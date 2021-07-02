@@ -1,0 +1,384 @@
+[2021-05-08.14:17:36.324232] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.14:17:41.262725] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:17:41.262725] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:18:02.275639] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:18:02.275639] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:18:02.276155] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:18:02.276155] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:18:02.281205] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:18:02.281205] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:18:02.289394] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:18:02.289394] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:19:03.052189] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:19:03.052189] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:20:41.263226] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:20:41.263226] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:23:04.059756] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:23:04.059756] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:23:04.060437] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:23:04.060437] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:23:04.064748] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:23:04.064748] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:23:04.072054] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:23:04.072054] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.610465] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.611039] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.645405] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.646339] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.735161] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.735161] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.830186] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.830186] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.846241] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.846241] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.924976] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.925177] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:11.959333] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:11.959333] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:13.167605] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:13.167605] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:17.925162] ERROR Error accepting new connection - %v EOF
+[2021-05-08.14:26:17.925162] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:17.927920] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:17.928442] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:17.928442] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:17.928442] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:17.928442] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:17.928442] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:17.928962] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:17.928962] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:22.929197] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:22.929197] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:52.929848] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:52.929848] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:53.939019] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:53.939540] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:53.939540] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:53.939540] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:56.209408] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:56.209932] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:26:56.209932] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:26:56.210546] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:27:10.846107] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:27:10.846107] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:27:10.846639] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:27:10.847171] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:27:10.852080] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:27:10.852080] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:27:10.859734] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:27:10.859734] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:27:16.210752] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:27:16.210752] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:28:06.030282] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:28:06.030282] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:28:06.030282] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:28:06.030282] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:28:06.030786] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:28:06.030786] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:28:06.031354] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:28:06.030786] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:28:16.213083] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:28:16.213083] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:30:23.166150] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.14:30:40.862915] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:30:40.862915] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:30:40.867406] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:30:40.867406] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:30:40.867995] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:30:40.867995] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:30:40.873346] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:30:40.873346] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:30:40.883101] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:30:40.883101] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:32:40.242656] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:32:40.242656] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:33:53.512074] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:33:53.512074] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:33:53.514285] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:33:53.514285] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:33:53.515661] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:33:53.515661] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:33:53.521058] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:33:53.521058] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:33:53.530197] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:33:53.530197] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:37:23.540258] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:37:23.540762] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:37:23.541015] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:37:23.541015] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:37:23.542017] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:37:23.542017] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:37:23.547391] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:37:23.547391] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:37:23.555538] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:37:23.555538] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:38:20.245661] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:38:20.245661] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:42:21.253288] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:42:21.253288] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:42:21.253896] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:42:21.253896] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:42:21.254400] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:42:21.254459] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:42:21.259310] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:42:21.259310] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:42:21.266665] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:42:21.266665] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:49:20.246701] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:49:20.246701] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:49:36.068646] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:49:36.068646] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:51:51.274103] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:51:51.274103] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:51:51.274103] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:51:51.274660] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:51:51.275626] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:51:51.275626] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:51:51.281902] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:51:51.281902] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:51:51.291255] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.14:51:51.291255] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.14:55:43.833128] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:09:21.299807] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:09:21.300333] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:09:21.300850] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:09:21.301094] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:09:21.302033] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:09:21.302553] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:09:21.307984] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:09:21.307984] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:09:21.315472] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:09:21.316333] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:10:16.020923] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:11:00.250193] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:11:00.250193] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:11:04.991504] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:14:19.622047] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:16:33.697672] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:16:37.819331]  INFO request Context: context.Background.WithValue(type *http.contextKey, val <not Stringer>).WithValue(type *http.contextKey, val 127.0.0.1:3129).WithCancel.WithCancel
+[2021-05-08.15:17:16.890969]  INFO request Context: context.Background.WithValue(type *http.contextKey, val <not Stringer>).WithValue(type *http.contextKey, val 127.0.0.1:3129).WithCancel.WithCancel
+[2021-05-08.15:21:12.860611] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:21:20.082781]  INFO request URL: http://192.168.166.95/xss.jsp
+[2021-05-08.15:23:47.132514] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:23:47.328410] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:23:47.328410] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:23:58.834231]  INFO request URL: http://192.168.166.95/xss.jsp
+[2021-05-08.15:24:03.987441]  INFO request URL: http://192.168.166.95/javascript/jquery-1.11.1.min.js
+[2021-05-08.15:24:06.177871]  INFO request URL: http://192.168.166.95/index/xssTest.do?id=
+[2021-05-08.15:27:10.579379] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.579379] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:27:10.580064] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.580064] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:27:10.580064] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.580586] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:27:10.581212] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.581212] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:27:10.586118] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.586118] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:27:10.593556] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:27:10.593556] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.596777] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.596777] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.602291] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.602291] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.602873] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.602873] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.603786] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.603786] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.604693] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.604693] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:32:40.609782] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:32:40.609782] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:34:10.597269] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:34:10.597269] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:35:54.542216] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:35:54.542216] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:41:00.831059] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:41:00.831059] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.628321] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.628321] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.628846] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.628846] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.629413] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.629413] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.630799] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.630799] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.631874] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.631874] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:42:10.636711] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:42:10.636711] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:43:40.629053] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:43:40.629053] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:45:37.266719] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:45:37.266719] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:45:38.362766]  INFO request URL: http://192.168.166.95/xss.jsp
+[2021-05-08.15:45:40.382724] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:45:40.382724] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:45:48.073979]  INFO request URL: http://192.168.166.95/xss.jsp
+[2021-05-08.15:45:50.264034] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:45:50.264034] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:45:56.081158] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:45:56.081751] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:45:59.757141]  INFO request URL: http://192.168.166.95/xss.jsp?id=2222
+[2021-05-08.15:46:01.775519] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.15:46:01.775519] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.15:55:36.993172] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:55:47.537092] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:56:22.455415] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:56:29.861531] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:56:44.178584] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:57:14.604522] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:57:16.729378]  INFO request : http://192.168.166.95/xss.jsp
+[2021-05-08.15:57:42.441626] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:58:23.587550] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.15:59:17.557658] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.16:00:04.202315] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.16:00:10.697770]  INFO request : http://detectportal.firefox.com/success.txt map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] {}
+[2021-05-08.16:00:10.698309] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:10.698880] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:10.786737]  INFO request : http://detectportal.firefox.com/success.txt?ipv4 map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] {}
+[2021-05-08.16:00:10.786737]  INFO request : http://detectportal.firefox.com/success.txt?ipv6 map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] {}
+[2021-05-08.16:00:10.814893] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:10.814893] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:10.817395] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:10.817647] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:10.907131] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:10.907131] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:10.928515] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:10.928515] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:11.024745] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:11.024953] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:12.194789] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:12.194789] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:00:15.045926]  INFO request : http://192.168.166.95/xss.jsp map[Accept:[text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Connection:[keep-alive] Upgrade-Insecure-Requests:[1] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] {}
+[2021-05-08.16:00:17.065156]  INFO request : http://192.168.166.95/favicon.ico map[Accept:[image/webp,*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Connection:[keep-alive] Referer:[http://192.168.166.95/xss.jsp] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] {}
+[2021-05-08.16:00:35.931023] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:00:35.931023] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.628355] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.16:01:09.709731] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.710343] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.712095] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.712095] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.713329] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.713329] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.714586] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.714586] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.714586] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.715091] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.715091] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.715091] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.715610] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.716132] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.717361] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.717361] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:09.726015] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:09.726015] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:10.666155]  INFO request : http://detectportal.firefox.com/success.txt Header: map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] Body: {}
+[2021-05-08.16:01:10.742572]  INFO request : http://detectportal.firefox.com/success.txt?ipv6 Header: map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] Body: {}
+[2021-05-08.16:01:10.742572]  INFO request : http://detectportal.firefox.com/success.txt?ipv4 Header: map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] Body: {}
+[2021-05-08.16:01:15.690148]  INFO request : http://192.168.166.95/xss.jsp Header: map[Accept:[text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[max-age=0] Connection:[keep-alive] Upgrade-Insecure-Requests:[1] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] Body: {}
+[2021-05-08.16:01:15.711354] ERROR Error accepting new connection - %v EOF
+[2021-05-08.16:01:15.712067] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:15.712067] ERROR Error accepting new connection - %v EOF
+[2021-05-08.16:01:15.712067] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:45.937195] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:45.937195] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:46.938471] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:46.938471] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:46.950779] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:46.950779] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:01:46.951296] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:01:46.951296] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:45.940993] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:45.940993] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.953141] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.953141] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.953669] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.953669] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.954478] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.954478] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.955205] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.955205] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.955721] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.956018] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:02:46.956604] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:02:46.956604] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:25.941979] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:25.941979] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.742068] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.742068] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.750430] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.750430] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.750962] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.750962] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.752173] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.752173] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.753327] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.753327] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:04:39.754371] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:04:39.754371] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:06:09.742967] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:06:09.742967] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:06:09.750697] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:06:09.750697] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:07:25.943129] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:07:25.943129] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.780666] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.780666] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.781889] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.781889] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.782858] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.782858] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.783889] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.783889] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.785176] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.785176] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:10:09.785781] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:10:09.785781] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:11:39.782333] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:11:39.782333] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:11:39.783445] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:11:39.783445] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:13:05.945465] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:13:05.945465] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.807989] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.807989] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.809139] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.809139] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.809657] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.809657] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.811500] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.811500] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.812675] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.812675] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:19:39.813465] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:19:39.813465] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:21:09.810289] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:21:09.810289] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:21:09.810289] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:21:09.810806] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:24:05.947680] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:24:05.947680] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:28:21.941960] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:28:21.941960] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.833152] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.833152] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.834190] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.834190] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.835166] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.835166] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.836320] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.836320] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.837263] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.837263] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:37:09.838664] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:37:09.838664] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:38:39.834016] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:38:39.834016] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:38:39.834564] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:38:39.834564] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.16:45:45.948621] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.16:45:45.948621] ERROR Cannot support non-SNI enabled clients
+[2021-05-08.17:03:34.949589] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-08.17:03:36.336379] ERROR Error accepting new connection - %v record overflow
+[2021-05-08.17:03:36.336379] ERROR Cannot support non-SNI enabled clients

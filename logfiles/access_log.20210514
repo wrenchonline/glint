@@ -1,0 +1,3 @@
+[2021-05-14.13:58:05.547936] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-14.13:59:39.613026] DEBUG Server starting up! - configured to listen on http interface %s and https interface %s :3129 :3128
+[2021-05-14.13:59:49.483461]  INFO request : /success.txt Header: map[Accept:[*/*] Accept-Encoding:[gzip, deflate] Accept-Language:[zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2] Cache-Control:[no-cache] Connection:[keep-alive] Pragma:[no-cache] User-Agent:[Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0]] Body: {}
