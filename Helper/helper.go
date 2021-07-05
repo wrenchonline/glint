@@ -106,7 +106,7 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 				}
 			}
 		} else if kvi.Tagname == "script" {
-			log.Info("Content:", kvi.Content)
+			log.Debug("Content:", kvi.Content)
 			program, err := parser.ParseFile(nil, "", kvi.Content, 0)
 			if err != nil {
 				panic(err)
@@ -238,11 +238,30 @@ func SearchInputInResponse(input string, body string) []Occurence {
 				Occurences = append(Occurences, Occurence{Type: "html", Position: Index, Details: token})
 			} else {
 				Occurences = append(Occurences, Occurence{Type: "html", Position: Index, Details: token})
+				for _, attibute := range *attibutes {
+					if input == attibute.Key {
+						detail := Node{Tagname: "attibute", Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+						Occurences = append(
+							Occurences,
+							Occurence{
+								Type:     "attibute",
+								Position: Index,
+								Details:  detail})
+					} else if input == attibute.Val {
+						detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+						Occurences = append(
+							Occurences,
+							Occurence{
+								Type:     "attibute",
+								Position: Index,
+								Details:  detail})
+					}
+				}
 			}
 		} else {
 			for _, attibute := range *attibutes {
 				if input == attibute.Key {
-					detail := Node{Tagname: tagname, Content: "key", Attributes: &[]Attribute{Attribute{Key: attibute.Key, Val: attibute.Val}}}
+					detail := Node{Tagname: "attibute", Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 					Occurences = append(
 						Occurences,
 						Occurence{
@@ -250,7 +269,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 							Position: Index,
 							Details:  detail})
 				} else if input == attibute.Val {
-					detail := Node{Tagname: tagname, Content: "key", Attributes: &[]Attribute{Attribute{Key: attibute.Key, Val: attibute.Val}}}
+					detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 					Occurences = append(
 						Occurences,
 						Occurence{

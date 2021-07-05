@@ -13,6 +13,7 @@ require (
 	github.com/fatih/color v1.12.0
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/thoas/go-funk v0.8.0 // indirect
 	github.com/tidwall/btree v0.5.0
 	github.com/tidwall/buntdb v1.2.4
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
