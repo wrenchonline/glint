@@ -1,4 +1,4 @@
-package httpex
+package Httpex
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func (spider *Spider) Sendreq(mode string, playload string) *string {
 
 		*spider.Ctx,
 
-		chromedp.Navigate(`http://192.168.166.95/xss2.jsp?id=`+playload),
+		chromedp.Navigate(`http://192.168.166.95/xss.jsp?id=`+playload),
 		// 等待直到html加载完毕
 		chromedp.WaitReady(`html`, chromedp.BySearch),
 		// 获取获取服务列表HTML

@@ -1,13 +1,20 @@
 package Helper
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"reflect"
+	"regexp"
 	"strings"
 
 	log "wenscan/Log"
 
 	"github.com/dop251/goja/ast"
 	"github.com/dop251/goja/parser"
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/js"
+	"github.com/thoas/go-funk"
 	"github.com/tidwall/btree"
 	"golang.org/x/net/html"
 )
@@ -131,12 +138,12 @@ func (parser *Parser) HttpParser(body string) bool {
 		case html.ErrorToken:
 			goto processing
 		case html.TextToken:
-			log.Debug("html.TextToken:", string(z.Raw()))
+			log.Debug("html.TextToken:%s", string(z.Raw()))
 			if field, ok := Tree.Max().(*Node); ok {
 				field.Content = string(z.Raw())
 			}
 		case html.StartTagToken:
-			log.Debug("html.StartTagToken:", string(z.Raw()))
+			log.Debug("html.StartTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -155,7 +162,7 @@ func (parser *Parser) HttpParser(body string) bool {
 
 		case html.EndTagToken:
 			name, _ := z.TagName()
-			log.Debug("html.EndTagToken:", string(z.Raw()))
+			log.Debug("html.EndTagToken:%s", string(z.Raw()))
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
@@ -166,7 +173,7 @@ func (parser *Parser) HttpParser(body string) bool {
 				}
 			}
 		case html.SelfClosingTagToken:
-			log.Debug("html.SelfClosingTagToken:", string(z.Raw()))
+			log.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -195,7 +202,7 @@ func (parser *Parser) HttpParser(body string) bool {
 
 		case html.CommentToken:
 			Attributes := make([]Attribute, 0)
-			log.Debug("html.CommentToken:", string(z.Raw()))
+			log.Debug("html.CommentToken:%s", string(z.Raw()))
 			parser.tokenizer.Set(&Node{Idx: i, Tagname: "#comment", Content: string(z.Raw()), Attributes: &Attributes})
 		}
 
@@ -229,7 +236,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 		attibutes := token.Attributes
 		if input == tagname {
 			Occurences = append(Occurences, Occurence{Type: "intag", Position: Index, Details: token})
-		} else if input == content {
+		} else if funk.Contains(content, input) {
 			if tagname == "#comment" {
 				Occurences = append(Occurences, Occurence{Type: "comment", Position: Index, Details: token})
 			} else if tagname == "script" {
@@ -284,4 +291,179 @@ func SearchInputInResponse(input string, body string) []Occurence {
 		}
 	}
 	return Occurences
+}
+
+//AnalyseJSGetFlag 分析js语法获取部分语法数据
+func AnalyseJSGetFlag(input string, script string) {
+
+	ast, err := js.Parse(parse.NewInputString(script))
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("Scope:", ast.Scope.String())
+
+	fmt.Println("JS:", ast.String())
+	ast.BlockStmt.String()
+	l := js.NewLexer(parse.NewInputString(script))
+	for {
+		tt, text := l.Next()
+		switch tt {
+		case js.ErrorToken:
+			if l.Err() != io.EOF {
+				fmt.Println("Error on line:", l.Err())
+			}
+			return
+		case js.IdentifierToken:
+			str := string(text)
+			if funk.Contains(str, input) {
+				log.Info("flag %s exists in a Identifier ", str)
+			}
+
+		case js.StringToken:
+			str := string(text)
+			if funk.Contains(str, input) {
+				reg := "\\(function(.*?)Stmt\\({(.*?)" + str + "(.*?)}\\)\\)"
+				//检测flag是否在闭合函数中
+				match, _ := regexp.MatchString(reg, ast.String())
+				if match {
+					log.Info("var %s flag exists in a closed function", str)
+					//检查是否有闭合括号
+
+					//判断是否是单引号还是双引号的字符串变量
+					if funk.Contains(str, "'") {
+						//payload := "123';%0aconsole.log(" + input + ")%0a//\\"
+					} else {
+
+					}
+				} else {
+					log.Info("var %s flag exists in Statement", str)
+					//判断是否是单引号还是双引号的字符串变量
+					if funk.Contains(str, "'") {
+
+					} else {
+
+					}
+				}
+			}
+		case js.ElseToken:
+
+		}
+	}
+}
+
+// 反转字符串
+func reverseString(s string) string {
+	runes := []rune(s)
+	for from, to := 0, len(runes)-1; from < to; from, to = from+1, to-1 {
+		runes[from], runes[to] = runes[to], runes[from]
+	}
+	return string(runes)
+}
+
+func stripper(str string, substring rune, direction string) string {
+	done := false
+	var (
+		strippedString bytes.Buffer
+		s              bytes.Buffer
+		retstring      bytes.Buffer
+	)
+
+	if direction == "right" {
+		s.WriteString(reverseString(str))
+	}
+	for _, char := range s.String() {
+		if char == substring && !done {
+			done = true
+		} else {
+			strippedString.WriteString(string(char))
+		}
+	}
+	if direction == "right" {
+		retstring.WriteString(reverseString(strippedString.String()))
+	}
+	return retstring.String()
+}
+
+//JsContexter 生成左半边的闭合xss payload
+func JsContexterLeft(xsschecker string, script string) string {
+	var breaker bytes.Buffer
+	broken := strings.Split(script, xsschecker)
+	pre := broken[0]
+	re := regexp.MustCompile(`(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'`)
+	s := re.ReplaceAllString(pre, "")
+	num := 0
+	for idx, char := range s {
+		if char == '{' {
+			breaker.WriteString("}")
+		} else if char == '(' {
+			breaker.WriteString(";)")
+		} else if char == '[' {
+			breaker.WriteString("]")
+		} else if char == '/' {
+			if idx+1 <= len(s) {
+				if s[idx+1] == '*' {
+					breaker.WriteString("/*")
+				}
+			}
+		} else if char == '}' {
+			c := stripper(breaker.String(), '}', "right")
+			breaker.Reset()
+			breaker.WriteString(c)
+		} else if char == ')' {
+			c := stripper(breaker.String(), ')', "right")
+			breaker.Reset()
+			breaker.WriteString(c)
+		} else if char == ']' {
+			c := stripper(breaker.String(), ']', "right")
+			breaker.Reset()
+			breaker.WriteString(c)
+		}
+		num++
+	}
+	return reverseString(breaker.String())
+}
+
+//JsContexterRight 生成右半边的闭合xss payload
+func JsContexterRight(xsschecker string, script string) string {
+	var breaker bytes.Buffer
+	bFrist := true
+	bFriststr := "funtion (){"
+	broken := strings.Split(script, xsschecker)
+	pre := broken[1]
+	re := regexp.MustCompile(`(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'`)
+	s := re.ReplaceAllString(pre, "")
+	num := 0
+	for idx, char := range s {
+		if char == '}' {
+			if bFrist {
+				bFrist = false
+			} else {
+				breaker.WriteString("{)1(fi")
+			}
+		} else if char == ')' {
+			breaker.WriteString("('")
+		} else if char == ']' {
+			breaker.WriteString("[")
+		} else if char == '*' {
+			if idx+1 <= len(s) {
+				if s[idx+1] == '/' {
+					breaker.WriteString("*/")
+				}
+			}
+		} else if char == '{' {
+			c := stripper(breaker.String(), '{', "left")
+			breaker.Reset()
+			breaker.WriteString(c)
+		} else if char == '(' {
+			c := stripper(breaker.String(), '(', "left")
+			breaker.Reset()
+			breaker.WriteString(c)
+		} else if char == '[' {
+			c := stripper(breaker.String(), '[', "left")
+			breaker.Reset()
+			breaker.WriteString(c)
+		}
+		num++
+	}
+	return bFriststr + reverseString(breaker.String())
 }
