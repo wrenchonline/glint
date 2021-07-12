@@ -5,6 +5,7 @@ import (
 	"time"
 	log "wenscan/Log"
 
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 )
@@ -63,7 +64,11 @@ func (spider *Spider) Sendreq(mode string, playload string) *string {
 
 		*spider.Ctx,
 
-		chromedp.Navigate(`http://192.168.166.95/xss.jsp?id=`+playload),
+		SetCookie("PHPSESSID", "3kg4am0eom8dnnus68c849ppmk", "localhost", "/", false, false),
+
+		SetCookie("security", "low", "localhost", "/", false, false),
+
+		chromedp.Navigate(`http://localhost/vulnerabilities/xss_r/?name=`+playload),
 		// 等待直到html加载完毕
 		chromedp.WaitReady(`html`, chromedp.BySearch),
 		// 获取获取服务列表HTML
@@ -74,4 +79,31 @@ func (spider *Spider) Sendreq(mode string, playload string) *string {
 	}
 	log.Debug("html:", res)
 	return &res
+}
+
+func ShowCookies() chromedp.Action {
+	return chromedp.ActionFunc(func(ctx context.Context) error {
+		cookies, err := network.GetAllCookies().Do(ctx)
+		if err != nil {
+			return err
+		}
+		for i, cookie := range cookies {
+			log.Printf("chrome cookie %d: %+v", i, cookie)
+		}
+		return nil
+	})
+}
+
+func SetCookie(name, value, domain, path string, httpOnly, secure bool) chromedp.Action {
+	return chromedp.ActionFunc(func(ctx context.Context) error {
+		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
+		network.SetCookie(name, value).
+			WithExpires(&expr).
+			WithDomain(domain).
+			WithPath(path).
+			WithHTTPOnly(httpOnly).
+			WithSecure(secure).
+			Do(ctx)
+		return nil
+	})
 }

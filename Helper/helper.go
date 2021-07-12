@@ -293,15 +293,56 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	return Occurences
 }
 
-//AnalyseJSGetFlag 分析js语法获取部分语法数据
-func AnalyseJSGetFlag(input string, script string) {
+func checkIfstmtExistsFlag(leftpayload bytes.Buffer, rightpayload bytes.Buffer, input string, Body js.IStmt) {
+	switch a := Body.(type) {
+	case *js.BlockStmt:
+		leftpayload.WriteString("}")
+		rightpayload.WriteString("{")
+		for _, item := range a.List {
+			switch c := item.(type) {
+			case *js.VarDecl:
+				for _, a := range c.List {
+					if funk.Contains(a.Default.JS(), input) {
+						sd := leftpayload.Bytes()[len(leftpayload.Bytes())-1]
+						leftpayload.Reset()
+						leftpayload.WriteByte(sd)
+					}
+				}
+			}
+		}
 
+	}
+}
+
+// for _, item := range ast.BlockStmt.List {
+// 	switch a := item.(type) {
+// 	case *js.FuncDecl:
+// 		leftpayload.WriteString("}")
+// 		rightpayload.WriteString("{")
+// 		for _, c := range a.Body.List {
+// 			switch sc := c.(type) {
+// 			case *js.IfStmt:
+// 				//判断flag是否在变量内 if（xxx）{ var xx = flag} else { xxxxx }' block
+// 				fmt.Println("IfStmt:", sc.Body.JS())
+// 				if sc.Else == nil {
+// 					checkIfstmtExistsFlag(leftpayload, rightpayload, input, sc.Body)
+// 					AnalyseJSFuncByFlag(leftpayload, rightpayload, input, script)
+// 				}
+// 			}
+// 		}
+
+// 	}
+// }
+//var left bytes.Buffer
+
+//AnalyseJSByFlag 分析js语法获取部分语法数据
+func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 	ast, err := js.Parse(parse.NewInputString(script))
 	if err != nil {
 		panic(err.Error())
 	}
+	var newpayload bytes.Buffer
 	fmt.Println("Scope:", ast.Scope.String())
-
 	fmt.Println("JS:", ast.String())
 	ast.BlockStmt.String()
 	l := js.NewLexer(parse.NewInputString(script))
@@ -312,43 +353,41 @@ func AnalyseJSGetFlag(input string, script string) {
 			if l.Err() != io.EOF {
 				fmt.Println("Error on line:", l.Err())
 			}
-			return
+			return newpayload.String(), nil
 		case js.IdentifierToken:
 			str := string(text)
 			if funk.Contains(str, input) {
 				log.Info("flag %s exists in a Identifier ", str)
 			}
-
 		case js.StringToken:
 			str := string(text)
 			if funk.Contains(str, input) {
-				reg := "\\(function(.*?)Stmt\\({(.*?)" + str + "(.*?)}\\)\\)"
 				//检测flag是否在闭合函数中
+				reg := "\\(function(.*?)Stmt\\({(.*?)" + str + "(.*?)}\\)\\)"
 				match, _ := regexp.MatchString(reg, ast.String())
 				if match {
 					log.Info("var %s flag exists in a closed function", str)
-					//检查是否有闭合括号
-
+					leftcloser := JsContexterLeft(input, ast.JS())
+					Rightcloser := JsContexterRight(input, ast.JS())
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
-						//payload := "123';%0aconsole.log(" + input + ")%0a//\\"
+						newpayload.WriteString("%27;" + leftcloser + "%0aconsole.log('" + input + "');%0a" + Rightcloser + "//\\")
 					} else {
-
+						newpayload.WriteString("\"\";" + leftcloser + "%0aconsole.log('" + input + "');%0a" + Rightcloser + "//\\")
 					}
 				} else {
 					log.Info("var %s flag exists in Statement", str)
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
-
+						newpayload.WriteString("%27;%0aconsole.log('" + input + "');//")
 					} else {
-
+						newpayload.WriteString("\"\";%0aconsole.log('" + input + "');//")
 					}
 				}
 			}
-		case js.ElseToken:
-
 		}
 	}
+
 }
 
 // 反转字符串
@@ -427,7 +466,7 @@ func JsContexterLeft(xsschecker string, script string) string {
 func JsContexterRight(xsschecker string, script string) string {
 	var breaker bytes.Buffer
 	bFrist := true
-	bFriststr := "funtion (){"
+	bFriststr := "function%20a(){"
 	broken := strings.Split(script, xsschecker)
 	pre := broken[1]
 	re := regexp.MustCompile(`(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'`)
@@ -438,10 +477,10 @@ func JsContexterRight(xsschecker string, script string) string {
 			if bFrist {
 				bFrist = false
 			} else {
-				breaker.WriteString("{)1(fi")
+				breaker.WriteString("a0%{)1(fi")
 			}
 		} else if char == ')' {
-			breaker.WriteString("('")
+			breaker.WriteString("(")
 		} else if char == ']' {
 			breaker.WriteString("[")
 		} else if char == '*' {
