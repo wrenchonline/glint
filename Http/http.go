@@ -1,4 +1,4 @@
-package Httpex
+package http
 
 import (
 	"context"

@@ -480,7 +480,7 @@ func JsContexterRight(xsschecker string, script string) string {
 				breaker.WriteString("a0%{)1(fi")
 			}
 		} else if char == ')' {
-			breaker.WriteString("(")
+			breaker.WriteString("(") //这个估计改下1(
 		} else if char == ']' {
 			breaker.WriteString("[")
 		} else if char == '*' {

