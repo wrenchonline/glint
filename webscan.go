@@ -41,65 +41,63 @@ func main() {
 	var result interface{}
 	VulOK := false
 
-	for _, tag := range payloads {
-		result = funk.Map(locations, func(item Helper.Occurence) (bool, string) {
-			var newpayload string
-			if !VulOK {
-				if item.Type == "html" {
-					newpayload = fmt.Sprintf(tag, playload)
+	//for _, tag := range payloads {
+	result = funk.Map(locations, func(item Helper.Occurence) (bool, string) {
+		var newpayload string
+		if !VulOK {
+			if item.Type == "html" {
+				newpayload = fmt.Sprintf(tag, playload)
+				html := Spider.Sendreq("", newpayload)
+				locations := Helper.SearchInputInResponse(playload, *html)
+				for _, location := range locations {
+					if location.Details.Content == playload {
+						log.Info("《html》html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+						VulOK = true
+						break
+					}
+				}
+			} else if item.Type == "attibute" {
+				//假设如果渲染得值在key中
+				if item.Details.Content == "key" {
+					newpayload = fmt.Sprintf(">", tag, playload, "//")
 					html := Spider.Sendreq("", newpayload)
 					locations := Helper.SearchInputInResponse(playload, *html)
 					for _, location := range locations {
 						if location.Details.Content == playload {
-							log.Info("《html》html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+							log.Info("《attibute》Key html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
 							VulOK = true
 							break
 						}
 					}
-				} else if item.Type == "attibute" {
-					//假设如果渲染得值在key中
-					if item.Details.Content == "key" {
-						newpayload = fmt.Sprintf(">", tag, playload)
-						html := Spider.Sendreq("", newpayload)
-						locations := Helper.SearchInputInResponse(playload, *html)
-						for _, location := range locations {
-							if location.Details.Content == playload {
-								log.Info("《attibute》Key html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
-								VulOK = true
-								break
-							}
-						}
-					} else {
-						//否则就在value中
-						newpayload = fmt.Sprintf(tag, playload)
-						html := Spider.Sendreq("", newpayload)
-						//println(*html)
-						locations := Helper.SearchInputInResponse(newpayload, *html)
-						for _, location := range locations {
-							ret := funk.Map(*location.Details.Attributes, func(item Helper.Attribute) bool {
-								return newpayload == item.Val
-							})
-							if funk.Contains(ret, true) {
-								log.Info("《attibute》Val html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
-								VulOK = true
-								break
-							}
+				} else {
+					//否则就在value中
+					newpayload = fmt.Sprintf(tag, playload)
+					html := Spider.Sendreq("", newpayload)
+					locations := Helper.SearchInputInResponse(newpayload, *html)
+					for _, location := range locations {
+						ret := funk.Map(*location.Details.Attributes, func(item Helper.Attribute) bool {
+							return newpayload == item.Val
+						})
+						if funk.Contains(ret, true) {
+							log.Info("《attibute》Val html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+							VulOK = true
+							break
 						}
 					}
-
-				} else if item.Type == "script" {
-					paylod, _ := Helper.AnalyseJSFuncByFlag(playload, item.Details.Content)
-					log.Info("generator payload:%s", paylod)
-					html := Spider.Sendreq("", paylod)
-					log.Info("html:%s", *html)
-					//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
-
 				}
-			}
 
-			return VulOK, newpayload
-		})
-	}
+			} else if item.Type == "script" {
+				paylod, _ := Helper.AnalyseJSFuncByFlag(playload, item.Details.Content)
+				log.Info("generator payload:%s", paylod)
+				html := Spider.Sendreq("", paylod)
+				log.Info("html:%s", *html)
+				//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
+
+			}
+		}
+		return VulOK, newpayload
+	})
+	//}
 
 	if funk.Contains(result, true) {
 		//log.Info("html标签可被闭合")+
