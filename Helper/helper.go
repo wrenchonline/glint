@@ -254,7 +254,8 @@ func SearchInputInResponse(input string, body string) []Occurence {
 								Type:     "attibute",
 								Position: Index,
 								Details:  detail})
-					} else if input == attibute.Val {
+						//使用funk.Contains是因为有可能是Val是脚本
+					} else if funk.Contains(attibute.Val, input) {
 						detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 						Occurences = append(
 							Occurences,
@@ -275,7 +276,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 							Type:     "attibute",
 							Position: Index,
 							Details:  detail})
-				} else if input == attibute.Val {
+				} else if funk.Contains(attibute.Val, input) {
 					detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 					Occurences = append(
 						Occurences,
@@ -293,26 +294,27 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	return Occurences
 }
 
-func checkIfstmtExistsFlag(leftpayload bytes.Buffer, rightpayload bytes.Buffer, input string, Body js.IStmt) {
-	switch a := Body.(type) {
-	case *js.BlockStmt:
-		leftpayload.WriteString("}")
-		rightpayload.WriteString("{")
-		for _, item := range a.List {
-			switch c := item.(type) {
-			case *js.VarDecl:
-				for _, a := range c.List {
-					if funk.Contains(a.Default.JS(), input) {
-						sd := leftpayload.Bytes()[len(leftpayload.Bytes())-1]
-						leftpayload.Reset()
-						leftpayload.WriteByte(sd)
-					}
-				}
-			}
-		}
+//checkIfstmtExistsFlag
+// func checkIfstmtExistsFlag(leftpayload bytes.Buffer, rightpayload bytes.Buffer, input string, Body js.IStmt) {
+// 	switch a := Body.(type) {
+// 	case *js.BlockStmt:
+// 		leftpayload.WriteString("}")
+// 		rightpayload.WriteString("{")
+// 		for _, item := range a.List {
+// 			switch c := item.(type) {
+// 			case *js.VarDecl:
+// 				for _, a := range c.List {
+// 					if funk.Contains(a.Default.JS(), input) {
+// 						sd := leftpayload.Bytes()[len(leftpayload.Bytes())-1]
+// 						leftpayload.Reset()
+// 						leftpayload.WriteByte(sd)
+// 					}
+// 				}
+// 			}
+// 		}
 
-	}
-}
+// 	}
+// }
 
 // for _, item := range ast.BlockStmt.List {
 // 	switch a := item.(type) {
@@ -344,7 +346,7 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 	var newpayload bytes.Buffer
 	fmt.Println("Scope:", ast.Scope.String())
 	fmt.Println("JS:", ast.String())
-	ast.BlockStmt.String()
+	//ast.BlockStmt.String()
 	l := js.NewLexer(parse.NewInputString(script))
 	for {
 		tt, text := l.Next()
