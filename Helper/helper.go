@@ -369,11 +369,12 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 				match, _ := regexp.MatchString(reg, ast.String())
 				if match {
 					log.Info("var %s flag exists in a closed function", str)
+
 					leftcloser := JsContexterLeft(input, ast.JS())
 					Rightcloser := JsContexterRight(input, ast.JS())
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
-						newpayload.WriteString("%27;" + leftcloser + "%0aconsole.log('" + input + "');%0a" + Rightcloser + "//\\")
+						newpayload.WriteString("%27;" + leftcloser + "%0aconsole.log(\"" + input + "\");%0a" + Rightcloser + "//\\")
 					} else {
 						newpayload.WriteString("\"\";" + leftcloser + "%0aconsole.log('" + input + "');%0a" + Rightcloser + "//\\")
 					}
@@ -467,20 +468,41 @@ func JsContexterLeft(xsschecker string, script string) string {
 //JsContexterRight 生成右半边的闭合xss payload
 func JsContexterRight(xsschecker string, script string) string {
 	var breaker bytes.Buffer
-	bFrist := true
+	var count int = 0
+	var s string
 	bFriststr := "function%20a(){"
 	broken := strings.Split(script, xsschecker)
 	pre := broken[1]
-	re := regexp.MustCompile(`(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'`)
-	s := re.ReplaceAllString(pre, "")
+	pre0 := broken[0] //检测else 对于flag左半边边是否是子集    比如 if else 外部有个 if 包含了
+	fmt.Println(pre0)
+	/*
+		pre0 == function loadTest () { var time = 11; if (1) { if (time < 20) { if (1) { var x = '
+	*/
+	Lpayload := strings.Count(pre0, "{")
+
+	//pre = "'); }; } else { var x = '2222222'; }; };"
+	//re := regexp.MustCompile(`(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'`)
+	//// '; }; } else { var x = '2222222'; }; };    //过滤前
+	//// 2222222'; }; }; 					//过滤后
+	///这里可以过滤到else有什么问题可以在这里调试
+	elses := strings.Split(pre, "else")
+	//这里存在else的因素所以必须想办法使生成的payload让这个函数闭合，我采取的思路就是else右半边的 '}' 与 左半边的 '}' 相减，多出来的数目在payload后面添加 }
+	if len(elses) >= 2 {
+		//计算else左边反括号数量
+		LbracketsCount := strings.Count(elses[0], "}")
+		//计算else右边反括号数量
+		RbracketsCount := strings.Count(elses[1], "}")
+		//计算闭合
+		cot := Lpayload - RbracketsCount
+		count = RbracketsCount - LbracketsCount + 1 - 1 - cot // + 1 是因为else的存在，-1是因为我函数开头以 function%20a(){ 的存在 ,cot判断else是否有外部闭合的情况
+		s = pre
+	} else {
+		s = strings.Replace(pre, "}", "", 1) //1是因为我函数开头以 function%20a(){ 的存在
+	}
 	num := 0
 	for idx, char := range s {
 		if char == '}' {
-			if bFrist {
-				bFrist = false
-			} else {
-				breaker.WriteString("a0%{)1(fi")
-			}
+			breaker.WriteString("a0%{)1(fi")
 		} else if char == ')' {
 			breaker.WriteString("(") //这个估计改下1(
 		} else if char == ']' {
@@ -506,5 +528,9 @@ func JsContexterRight(xsschecker string, script string) string {
 		}
 		num++
 	}
-	return bFriststr + reverseString(breaker.String())
+	var exportbyelse bytes.Buffer
+	for z := 0; z < count; z++ {
+		exportbyelse.WriteString("}")
+	}
+	return bFriststr + reverseString(breaker.String()) + exportbyelse.String()
 }

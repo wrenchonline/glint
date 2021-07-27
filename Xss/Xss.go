@@ -108,6 +108,7 @@ type Kv struct {
 type PayloadMode struct {
 	Mode       int
 	IsNeedFlag bool
+	payload    string
 }
 
 //CheckHtmlNodeAttributesKey 检测是否存在对应的key值
@@ -169,10 +170,11 @@ func Test_CheckHtmlNodeAttributesKey() {
 
 //给payload做扩展属性
 func (g *Generator) mapmode(Mode int, IsNeedFlag bool) {
-	mode := funk.Map(g.words, func() PayloadMode {
+	mode := funk.Map(g.words, func(payload string) PayloadMode {
 		var mode PayloadMode
 		mode.Mode = Mode
 		mode.IsNeedFlag = IsNeedFlag
+		mode.payload = payload
 		return mode
 	})
 	if v, ok := mode.([]PayloadMode); ok {
@@ -244,13 +246,22 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 				g.mapmode(CheckConsoleLog, false)
 			}
 		}
+	} else if Script == Tagmode {
+		switch s := extension.(type) {
+		case Helper.Occurence:
+			payload, _ := Helper.AnalyseJSFuncByFlag(flag, s.Details.Content)
+			log.Info("Script generator payload:%s", payload)
+			payloads := []string{payload}
+			g.words = append(g.words, payloads...)
+			g.mapmode(CheckConsoleLog, false)
+		}
 	}
 	return nil
 }
 
 //GetPayloadValue 迭代 payload
 func (g *Generator) GetPayloadValue() (string, int) {
-	if !g.Next() {
+	if g.Next() {
 		if g.IsNeedFlag {
 			switch v := g.Value().(type) {
 			case string:
@@ -263,6 +274,7 @@ func (g *Generator) GetPayloadValue() (string, int) {
 			}
 		}
 	}
+
 	return "", 0
 }
 
