@@ -172,6 +172,7 @@ func (parser *Parser) HttpParser(body string) bool {
 					parser.tokenizer.Set(Tree.PopMax())
 				}
 			}
+
 		case html.SelfClosingTagToken:
 			log.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)

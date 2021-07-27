@@ -16,7 +16,7 @@ func main() {
 	Spider.Init()
 	defer Spider.Close()
 	html := Spider.Sendreq("", playload)
-	log.Info(*html)
+	//log.Info(*html)
 	locations := Helper.SearchInputInResponse(playload, *html)
 	if len(locations) == 0 {
 		log.Error("SearchInputInResponse error,U can convert html encode")
@@ -27,11 +27,16 @@ func main() {
 		if item.Type == "html" {
 			g := new(Xss.Generator)
 			g.GeneratorPayload(Xss.Htmlmode, playload, item)
-			for newpayload, methods := g.GetPayloadValue(); len(newpayload) != 0; {
-				html := Spider.Sendreq("", newpayload)
-				locations := Helper.SearchInputInResponse(playload, *html)
-				if g.CheckXssVul(locations, methods, Spider) {
-					log.Info("《html》html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+			for {
+				newpayload, methods := g.GetPayloadValue()
+				if len(newpayload) != 0 {
+					html := Spider.Sendreq("", newpayload)
+					locations := Helper.SearchInputInResponse(playload, *html)
+					if g.CheckXssVul(locations, methods, Spider) {
+						log.Info("Xss::html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+						break
+					}
+				} else {
 					break
 				}
 			}
@@ -40,11 +45,16 @@ func main() {
 			if item.Details.Content == "key" {
 				g := new(Xss.Generator)
 				g.GeneratorPayload(Xss.Attibute, playload, item)
-				for newpayload, methods := g.GetPayloadValue(); len(newpayload) != 0; {
-					html := Spider.Sendreq("", newpayload)
-					locations := Helper.SearchInputInResponse(playload, *html)
-					if g.CheckXssVul(locations, methods, Spider) {
-						log.Info("《attibute》attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+				for {
+					newpayload, methods := g.GetPayloadValue()
+					if len(newpayload) != 0 {
+						html := Spider.Sendreq("", newpayload)
+						locations := Helper.SearchInputInResponse(playload, *html)
+						if g.CheckXssVul(locations, methods, Spider) {
+							log.Info("Xss::attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+							break
+						}
+					} else {
 						break
 					}
 				}
@@ -52,11 +62,16 @@ func main() {
 				//否则就在value中
 				g := new(Xss.Generator)
 				g.GeneratorPayload(Xss.Attibute, playload, item)
-				for newpayload, methods := g.GetPayloadValue(); len(newpayload) != 0; {
-					html := Spider.Sendreq("", newpayload)
-					locations := Helper.SearchInputInResponse(playload, *html)
-					if g.CheckXssVul(locations, methods, Spider) {
-						log.Info("《attibute》attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+				for {
+					newpayload, methods := g.GetPayloadValue()
+					if len(newpayload) != 0 {
+						html := Spider.Sendreq("", newpayload)
+						locations := Helper.SearchInputInResponse(playload, *html)
+						if g.CheckXssVul(locations, methods, Spider) {
+							log.Info("Xss::attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+							break
+						}
+					} else {
 						break
 					}
 				}
@@ -64,11 +79,16 @@ func main() {
 		} else if item.Type == "script" {
 			g := new(Xss.Generator)
 			g.GeneratorPayload(Xss.Script, playload, item)
-			for newpayload, methods := g.GetPayloadValue(); len(newpayload) != 0; {
-				html := Spider.Sendreq("", newpayload)
-				locations := Helper.SearchInputInResponse(playload, *html)
-				if g.CheckXssVul(locations, methods, Spider) {
-					log.Info("《attibute》attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+			for {
+				newpayload, methods := g.GetPayloadValue()
+				if len(newpayload) != 0 {
+					html := Spider.Sendreq("", newpayload)
+					locations := Helper.SearchInputInResponse(playload, *html)
+					if g.CheckXssVul(locations, methods, Spider) {
+						log.Info("Xss::script标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
+						break
+					}
+				} else {
 					break
 				}
 			}

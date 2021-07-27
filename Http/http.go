@@ -1,9 +1,10 @@
-package http
+package Http
 
 import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 	log "wenscan/Log"
 
@@ -90,8 +91,8 @@ func (spider *Spider) Init() {
 		case *runtime.EventConsoleAPICalled:
 			fmt.Printf("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
-				fmt.Printf("%s - %s\n", arg.Type, arg.Value)
-				Response[string(arg.Type)] = string(arg.Value)
+				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
+				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
 				Responses = append(Responses, Response)
 			}
 			go func() {

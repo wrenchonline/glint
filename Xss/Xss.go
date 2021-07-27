@@ -9,7 +9,7 @@ import (
 	"time"
 	"wenscan/Helper"
 	log "wenscan/Log"
-	"wenscan/http"
+	http "wenscan/http"
 
 	"github.com/thoas/go-funk"
 )
