@@ -475,7 +475,7 @@ func JsContexterRight(xsschecker string, script string) string {
 	broken := strings.Split(script, xsschecker)
 	pre := broken[1]
 	pre0 := broken[0] //检测else 对于flag左半边边是否是子集    比如 if else 外部有个 if 包含了
-	fmt.Println(pre0)
+	//fmt.Println(pre0)
 	/*
 		pre0 == function loadTest () { var time = 11; if (1) { if (time < 20) { if (1) { var x = '
 	*/
