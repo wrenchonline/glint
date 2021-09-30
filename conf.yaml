@@ -1,0 +1,34 @@
+crawler:
+  url: 
+    - 'http://localhost/'
+  brokenurl: 
+    - 'http://localhost/logout.php'
+reqmode: 'Get'
+cookies: [{
+    name: "PHPSESSID",
+    value: "ocd0lqa7lv961n4egp897fnjvp",
+    domain: "localhost",
+    path: "/",
+    httpOnly: true,
+    secure: false,
+  },{
+    name: "security",
+    value: "low",
+    domain: "localhost",
+    path: "/",
+    httpOnly: true,
+    secure: false,
+  }
+  ]
+url:
+  'http://localhost/'
+reqsleep:
+   1000   #设置1秒沉睡，因为js渲染新节点会造成页面发生变化，等待js渲染完成是不可能的事，有可能js代码一直改变节点让他永远不完成加载...。固设置超时机制
+sqlinject:
+  attacktype: 'len'
+  attackpayloads:
+xss:
+  xsspayload: 
+    - ""
+post:
+  data:

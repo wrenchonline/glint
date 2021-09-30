@@ -4,6 +4,7 @@ import (
 	"wenscan/Helper"
 	log "wenscan/Log"
 	"wenscan/Xss"
+	cf "wenscan/config"
 	http "wenscan/http"
 
 	"github.com/thoas/go-funk"
@@ -15,8 +16,16 @@ func main() {
 	Spider := http.Spider{}
 	Spider.Init()
 	defer Spider.Close()
-	html := Spider.Sendreq("", playload)
-	//log.Info(*html)
+	c := cf.Conf{}
+	//读取配置文件
+	conf := c.GetConf()
+	Spider.ReqMode = conf.ReqMode
+	if err := Spider.SetCookie(conf); err != nil {
+		panic(err)
+	}
+
+	url := conf.Url + playload
+	html := Spider.Sendreq(url)
 	locations := Helper.SearchInputInResponse(playload, *html)
 	if len(locations) == 0 {
 		log.Error("SearchInputInResponse error,U can convert html encode")
@@ -30,7 +39,8 @@ func main() {
 			for {
 				newpayload, methods := g.GetPayloadValue()
 				if len(newpayload) != 0 {
-					html := Spider.Sendreq("", newpayload)
+					url := conf.Url + newpayload
+					html := Spider.Sendreq(url)
 					locations := Helper.SearchInputInResponse(playload, *html)
 					if g.CheckXssVul(locations, methods, Spider) {
 						log.Info("Xss::html标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
@@ -48,7 +58,8 @@ func main() {
 				for {
 					newpayload, methods := g.GetPayloadValue()
 					if len(newpayload) != 0 {
-						html := Spider.Sendreq("", newpayload)
+						url := conf.Url + newpayload
+						html := Spider.Sendreq(url)
 						locations := Helper.SearchInputInResponse(playload, *html)
 						if g.CheckXssVul(locations, methods, Spider) {
 							log.Info("Xss::attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
@@ -65,7 +76,8 @@ func main() {
 				for {
 					newpayload, methods := g.GetPayloadValue()
 					if len(newpayload) != 0 {
-						html := Spider.Sendreq("", newpayload)
+						url := conf.Url + newpayload
+						html := Spider.Sendreq(url)
 						locations := Helper.SearchInputInResponse(playload, *html)
 						if g.CheckXssVul(locations, methods, Spider) {
 							log.Info("Xss::attibute标签可被闭合 发现xss漏洞 payloads:%s", newpayload)
@@ -82,7 +94,8 @@ func main() {
 			for {
 				newpayload, methods := g.GetPayloadValue()
 				if len(newpayload) != 0 {
-					html := Spider.Sendreq("", newpayload)
+					url := conf.Url + newpayload
+					html := Spider.Sendreq(url)
 					locations := Helper.SearchInputInResponse(playload, *html)
 					if g.CheckXssVul(locations, methods, Spider) {
 						log.Info("Xss::script标签可被闭合 发现xss漏洞 payloads:%s", newpayload)

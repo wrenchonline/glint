@@ -10,8 +10,6 @@ import (
 
 	log "wenscan/Log"
 
-	"github.com/dop251/goja/ast"
-	"github.com/dop251/goja/parser"
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 	"github.com/thoas/go-funk"
@@ -62,41 +60,35 @@ func Duplicate(a interface{}) (ret []interface{}) {
 }
 
 //AnalyseJs Js的ast语法分析，主要目的是抓取变量，返回变量数组
-func AnalyseJs(program *ast.Program) []string {
+func AnalyseJs(script string) []string {
 	var params = []string{}
-	for _, Declaration := range program.DeclarationList {
-		switch c := Declaration.(type) {
-		case *ast.VariableDeclaration:
-			for _, v := range c.List {
-				params = append(params, v.Name.String())
-				//fmt.Println("发现变量声明", v.Name.String())
-				switch c := v.Initializer.(type) {
-				case *ast.FunctionLiteral:
-					//fmt.Println("发现函数声明，正在提取函数内的变量", c.DeclarationList)
-					for _, Declaration := range c.DeclarationList {
-						switch c := Declaration.(type) {
-						case *ast.VariableDeclaration:
-							for _, v := range c.List {
-								//fmt.Println("函数内的变量", v.Name.String())
-								params = append(params, v.Name.String())
-							}
-						}
-					}
-				}
+	var vardiscover bool
+	ast, err := js.Parse(parse.NewInputString(script))
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("Scope:", ast.Scope.String())
+	fmt.Println("JS:", ast.String())
+	//ast.BlockStmt.String()
+	l := js.NewLexer(parse.NewInputString(script))
+	for {
+		tt, text := l.Next()
+		switch tt {
+		case js.ErrorToken:
+			if l.Err() != io.EOF {
+				fmt.Println("Error on line:", l.Err())
 			}
-		case *ast.FunctionDeclaration:
-			for _, Declaration := range c.Function.DeclarationList {
-				switch c := Declaration.(type) {
-				case *ast.VariableDeclaration:
-					for _, v := range c.List {
-						//fmt.Println("发现属性FunctionDeclaration内变量声明", v.Name.String())
-						params = append(params, v.Name.String())
-					}
-				}
+			return params
+		case js.VarToken:
+			vardiscover = true
+		case js.StringToken:
+			str := string(text)
+			if vardiscover {
+				params = append(params, str)
 			}
+			vardiscover = false
 		}
 	}
-	return params
 }
 
 //GetHtmlParams 获取html的参数
@@ -114,11 +106,11 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 			}
 		} else if kvi.Tagname == "script" {
 			log.Debug("Content:", kvi.Content)
-			program, err := parser.ParseFile(nil, "", kvi.Content, 0)
-			if err != nil {
-				panic(err)
-			}
-			params = append(params, AnalyseJs(program)...)
+			// program, err := parser.ParseFile(nil, "", kvi.Content, 0)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			params = append(params, AnalyseJs(kvi.Content)...)
 		}
 		return true
 	})

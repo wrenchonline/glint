@@ -4,23 +4,32 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 	log "wenscan/Log"
+	cf "wenscan/config"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"github.com/fatih/color"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
-	Ctx       *context.Context //存储着浏览器的资源
-	Cancel    *context.CancelFunc
-	Responses chan []map[string]string
-	ReqMode   string
+	Ctx            *context.Context //存储着浏览器的资源
+	Cancel         *context.CancelFunc
+	Responses      chan []map[string]string
+	ReqMode        string
+	PostData       []byte
+	Standardlen    int //爬虫请求的长度
+	ReqUrlresplen  int
+	Url            *url.URL
+	Isreponse      bool
+	Currentcontent string
 }
 
 func (spider *Spider) Close() {
@@ -45,24 +54,18 @@ func (spider *Spider) CheckPayloadbyConsole(types string, xsschecker string) boo
 	return false
 }
 
-/*
-//post请求方式
-switch ev := ev.(type) {
-		case *fetch.EventRequestPaused:
-			go func() {
-				c := chromedp.FromContext(cctx)
-				cctx := cdp.WithExecutor(cctx, c.Target)
-                newreq := fetch.ContinueRequest(ev.RequestID)
-				newreq.URL = "http://my-vps:4321/fse/ooo.php"
-				newreq.Method = "POST"
-				newreq.Headers = []*fetch.HeaderEntry{{"Content-Type", "application/x-www-form-urlencoded"}}
-				newreq.PostData = base64.StdEncoding.EncodeToString([]byte("aaaaa=1234"))
-				newreq.Do(cctx)
-        	}()
+func (spider *Spider) SetCookie(conf *cf.Conf) error {
+	for _, i := range conf.Cookies {
+		err := chromedp.Run(*spider.Ctx, SetCookie(i.Name, i.Value, i.Domain, i.Path, i.HttpOnly, i.Secure))
+		if err != nil {
+			log.Error("error:", err)
+			return err
+		}
+	}
+	return nil
 }
-*/
 
-func (spider *Spider) Init() {
+func (spider *Spider) Init() error {
 	//gotException := make(chan bool, 1)
 	spider.Responses = make(chan []map[string]string)
 	options := []chromedp.ExecAllocatorOption{
@@ -107,32 +110,35 @@ func (spider *Spider) Init() {
 				e := cdp.WithExecutor(ctx, c.Target)
 				req := fetch.ContinueRequest(ev.RequestID)
 				if spider.ReqMode == "POST" {
+					//req.Headers = []*fetch.HeaderEntry{{"Myheader", "example"}}
 					req.Method = "POST"
-					req.PostData = base64.StdEncoding.EncodeToString([]byte("aaaaa=1234"))
+					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
+					color.Yellow("post req: ", req)
 				}
 				if err := req.Do(e); err != nil {
-					log.Printf("Failed to continue request: %v", err)
+					log.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
 			}()
 		}
 	})
 	spider.Cancel = &cancel
 	spider.Ctx = &timeoutCtx
+	err := chromedp.Run(
+		*spider.Ctx,
+		fetch.Enable(),
+	)
+	return err
 }
 
 //Sendreq 发送请求
-func (spider *Spider) Sendreq(mode string, playload string) *string {
+func (spider *Spider) Sendreq(url string) *string {
+
 	var res string
-	spider.ReqMode = mode
+	// var mutex sync.Mutex
+	// mutex.Lock()
 	err := chromedp.Run(
-
 		*spider.Ctx,
-
-		SetCookie("PHPSESSID", "mc0j3i0nre4jjv7qumfvp3davl", "localhost", "/", false, false),
-
-		SetCookie("security", "low", "localhost", "/", false, false),
-
-		chromedp.Navigate(`http://localhost/vulnerabilities/xss_r/?name=`+playload),
+		chromedp.Navigate(url),
 		// 等待直到html加载完毕
 		chromedp.WaitReady(`html`, chromedp.BySearch),
 		// 获取获取服务列表HTML
@@ -141,7 +147,8 @@ func (spider *Spider) Sendreq(mode string, playload string) *string {
 	if err != nil {
 		log.Error("error:", err)
 	}
-	log.Debug("html:", res)
+	// mutex.Unlock()
+	// log.Debug("html:", res)
 
 	return &res
 }
@@ -171,4 +178,16 @@ func SetCookie(name, value, domain, path string, httpOnly, secure bool) chromedp
 			Do(ctx)
 		return nil
 	})
+}
+
+func (spider *Spider) GetRequrlparam() (url.Values, error) {
+	if len(spider.Url.String()) == 0 {
+		panic("request url is emtry")
+	}
+	u, err := url.Parse(spider.Url.String())
+	if err != nil {
+		panic(err)
+	}
+	m, err := url.ParseQuery(u.RawQuery)
+	return m, err
 }
