@@ -52,11 +52,11 @@ func TestXSS(t *testing.T) {
 		Spider.ReqMode = data.MetHod
 		Spider.Url, err = url.Parse(data.Url)
 		Spider.PostData = []byte(data.Data)
+		Spider.Headers = data.Headers
 		color.Red(Spider.Url.String())
 		if err != nil {
 			color.Red(err.Error())
 		}
-
 		if Spider.CheckPayloadNormal(playload, func(html string) bool {
 			locations := Helper.SearchInputInResponse(playload, html)
 			if len(locations) != 0 {

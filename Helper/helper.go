@@ -18,18 +18,18 @@ import (
 )
 
 type JsonUrl struct {
-	Url     string  `json:"url"`
-	MetHod  string  `json:"method"`
-	Headers headers `json:"headers"`
-	Data    string  `json:"data"` //post数据
-	Source  string  `json:"source"`
+	Url     string            `json:"url"`
+	MetHod  string            `json:"method"`
+	Headers map[string]string `json:"headers"`
+	Data    string            `json:"data"` //post数据
+	Source  string            `json:"source"`
 }
 
-type headers struct {
-	Cookie    string `json:"Cookie"`
-	Referer   string `json:"Referer"`
-	UserAgent string `json:"User-Agent"`
-}
+// type headers struct {
+// 	Cookie    string `json:"Cookie"`
+// 	Referer   string `json:"Referer"`
+// 	UserAgent string `json:"User-Agent"`
+// }
 
 type Attribute struct {
 	Key string

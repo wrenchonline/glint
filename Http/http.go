@@ -28,6 +28,7 @@ type Spider struct {
 	Standardlen    int //爬虫请求的长度
 	ReqUrlresplen  int
 	Url            *url.URL
+	Headers        map[string]string //请求头
 	Isreponse      bool
 	Currentcontent string
 }
@@ -103,8 +104,6 @@ func (spider *Spider) Init() error {
 				spider.Responses <- Responses
 			}()
 		case *runtime.EventExceptionThrown:
-			// s := ev.ExceptionDetails.Error()
-			// fmt.Printf("* %s\n", s)
 		case *fetch.EventRequestPaused:
 			go func() {
 				c := chromedp.FromContext(ctx)
@@ -113,18 +112,13 @@ func (spider *Spider) Init() error {
 				if spider.ReqMode == "POST" {
 					req = fetch.ContinueRequest(ev.RequestID)
 					req.URL = spider.Url.String()
-					req.Headers = []*fetch.HeaderEntry{
-						{"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"},
-						{"Content-Type", "application/x-www-form-urlencoded"},
-						// {"Cookie", "PHPSESSID=2j1mouuhfa7jug2fjf3vkrk5su; security=high"},
-						{"Origin", "http://127.0.0.1"},
-						{"Referer", "http://127.0.0.1/vulnerabilities/xss_s/"},
-						{"Upgrade-Insecure-Requests", "1"},
-						{"User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3945.0 Safari/537.36"},
+					req.Headers = []*fetch.HeaderEntry{}
+					//设置文件头
+					for key, value := range spider.Headers {
+						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value})
 					}
 					req.Method = "POST"
 					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
-					//color.Yellow("post req: ", req)
 				} else {
 					req = fetch.ContinueRequest(ev.RequestID)
 				}
@@ -133,15 +127,7 @@ func (spider *Spider) Init() error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
-			request := ev.Request
-			fmt.Printf(" request url: %s\n", request.URL)
-			if ev.RedirectResponse != nil {
-				url := request.URL
-				fmt.Printf(" got redirect: %s\n", url)
-			}
 		case *network.EventResponseReceived:
-			// response := ev.Response
-			// fmt.Println(response.Headers)
 		}
 	})
 	spider.Cancel = &cancel
