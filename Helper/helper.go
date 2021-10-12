@@ -17,6 +17,20 @@ import (
 	"golang.org/x/net/html"
 )
 
+type JsonUrl struct {
+	Url     string  `json:"url"`
+	MetHod  string  `json:"method"`
+	Headers headers `json:"headers"`
+	Data    string  `json:"data"` //post数据
+	Source  string  `json:"source"`
+}
+
+type headers struct {
+	Cookie    string `json:"Cookie"`
+	Referer   string `json:"Referer"`
+	UserAgent string `json:"User-Agent"`
+}
+
 type Attribute struct {
 	Key string
 	Val string
@@ -119,6 +133,7 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 
 //HttpParser http标签过滤
 func (parser *Parser) HttpParser(body string) bool {
+	//color.Red(body)
 	Tree := btree.New(ByKeys)
 	parser.tokenizer = btree.New(ByKeys)
 	z := html.NewTokenizer(strings.NewReader(body))
@@ -150,7 +165,12 @@ func (parser *Parser) HttpParser(body string) bool {
 				}
 			}
 			cx := string(array)
-			Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
+			if cx == "br" {
+				log.Debug(" html.StartTagToken 发现br标签,忽略")
+			} else {
+				Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
+			}
+			// Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 
 		case html.EndTagToken:
 			name, _ := z.TagName()
@@ -161,6 +181,7 @@ func (parser *Parser) HttpParser(body string) bool {
 						parser.tokenizer.Set(Tree.PopMax())
 						break
 					}
+					//color.Red("field.Tagname:%s  local TagName:%s", field.Tagname, name)
 					parser.tokenizer.Set(Tree.PopMax())
 				}
 			}
@@ -221,8 +242,16 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	parse := Parser{}
 	Occurences := []Occurence{}
 	Index := 0
+	if len(body) == 0 {
+		log.Error("SearchInputInResponse 获取body失败")
+		return Occurences
+	}
 	parse.HttpParser(body)
 	tokens := parse.GetTokenizer()
+	if len(tokens) == 0 {
+		log.Error("SearchInputInResponse tokens 没有发现节点")
+		return Occurences
+	}
 	for _, token := range tokens {
 		tagname := token.Tagname
 		content := token.Content
@@ -287,49 +316,6 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	return Occurences
 }
 
-//checkIfstmtExistsFlag
-// func checkIfstmtExistsFlag(leftpayload bytes.Buffer, rightpayload bytes.Buffer, input string, Body js.IStmt) {
-// 	switch a := Body.(type) {
-// 	case *js.BlockStmt:
-// 		leftpayload.WriteString("}")
-// 		rightpayload.WriteString("{")
-// 		for _, item := range a.List {
-// 			switch c := item.(type) {
-// 			case *js.VarDecl:
-// 				for _, a := range c.List {
-// 					if funk.Contains(a.Default.JS(), input) {
-// 						sd := leftpayload.Bytes()[len(leftpayload.Bytes())-1]
-// 						leftpayload.Reset()
-// 						leftpayload.WriteByte(sd)
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 	}
-// }
-
-// for _, item := range ast.BlockStmt.List {
-// 	switch a := item.(type) {
-// 	case *js.FuncDecl:
-// 		leftpayload.WriteString("}")
-// 		rightpayload.WriteString("{")
-// 		for _, c := range a.Body.List {
-// 			switch sc := c.(type) {
-// 			case *js.IfStmt:
-// 				//判断flag是否在变量内 if（xxx）{ var xx = flag} else { xxxxx }' block
-// 				fmt.Println("IfStmt:", sc.Body.JS())
-// 				if sc.Else == nil {
-// 					checkIfstmtExistsFlag(leftpayload, rightpayload, input, sc.Body)
-// 					AnalyseJSFuncByFlag(leftpayload, rightpayload, input, script)
-// 				}
-// 			}
-// 		}
-
-// 	}
-// }
-//var left bytes.Buffer
-
 //AnalyseJSByFlag 分析js语法获取部分语法数据
 func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 	ast, err := js.Parse(parse.NewInputString(script))
@@ -367,15 +353,15 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 					Rightcloser := JsContexterRight(input, ast.JS())
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
-						newpayload.WriteString("%27;" + leftcloser + "%0aconsole.log(\"" + input + "\");%0a" + Rightcloser + "//\\")
+						newpayload.WriteString("';" + leftcloser + " console.log(\"" + input + "\"); " + Rightcloser + "//\\")
 					} else {
-						newpayload.WriteString("\"\";" + leftcloser + "%0aconsole.log('" + input + "');%0a" + Rightcloser + "//\\")
+						newpayload.WriteString("\"\";" + leftcloser + " console.log('" + input + "'); " + Rightcloser + "//\\")
 					}
 				} else {
 					log.Info("var %s flag exists in Statement", str)
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
-						newpayload.WriteString("%27;%0aconsole.log('" + input + "');//")
+						newpayload.WriteString("'; console.log('" + input + "');//")
 					} else {
 						newpayload.WriteString("\"\";%0aconsole.log('" + input + "');//")
 					}
@@ -463,7 +449,7 @@ func JsContexterRight(xsschecker string, script string) string {
 	var breaker bytes.Buffer
 	var count int = 0
 	var s string
-	bFriststr := "function%20a(){"
+	bFriststr := "function a(){"
 	broken := strings.Split(script, xsschecker)
 	pre := broken[1]
 	pre0 := broken[0] //检测else 对于flag左半边边是否是子集    比如 if else 外部有个 if 包含了
@@ -495,7 +481,7 @@ func JsContexterRight(xsschecker string, script string) string {
 	num := 0
 	for idx, char := range s {
 		if char == '}' {
-			breaker.WriteString("a0%{)1(fi")
+			breaker.WriteString(" {)1(fi")
 		} else if char == ')' {
 			breaker.WriteString("(") //这个估计改下1(
 		} else if char == ']' {

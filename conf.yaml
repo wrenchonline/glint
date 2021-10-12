@@ -3,10 +3,10 @@ crawler:
     - 'http://localhost/'
   brokenurl: 
     - 'http://localhost/logout.php'
-reqmode: 'Get'
+reqmode: 'GET'
 cookies: [{
-    name: "PHPSESSID",
-    value: "ocd0lqa7lv961n4egp897fnjvp",
+    name: "NTKF_T2D_CLIENTID",
+    value: "qsr8mh9uan1pmm8na8dlf0l9pj",
     domain: "localhost",
     path: "/",
     httpOnly: true,

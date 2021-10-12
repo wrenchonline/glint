@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 	"time"
-	cf "wenscan/config"
 
 	//log "wenscan/Log"
 
@@ -52,16 +50,14 @@ type reqinfo struct {
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
-	Parentcxt    context.Context //主context
-	Requests     []reqinfo
-	Scanhostpage string
-	StartPaused  bool
-	ForbiddenUrl []string
-	Cookies      []chromedp.Action
-	//Chromecontext []*chromecontext //存储着主context子tag页面
-	Responses chan []map[string]string
-	ReqMode   string
-	// nodes         []*cdp.Node // 定义全局变量，用来保存爬虫的数据node
+	Parentcxt     context.Context //主context
+	Requests      []reqinfo
+	Scanhostpage  string
+	StartPaused   bool
+	ForbiddenUrl  []string
+	Cookies       []chromedp.Action
+	Responses     chan []map[string]string
+	ReqMode       string
 	ExecAllocator []func(*chromedp.ExecAllocator)
 	ch            chan *dom.EventDocumentUpdated
 }
@@ -93,7 +89,7 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
-		//fmt.Println(reflect.TypeOf(ev))
+		// fmt.Println(reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *runtime.EventConsoleAPICalled:
 			//fmt.Printf("* console.%s call:\n", ev.Type)
@@ -109,10 +105,16 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 				if strings.HasSuffix(ev.Request.URL, ".css") ||
 					strings.HasSuffix(ev.Request.URL, ".js") ||
 					strings.HasSuffix(ev.Request.URL, ".ico") ||
+					strings.HasSuffix(ev.Request.URL, "#") ||
+					funk.Contains(ev.Request.URL, "js?") ||
+					funk.Contains(ev.Request.URL, "css?") ||
+					funk.Contains(ev.Request.URL, "woff2?") ||
+					funk.Contains(ev.Request.URL, "woff?") ||
 					ev.Request.URL == spider.Scanhostpage {
 					fmt.Println("request:", ev.Request.URL)
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
+					fmt.Println("FailRequest:", ev.Request.URL)
 					c := chromedp.FromContext(ctx)
 					ctx = cdp.WithExecutor(ctx, c.Target)
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
@@ -123,7 +125,11 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 				if !strings.HasSuffix(ev.Request.URL, ".css") &&
 					!strings.HasSuffix(ev.Request.URL, ".js") &&
 					!strings.HasSuffix(ev.Request.URL, ".ico") &&
-					ev.Request.URL != spider.Scanhostpage {
+					!strings.HasSuffix(ev.Request.URL, "#") &&
+					!funk.Contains(ev.Request.URL, "js?") &&
+					!funk.Contains(ev.Request.URL, "css?") &&
+					!funk.Contains(ev.Request.URL, "woff2?") &&
+					!funk.Contains(ev.Request.URL, "woff?") {
 					if !funk.Contains(spider.Requests, req) {
 						spider.Requests = append(spider.Requests, req)
 						log.Println("Add crawer url:", req)
@@ -139,6 +145,7 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 			log.Println("EventJavascriptDialogOpening url:", ev.URL)
 		case *page.EventNavigatedWithinDocument:
 			log.Println("EventNavigatedWithinDocument url:", ev.URL)
+
 		case *page.EventWindowOpen:
 			log.Println("EventWindowOpen url:", ev.URL)
 			var req reqinfo
@@ -146,7 +153,11 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 			req.Method = "GET"
 			if !strings.HasSuffix(ev.URL, ".css") &&
 				!strings.HasSuffix(ev.URL, ".js") &&
-				!strings.HasSuffix(ev.URL, ".ico") {
+				!strings.HasSuffix(ev.URL, ".ico") &&
+				!funk.Contains(ev.URL, "js?") &&
+				!funk.Contains(ev.URL, "css?") &&
+				!funk.Contains(ev.URL, "woff2?") &&
+				!funk.Contains(ev.URL, "woff?") {
 				if !funk.Contains(spider.Requests, req) {
 					spider.Requests = append(spider.Requests, req)
 					log.Println("EventWindowOpen Add crawer url:", req)
@@ -174,6 +185,8 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 			// 	ev.FrameID, ev.URL, ev.Disposition, ev.Reason)
 		case *page.EventFrameStoppedLoading:
 		case *dom.EventSetChildNodes:
+		case *page.EventLifecycleEvent:
+
 		}
 
 	})
@@ -454,8 +467,20 @@ func (spider *Spider) fillForm(ctx context.Context) error {
 					if err != nil {
 						log.Fatal("SendKeys user name error:", err)
 					}
+				} else {
+					//移动鼠标到目标节点上,模拟人类操作，也许会触发标签事件
+					err = chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(ctx)
+					if err != nil {
+						log.Fatal("MouseClickNode error:", err)
+					}
+					//println(node.FullXPath())
+					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "1").Do(ctx)
+					if err != nil {
+						log.Fatal("SendKeys user name error:", err)
+					}
 				}
 			}
+
 		}
 
 	}
@@ -468,6 +493,7 @@ func (spider *Spider) ChlikLink(ctx context.Context) error {
 	var res *runtime.RemoteObject
 	var timestamp interface{}
 	var u string
+	var Linklist []cdp.NodeID
 
 	if err := chromedp.EvaluateAsDevTools(sethreftarget, &res).
 		Do(ctx); err != nil {
@@ -476,14 +502,10 @@ func (spider *Spider) ChlikLink(ctx context.Context) error {
 	}
 
 	chromedp.Location(&u).Do(ctx)
-	relativepath, _ := filepath.Rel(u, spider.Scanhostpage)
-	relativepath = strings.ReplaceAll(relativepath, "\\", "/")
-	relativepath += "/."
-	relativepath2 := strings.Replace(relativepath, "../", "", 1)
-	//LOOP:
+
 	err := chromedp.Nodes("a", &nodes, chromedp.ByQueryAll).Do(ctx)
 	if err != nil {
-		log.Println("ChlikLink error: ", err)
+		log.Println(": ", err)
 		return err
 	}
 
@@ -496,59 +518,49 @@ func (spider *Spider) ChlikLink(ctx context.Context) error {
 		log.Println("WaitReady error: ", err)
 		return err
 	}
+	for _, value := range nodes {
+		// log.Println("node id :", value.NodeID)
+		Linklist = append(Linklist, value.NodeID)
+	}
 
-	for _, link := range nodes {
-		if !(link.AttributeValue("type") == "hidden" ||
-			link.AttributeValue("display") == "none" ||
-			link.AttributeValue("href") == relativepath ||
-			link.AttributeValue("href") == relativepath2 ||
-			link.AttributeValue("href") == ".") {
-			_, err := chromedp.RunResponse(ctx, chromedp.MouseClickNode(link, chromedp.ButtonLeft))
-			//log.Println(response)
-			//err := chromedp.MouseClickNode(link, chromedp.ButtonLeft).Do(ctx)
-			if err != nil {
-				//出现(-32000)error 代表dom节点已经更新，原来chromedp.Nodes获取的节点id失效
-				if funk.Contains(err.Error(), "-32000") {
-					log.Println("ChlikLink MouseClickNode error: ", err)
-				}
-
-			}
-
+	for _, link := range Linklist {
+		if err := chromedp.EvaluateAsDevTools(sethreftarget, &res).
+			Do(ctx); err != nil {
+			log.Println("Evaluate: ", err)
+			return err
 		}
+		if err := chromedp.Poll("atags", &timestamp, chromedp.WithPollingInterval(2*time.Second)).Do(ctx); err != nil {
+			log.Println("Poll error: ", err)
+			return err
+		}
+		if err := chromedp.WaitReady("a", chromedp.ByQueryAll).Do(ctx); err != nil {
+			log.Println("WaitReady error: ", err)
+			return err
+		}
+
+		err := chromedp.Nodes("a", &nodes, chromedp.ByQueryAll).Do(ctx)
+		if err != nil {
+			log.Println("ChlikLink error: ", err)
+			return err
+		}
+
+		for _, n := range nodes {
+			if n.NodeID == link {
+				if !(n.AttributeValue("type") == "hidden" ||
+					n.AttributeValue("display") == "none" ||
+					n.AttributeValue("href") == "#") {
+					_, err := chromedp.RunResponse(ctx, chromedp.MouseClickNode(n, chromedp.ButtonLeft))
+					if err != nil {
+						// //出现(-32000)error 代表dom节点已经更新，原来chromedp.Nodes获取的节点id失效
+						log.Println("ChlikLink RunResponse error: ", err.Error(), "node Attribute:", n.Attributes)
+					}
+					break
+				}
+				break
+			}
+		}
+
 	}
 
 	return err
-}
-
-func main() {
-
-	Spider := Spider{}
-	Spider.Init()
-	cf := cf.Conf{}
-	Conf := cf.GetConf()
-
-	for _, i := range Conf.Cookies {
-		c := Spider.SetCookie(i.Name, i.Value, i.Domain, i.Path, i.HttpOnly, i.Secure)
-		Spider.Cookies = append(Spider.Cookies, c)
-	}
-
-	Spider.Scanhostpage = Conf.Crawler.Url[0]
-	Spider.ForbiddenUrl = Conf.Crawler.Brokenurl
-
-	ctx, _, err := Spider.Crawler(Spider.Scanhostpage, nil)
-
-	Requests := Spider.Requests
-	for _, Request := range Requests {
-		if _, ok := ctx.Deadline(); ok {
-			log.Println("Ctx is Deadline")
-			break
-		}
-		if _, _, err := Spider.Crawler(Request.URL, ctx); err != nil {
-			log.Println("Crawler error:", err)
-		} else {
-
-		}
-	}
-	log.Println("program quit:", err)
-
 }

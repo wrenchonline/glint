@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"wenscan/Helper"
 	http "wenscan/http"
 )
 
@@ -77,7 +78,10 @@ func Validationsqlerror(Spider *http.Spider) (map[string]string, error) {
 	if err != nil {
 		panic(err)
 	}
-	if Spider.ReqMode == "Get" {
+	if len(param) == 0 {
+		return result, fmt.Errorf("参数为空")
+	}
+	if Spider.ReqMode == "GET" {
 		for _, each := range eachs {
 			for _, er := range error_payload {
 				for name, _ := range param {
@@ -88,10 +92,14 @@ func Validationsqlerror(Spider *http.Spider) (map[string]string, error) {
 					URL, _ := url.Parse(Spider.Url.String())
 					URL.RawQuery = param.Encode()
 					fmt.Printf("Encoded URL is %q\n", URL.String())
-					html := Spider.Sendreq(URL.String())
-					fmt.Printf("Server Response is %q\n", *html)
+					Spider.Url = URL
+					html, err := Spider.Sendreq()
+					if err != nil {
+						panic(err.Error())
+					}
+					fmt.Printf("Server Response is %q\n", html)
 					for _, valueErr := range ErrPayloads {
-						if !strings.Contains(*html, valueErr) {
+						if !strings.Contains(html, valueErr) {
 							result["payload"] = URL.RawQuery
 							result["vultype"] = "Sql_Error"
 							result["Sucess"] = "true"
@@ -114,10 +122,13 @@ func ValidationDigit(Spider *http.Spider) (map[string]string, error) {
 	}
 
 	for _, eachs := range digit_bypass {
-		if Spider.ReqMode == "Get" {
+		if Spider.ReqMode == "GET" {
 			param, err := Spider.GetRequrlparam()
 			if err != nil {
 				panic(err)
+			}
+			if len(param) == 0 {
+				return result, fmt.Errorf("参数为空")
 			}
 			for name, _ := range param {
 				r1 := rand.New(rand.NewSource(time.Now().Unix()))
@@ -133,17 +144,24 @@ func ValidationDigit(Spider *http.Spider) (map[string]string, error) {
 				Url2, _ := url.Parse(Spider.Url.String())
 				param[name][0] = SpaceConcatSpace + eachs[1]
 				Url2.RawQuery = param.Encode()
-
-				html1 := Spider.Sendreq(Url1.String())
-				html2 := Spider.Sendreq(Url2.String())
-				if len(*html1) != len(*html2) && (len(*html1) == Spider.ReqUrlresplen || len(*html2) == Spider.ReqUrlresplen) {
+				Spider.Url = Url1
+				html1, err := Spider.Sendreq()
+				if err != nil {
+					panic(err.Error())
+				}
+				Spider.Url = Url2
+				html2, err := Spider.Sendreq()
+				if err != nil {
+					panic(err.Error())
+				}
+				if len(html1) != len(html2) && (len(html1) == Spider.ReqUrlresplen || len(html2) == Spider.ReqUrlresplen) {
 					result["payload"] = Url1.RawQuery + `-------------` + Url2.RawQuery
 					result["vultype"] = "Sql_Digit"
 					result["Sucess"] = "true"
 					return result, nil
 				}
 			}
-		} else if Spider.ReqMode == "Post" {
+		} else if Spider.ReqMode == "POST" {
 			r1 := rand.New(rand.NewSource(time.Now().Unix()))
 			space := Space[r1.Intn(len(Space))]
 			r2 := rand.New(rand.NewSource(time.Now().Unix()))
@@ -153,11 +171,17 @@ func ValidationDigit(Spider *http.Spider) (map[string]string, error) {
 			for i, _ := range params {
 				payload1 := strings.ReplaceAll(string(Spider.PostData), params[i], SpaceConcatSpace+eachs[0])
 				Spider.PostData = []byte(payload1)
-				html1 := Spider.Sendreq(Spider.Url.String())
+				html1, err := Spider.Sendreq()
+				if err != nil {
+					panic(err.Error())
+				}
 				payload2 := strings.ReplaceAll(string(Spider.PostData), params[i], SpaceConcatSpace+eachs[1])
 				Spider.PostData = []byte(payload2)
-				html2 := Spider.Sendreq(Spider.Url.String())
-				if len(*html1) != len(*html2) && (len(*html1) == Spider.ReqUrlresplen || len(*html2) == Spider.ReqUrlresplen) {
+				html2, err := Spider.Sendreq()
+				if err != nil {
+					panic(err.Error())
+				}
+				if len(html1) != len(html2) && (len(html1) == Spider.ReqUrlresplen || len(html2) == Spider.ReqUrlresplen) {
 					result["payload"] = payload1 + `-------------` + payload2
 					result["vultype"] = "Sql_Digit"
 					result["Sucess"] = "true"
@@ -178,10 +202,13 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 	}
 	for _, quote := range quotes_brackets {
 		for _, eachs := range digit_bypass {
-			if Spider.ReqMode == "Get" {
+			if Spider.ReqMode == "GET" {
 				param, err := Spider.GetRequrlparam()
 				if err != nil {
 					panic(err)
+				}
+				if len(param) == 0 {
+					return result, fmt.Errorf("参数为空")
 				}
 				for name, _ := range param {
 					r0 := rand.New(rand.NewSource(time.Now().Unix()))
@@ -199,17 +226,24 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 					Url2, _ := url.Parse(Spider.Url.String())
 					param[name][0] = quote + SpaceConcatSpace + eachs[1] + note
 					Url2.RawQuery = param.Encode()
-
-					html1 := Spider.Sendreq(Url1.String())
-					html2 := Spider.Sendreq(Url2.String())
-					if len(*html1) != len(*html2) && (len(*html1) == Spider.ReqUrlresplen || len(*html2) == Spider.ReqUrlresplen) {
+					Spider.Url = Url1
+					html1, err := Spider.Sendreq()
+					if err != nil {
+						panic(err.Error())
+					}
+					Spider.Url = Url2
+					html2, err := Spider.Sendreq()
+					if err != nil {
+						panic(err.Error())
+					}
+					if len(html1) != len(html2) && (len(html1) == Spider.ReqUrlresplen || len(html2) == Spider.ReqUrlresplen) {
 						result["payload"] = Spider.Url.RawQuery
 						result["vultype"] = "Sql_Digit"
 						result["Sucess"] = "true"
 						return result, nil
 					}
 				}
-			} else if Spider.ReqMode == "Post" {
+			} else if Spider.ReqMode == "POST" {
 				r0 := rand.New(rand.NewSource(time.Now().Unix()))
 				note := Notes[r0.Intn(len(Notes))]
 				r1 := rand.New(rand.NewSource(time.Now().Unix()))
@@ -221,11 +255,17 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 				for i, _ := range params {
 					payload1 := strings.ReplaceAll(string(Spider.PostData), params[i], quote+SpaceConcatSpace+eachs[0]+note)
 					Spider.PostData = []byte(payload1)
-					html1 := Spider.Sendreq(Spider.Url.String())
+					html1, err := Spider.Sendreq()
+					if err != nil {
+						panic(err.Error())
+					}
 					payload2 := strings.ReplaceAll(string(Spider.PostData), params[i], quote+SpaceConcatSpace+eachs[1]+note)
 					Spider.PostData = []byte(payload2)
-					html2 := Spider.Sendreq(Spider.Url.String())
-					if len(*html1) != len(*html2) && (len(*html1) == Spider.ReqUrlresplen || len(*html2) == Spider.ReqUrlresplen) {
+					html2, err := Spider.Sendreq()
+					if err != nil {
+						panic(err.Error())
+					}
+					if len(html1) != len(html2) && (len(html1) == Spider.ReqUrlresplen || len(html2) == Spider.ReqUrlresplen) {
 						result["payload"] = payload1 + `-------------` + payload2
 						result["vultype"] = "Sql_Char"
 						result["Sucess"] = "true"
@@ -237,4 +277,32 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 		}
 	}
 	return result, nil
+}
+
+//GetReqLensByHtml 二度获取请求的长度
+func GetReqLensByHtml(Spider *http.Spider, JsonUrls *Helper.JsonUrl) error {
+	if len(Spider.Url.String()) == 0 {
+		panic("request url is emtry")
+	}
+
+	if JsonUrls.MetHod == "GET" {
+		Spider.ReqMode = "GET"
+		Spider.Url, _ = url.Parse(JsonUrls.Url)
+		response, err := Spider.Sendreq()
+		if err != nil {
+			panic(err.Error())
+		}
+		Spider.Standardlen = len(response)
+	} else {
+		Spider.ReqMode = "POST"
+		Spider.Url, _ = url.Parse(JsonUrls.Url)
+		Spider.PostData = []byte(JsonUrls.Data)
+		response, err := Spider.Sendreq()
+		if err != nil {
+			panic(err.Error())
+		}
+		Spider.Standardlen = len(response)
+	}
+
+	return nil
 }

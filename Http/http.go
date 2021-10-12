@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"wenscan/Helper"
 	log "wenscan/Log"
 	cf "wenscan/config"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
-	"github.com/fatih/color"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -69,7 +69,7 @@ func (spider *Spider) Init() error {
 	//gotException := make(chan bool, 1)
 	spider.Responses = make(chan []map[string]string)
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
@@ -80,14 +80,15 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("block-new-web-contents", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
+		chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
-	options = append(options, chromedp.DefaultExecAllocatorOptions[:]...)
+	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
 	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
 	ctx, cancel := chromedp.NewContext(c)
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	//监听Console.log事件
-	chromedp.ListenTarget(timeoutCtx, func(ev interface{}) {
+	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
 		switch ev := ev.(type) {
@@ -102,27 +103,49 @@ func (spider *Spider) Init() error {
 				spider.Responses <- Responses
 			}()
 		case *runtime.EventExceptionThrown:
-			s := ev.ExceptionDetails.Error()
-			fmt.Printf("* %s\n", s)
+			// s := ev.ExceptionDetails.Error()
+			// fmt.Printf("* %s\n", s)
 		case *fetch.EventRequestPaused:
 			go func() {
 				c := chromedp.FromContext(ctx)
-				e := cdp.WithExecutor(ctx, c.Target)
-				req := fetch.ContinueRequest(ev.RequestID)
+				ctx := cdp.WithExecutor(ctx, c.Target)
+				var req *fetch.ContinueRequestParams
 				if spider.ReqMode == "POST" {
-					//req.Headers = []*fetch.HeaderEntry{{"Myheader", "example"}}
+					req = fetch.ContinueRequest(ev.RequestID)
+					req.URL = spider.Url.String()
+					req.Headers = []*fetch.HeaderEntry{
+						{"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"},
+						{"Content-Type", "application/x-www-form-urlencoded"},
+						// {"Cookie", "PHPSESSID=2j1mouuhfa7jug2fjf3vkrk5su; security=high"},
+						{"Origin", "http://127.0.0.1"},
+						{"Referer", "http://127.0.0.1/vulnerabilities/xss_s/"},
+						{"Upgrade-Insecure-Requests", "1"},
+						{"User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3945.0 Safari/537.36"},
+					}
 					req.Method = "POST"
 					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
-					color.Yellow("post req: ", req)
+					//color.Yellow("post req: ", req)
+				} else {
+					req = fetch.ContinueRequest(ev.RequestID)
 				}
-				if err := req.Do(e); err != nil {
+				if err := req.Do(ctx); err != nil {
 					log.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
 			}()
+		case *network.EventRequestWillBeSent:
+			request := ev.Request
+			fmt.Printf(" request url: %s\n", request.URL)
+			if ev.RedirectResponse != nil {
+				url := request.URL
+				fmt.Printf(" got redirect: %s\n", url)
+			}
+		case *network.EventResponseReceived:
+			// response := ev.Response
+			// fmt.Println(response.Headers)
 		}
 	})
 	spider.Cancel = &cancel
-	spider.Ctx = &timeoutCtx
+	spider.Ctx = &ctx
 	err := chromedp.Run(
 		*spider.Ctx,
 		fetch.Enable(),
@@ -130,15 +153,16 @@ func (spider *Spider) Init() error {
 	return err
 }
 
-//Sendreq 发送请求
-func (spider *Spider) Sendreq(url string) *string {
+//Sendreq 发送请求 url为空使用爬虫装载的url
+func (spider *Spider) Sendreq() (string, error) {
 
 	var res string
 	// var mutex sync.Mutex
 	// mutex.Lock()
+
 	err := chromedp.Run(
 		*spider.Ctx,
-		chromedp.Navigate(url),
+		chromedp.Navigate(spider.Url.String()),
 		// 等待直到html加载完毕
 		chromedp.WaitReady(`html`, chromedp.BySearch),
 		// 获取获取服务列表HTML
@@ -147,10 +171,7 @@ func (spider *Spider) Sendreq(url string) *string {
 	if err != nil {
 		log.Error("error:", err)
 	}
-	// mutex.Unlock()
-	// log.Debug("html:", res)
-
-	return &res
+	return res, err
 }
 
 func ShowCookies() chromedp.Action {
@@ -190,4 +211,124 @@ func (spider *Spider) GetRequrlparam() (url.Values, error) {
 	}
 	m, err := url.ParseQuery(u.RawQuery)
 	return m, err
+}
+
+//GetReqLensByHtml 二度获取请求的长度
+func (spider *Spider) GetReqLensByHtml(JsonUrls *Helper.JsonUrl) error {
+	if len(spider.Url.String()) == 0 {
+		panic("request url is emtry")
+	}
+
+	if JsonUrls.MetHod == "GET" {
+		spider.ReqMode = "GET"
+		spider.Url, _ = url.Parse(JsonUrls.Url)
+		response, err := spider.Sendreq()
+		if err != nil {
+			return err
+		}
+		spider.Standardlen = len(response)
+	} else {
+		spider.ReqMode = "POST"
+		spider.Url, _ = url.Parse(JsonUrls.Url)
+		spider.PostData = []byte(JsonUrls.Data)
+		response, err := spider.Sendreq()
+		if err != nil {
+			return err
+		}
+		spider.Standardlen = len(response)
+	}
+
+	return nil
+}
+
+//BuildPayload words和 extension 是映射关系
+type BuildPayload struct {
+	i     int
+	value string
+	words []string
+}
+
+func (g *BuildPayload) Next() bool {
+	if g.i == len(g.words) {
+		return false
+	}
+	g.value = g.words[g.i]
+	g.i++
+	return true
+}
+
+func (g *BuildPayload) Value() interface{} {
+	return g.value
+}
+
+//GetPayloadValue 迭代 payload
+func (g *BuildPayload) GetPayloadValue() (string, error) {
+	if g.Next() {
+		switch v := g.Value().(type) {
+		case string:
+			return v, nil
+		}
+	}
+	return "", fmt.Errorf("the datas is nothing")
+}
+
+//PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
+func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string) error {
+	if reqmod == "GET" {
+		params, err := spider.GetRequrlparam()
+		if err != nil {
+			return err
+		}
+		if len(params) == 0 {
+			return fmt.Errorf("GET参数为空")
+		}
+
+		params[paramname][0] = payload
+		spider.Url.RawQuery = params.Encode()
+	} else {
+		if len(spider.PostData) == 0 {
+			return fmt.Errorf("POST参数为空")
+		}
+
+		spider.PostData = []byte(payload)
+	}
+	return nil
+}
+
+func (spider *Spider) CheckPayloadNormal(newpayload string, f func(html string) bool) bool {
+	if spider.ReqMode == "GET" {
+		params, err := spider.GetRequrlparam()
+		if err != nil {
+			panic(err.Error())
+		}
+		for param, _ := range params {
+			spider.PayloadHandle(newpayload, "GET", param)
+			html, err := spider.Sendreq()
+			if err != nil {
+				return false
+			}
+			if f(html) {
+				return true
+			}
+		}
+		return false
+	} else {
+		PostData := spider.PostData
+		params := strings.Split(string(PostData), "&")
+		for i, _ := range params {
+			paramname := strings.Split(params[i], "=")[0]
+			newpayload := paramname + "=" + newpayload
+			newpayload1 := strings.ReplaceAll(string(PostData), params[i], newpayload)
+			spider.PostData = PostData
+			spider.PayloadHandle(newpayload1, "POST", "")
+			html, err := spider.Sendreq()
+			if err != nil {
+				log.Error(err.Error())
+			}
+			if f(html) {
+				return true
+			}
+		}
+		return false
+	}
 }
