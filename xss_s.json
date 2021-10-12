@@ -5,7 +5,7 @@
         "headers": {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Content-Type": "application/x-www-form-urlencoded",
-            "Cookie": "PHPSESSID=2j1mouuhfa7jug2fjf3vkrk5su; security=low",
+            "Cookie": "PHPSESSID=2j1mouuhfa7jug2fjf3vkrk5su; security=high",
             "Origin": "http://192.168.166.8",
             "Referer": "http://192.168.166.8/vulnerabilities/xss_s/",
             "Upgrade-Insecure-Requests": "1",
