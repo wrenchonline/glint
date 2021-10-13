@@ -109,7 +109,6 @@ func TestXSS(t *testing.T) {
 							} else {
 								break
 							}
-
 						}
 					} else {
 						//否则就在value中

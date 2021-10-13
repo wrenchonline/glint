@@ -283,7 +283,14 @@ func (g *Generator) CheckXssVul(locations []Helper.Occurence, methods int, exten
 	var VulOK bool
 	if methods == CheckValue {
 		for _, location := range locations {
-			if location.Details.Content == g.flag {
+			if location.Type == "attibute" {
+				for _, Attributes := range *location.Details.Attributes {
+					if Attributes.Key == g.flag || Attributes.Val == g.flag {
+						VulOK = true
+						break
+					}
+				}
+			} else if location.Details.Content == g.flag {
 				VulOK = true
 				break
 			}
@@ -291,7 +298,14 @@ func (g *Generator) CheckXssVul(locations []Helper.Occurence, methods int, exten
 	}
 	if methods == CheckTag {
 		for _, location := range locations {
-			if location.Details.Tagname == g.flag {
+			if location.Type == "attibute" {
+				for _, Attributes := range *location.Details.Attributes {
+					if Attributes.Key == g.flag || Attributes.Val == g.flag {
+						VulOK = true
+						break
+					}
+				}
+			} else if location.Details.Tagname == g.flag {
 				VulOK = true
 				break
 			}

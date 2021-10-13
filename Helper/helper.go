@@ -170,7 +170,6 @@ func (parser *Parser) HttpParser(body string) bool {
 			} else {
 				Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 			}
-			// Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 
 		case html.EndTagToken:
 			name, _ := z.TagName()
@@ -259,7 +258,8 @@ func SearchInputInResponse(input string, body string) []Occurence {
 		if input == tagname {
 			Occurences = append(Occurences, Occurence{Type: "intag", Position: Index, Details: token})
 		} else if funk.Contains(content, input) {
-			if tagname == "#comment" {
+			//log.Info("tagName: %s", tagname)
+			if tagname == "comment" {
 				Occurences = append(Occurences, Occurence{Type: "comment", Position: Index, Details: token})
 			} else if tagname == "script" {
 				Occurences = append(Occurences, Occurence{Type: "script", Position: Index, Details: token})
@@ -268,6 +268,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 			} else {
 				Occurences = append(Occurences, Occurence{Type: "html", Position: Index, Details: token})
 				for _, attibute := range *attibutes {
+					//log.Info("attibute.Val: %s", attibute.Val)
 					if input == attibute.Key {
 						detail := Node{Tagname: "attibute", Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 						Occurences = append(
