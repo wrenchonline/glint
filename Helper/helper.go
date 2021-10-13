@@ -321,7 +321,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 	ast, err := js.Parse(parse.NewInputString(script))
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 	var newpayload bytes.Buffer
 	fmt.Println("Scope:", ast.Scope.String())

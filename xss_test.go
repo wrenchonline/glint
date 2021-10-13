@@ -32,7 +32,7 @@ func TestXSS(t *testing.T) {
 		panic(err)
 	}
 
-	jsonFile, err := os.Open("xss_s.json")
+	jsonFile, err := os.Open("result.json")
 
 	// 最好要处理以下错误
 	if err != nil {
