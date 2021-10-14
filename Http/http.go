@@ -149,10 +149,10 @@ func (spider *Spider) Sendreq() (string, error) {
 	err := chromedp.Run(
 		*spider.Ctx,
 		chromedp.Navigate(spider.Url.String()),
-		// 等待直到html加载完毕
-		chromedp.WaitReady(`html`, chromedp.BySearch),
-		// 获取获取服务列表HTML
-		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
+		// // 等待直到html加载完毕
+		chromedp.WaitReady(`html`, chromedp.ByQueryAll),
+		//获取获取服务列表HTML
+		chromedp.OuterHTML("html", &res, chromedp.ByQueryAll),
 	)
 	if err != nil {
 		log.Error("error:", err)
