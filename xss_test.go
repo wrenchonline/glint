@@ -14,6 +14,8 @@ import (
 	http "wenscan/http"
 
 	"github.com/fatih/color"
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/js"
 	"github.com/thoas/go-funk"
 )
 
@@ -165,5 +167,29 @@ func TestXSS(t *testing.T) {
 			}
 		}
 	}
+
+}
+
+func Test_JS(t *testing.T) {
+	script := `
+	if (document.location.href.indexOf("default=") >= 0) {
+		var lang = document.location.href.substring(document.location.href.indexOf("default=")+8);
+		document.write("<option value='" + lang + "'>" + decodeURI(lang) + "</option>");
+		document.write("<option value='' disabled='disabled'>----</option>");
+	}
+	document.write("<option value='English'>English</option>");
+	document.write("<option value='French'>French</option>");
+	document.write("<option value='Spanish'>Spanish</option>");
+	document.write("<option value='German'>German</option>");
+	`
+	ast, err := js.Parse(parse.NewInputString(script))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	fmt.Println("Scope:", ast.Scope.String())
+	// for _, v := range ast.List {
+	// 	v.
+	// }
+	fmt.Println("JS:", ast.String())
 
 }
