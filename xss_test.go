@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 	"testing"
 	"wenscan/Helper"
 	log "wenscan/Log"
@@ -14,8 +16,6 @@ import (
 	http "wenscan/http"
 
 	"github.com/fatih/color"
-	"github.com/tdewolff/parse/v2"
-	"github.com/tdewolff/parse/v2/js"
 	"github.com/thoas/go-funk"
 )
 
@@ -171,6 +171,7 @@ func TestXSS(t *testing.T) {
 }
 
 func Test_JS(t *testing.T) {
+	log.DebugEnable(true)
 	script := `
 	if (document.location.href.indexOf("default=") >= 0) {
 		var lang = document.location.href.substring(document.location.href.indexOf("default=")+8);
@@ -182,14 +183,51 @@ func Test_JS(t *testing.T) {
 	document.write("<option value='Spanish'>Spanish</option>");
 	document.write("<option value='German'>German</option>");
 	`
-	ast, err := js.Parse(parse.NewInputString(script))
-	if err != nil {
-		t.Error(err.Error())
+
+	sources := `document\.(URL|documentURI|URLUnencoded|baseURI|cookie|referrer)|location\.(href|search|hash|pathname)|window\.name|history\.(pushState|replaceState)(local|session)Storage`
+	sinks := `eval|evaluate|execCommand|assign|navigate|getResponseHeaderopen|showModalDialog|Function|set(Timeout|Interval|Immediate)|execScript|crypto.generateCRMFRequest|ScriptElement\.(src|text|textContent|innerText)|.*?\.onEventName|document\.(write|writeln)|.*?\.innerHTML|Range\.createContextualFragment|(document|window)\.location`
+	newlines := strings.Split(script, "\n")
+	matchsinks := funk.Map(newlines, func(x string) string {
+		r, _ := regexp.Compile(sinks)
+		C := r.FindAllStringSubmatch(x, -1)
+		V := fmt.Sprintf("\u001b[1;31m sinks match :%v \n", C)
+		if len(C) != 0 {
+			fmt.Printf(V)
+		}
+
+		return ""
+	})
+
+	matchsources := funk.Map(newlines, func(x string) string {
+		r, _ := regexp.Compile(sources)
+		C := r.FindAllStringSubmatch(x, -1)
+		V := fmt.Sprintf("\u001b[1;33m sources match :%v \n", C)
+		if len(C) != 0 {
+			fmt.Printf(V)
+		}
+		return ""
+	})
+
+	if value, ok := matchsources.([]string); ok {
+		if len(value) != 0 {
+
+		}
 	}
-	fmt.Println("Scope:", ast.Scope.String())
-	// for _, v := range ast.List {
-	// 	v.
+
+	if value, ok := matchsinks.([]string); ok {
+		if len(value) != 0 {
+			fmt.Printf("\u001b[1;31m 发现DOM XSS漏洞，该对应参考payload代码应由研究人员构造\n")
+		}
+	}
+
+	// ast, err := js.Parse(parse.NewInputString(script))
+	// if err != nil {
+	// 	t.Error(err.Error())
 	// }
-	fmt.Println("JS:", ast.String())
+	// fmt.Println("Scope:", ast.Scope.String())
+	// // for _, v := range ast.List {
+	// // 	v.
+	// // }
+	// fmt.Println("JS:", ast.String())
 
 }

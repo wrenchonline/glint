@@ -5,10 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Launch Package",
             "type": "go",
             "request": "launch",
             "mode": "auto",
+            "console":"integratedTerminal", // 新的vscode版本换“internalConsole”
             "program": "${workspaceRoot}"
         }
     ]
