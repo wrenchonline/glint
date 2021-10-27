@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"wenscan/Helper"
+	ast "wenscan/ast"
 	http "wenscan/http"
 )
 
@@ -280,7 +280,7 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 }
 
 //GetReqLensByHtml 二度获取请求的长度
-func GetReqLensByHtml(Spider *http.Spider, JsonUrls *Helper.JsonUrl) error {
+func GetReqLensByHtml(Spider *http.Spider, JsonUrls *ast.JsonUrl) error {
 	if len(Spider.Url.String()) == 0 {
 		panic("request url is emtry")
 	}

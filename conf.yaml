@@ -1,27 +1,36 @@
 crawler:
   url: 
-    - 'http://localhost/'
+    - 'http://localhost/login.php'
   brokenurl: 
     - 'http://localhost/logout.php'
 reqmode: 'GET'
+# welcome=1; rui=am5DSHA0NnYzWlp5Y2twYXlEeU1ZQT09; cui=M3FNY29EbmJGNTRSZldHYTNUTkdOQT09
 cookies: [{
-    name: "NTKF_T2D_CLIENTID",
-    value: "qsr8mh9uan1pmm8na8dlf0l9pj",
-    domain: "localhost",
+    name: "welcome",
+    value: "1",
+    domain: "35.227.24.107",
     path: "/",
     httpOnly: true,
     secure: false,
   },{
-    name: "security",
-    value: "low",
-    domain: "localhost",
+    name: "rui",
+    value: "am5DSHA0NnYzWlp5Y2twYXlEeU1ZQT09",
+    domain: "35.227.24.107",
     path: "/",
     httpOnly: true,
     secure: false,
-  }
+  },
+  {
+    name: "cui",
+    value: "M3FNY29EbmJGNTRSZldHYTNUTkdOQT09",
+    domain: "35.227.24.107",
+    path: "/",
+    httpOnly: true,
+    secure: false,
+  },
   ]
 url:
-  'http://localhost/'
+  'http://localhost'
 reqsleep:
    1000   #设置1秒沉睡，因为js渲染新节点会造成页面发生变化，等待js渲染完成是不可能的事，有可能js代码一直改变节点让他永远不完成加载...。固设置超时机制
 sqlinject:

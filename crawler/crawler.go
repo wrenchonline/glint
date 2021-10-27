@@ -5,13 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
+
+	model2 "wenscan/model"
+
+	color "github.com/logrusorgru/aurora"
 
 	//log "wenscan/Log"
 
+	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/cdp"
-	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/fetch"
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
@@ -21,11 +28,7 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-var hosturl = "http://localhost/"
-var hostlogin = "login.php"
-var hostlogout = "logout.php"
 var removeAttribute = `var itags = document.getElementsByTagName('input');for(i=0;i<=itags.length;i++){if(itags[i]){itags[i].removeAttribute('style')}}`
-var fetchok bool
 
 const (
 	inViewportJS = `(function(a) {
@@ -42,57 +45,193 @@ const (
 // 	Requests []reqinfo
 // }
 
-type reqinfo struct {
-	Method  string
-	URL     string
-	Hreader string
+type Filter struct {
+	MarkedQueryMap    map[string]interface{}
+	QueryKeysId       string
+	QueryMapId        string
+	MarkedPostDataMap map[string]interface{}
+	PostDataId        string
+	MarkedPath        string
+	PathId            string
+	UniqueId          string
 }
 
-//Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
+type Options struct {
+	Headers  map[string]interface{}
+	PostData string
+}
+
+//Spider 爬虫资源
 type Spider struct {
-	Parentcxt     context.Context //主context
-	Requests      []reqinfo
-	Scanhostpage  string
-	StartPaused   bool
-	ForbiddenUrl  []string
-	Cookies       []chromedp.Action
-	Responses     chan []map[string]string
-	ReqMode       string
-	ExecAllocator []func(*chromedp.ExecAllocator)
-	ch            chan *dom.EventDocumentUpdated
+	Ctx          *context.Context
+	Cancel       *context.CancelFunc
+	tabs         []*context.Context
+	tabCancels   []context.CancelFunc
+	ExtraHeaders map[string]interface{}
+	lock         sync.Mutex
 }
 
-// func (chromecontext *chromecontext) Close() {
-// 	defer (chromecontext.Cancel)()
-// 	defer chromedp.Cancel(chromecontext.Ctx)
-// }
+type Tab struct {
+	Ctx          *context.Context
+	Cancel       context.CancelFunc
+	NavigateReq  model2.Request
+	ExtraHeaders map[string]interface{}
+	ResultList   []*model2.Request
+	// TopFrameId       string
+	// LoaderID         string
+	// NavNetworkID     string
+	// PageCharset      string
+	// PageBindings     map[string]interface{}
+	// NavDone          chan int
+	// FoundRedirection bool
+	DocBodyNodeId cdp.NodeID
+	config        TabConfig
 
-//CheckPayloadbyConsoleLog 检测回复中的log是否有我们触发的payload
-func (spider *Spider) CheckPayloadbyConsole(types string, xsschecker string) bool {
-	select {
-	case responseS := <-spider.Responses:
-		for _, response := range responseS {
-			if v, ok := response[types]; ok {
-				if v == xsschecker {
-					return true
-				}
-			}
-		}
-	case <-time.After(time.Duration(5) * time.Second):
+	lock sync.Mutex
+
+	WG            sync.WaitGroup //当前Tab页的等待同步计数
+	collectLinkWG sync.WaitGroup
+	loadedWG      sync.WaitGroup //Loaded之后的等待计数
+	formSubmitWG  sync.WaitGroup //表单提交完毕的等待计数
+	removeLis     sync.WaitGroup //移除事件监听
+	domWG         sync.WaitGroup //DOMContentLoaded 的等待计数
+	fillFormWG    sync.WaitGroup //填充表单任务
+}
+
+type TabConfig struct {
+	TabRunTimeout           time.Duration
+	DomContentLoadedTimeout time.Duration
+	EventTriggerMode        string        // 事件触发的调用方式： 异步 或 顺序
+	EventTriggerInterval    time.Duration // 事件触发的间隔 单位毫秒
+	BeforeExitDelay         time.Duration // 退出前的等待时间，等待DOM渲染，等待XHR发出捕获
+	EncodeURLWithCharset    bool
+	IgnoreKeywords          []string //
+	Proxy                   string
+	CustomFormValues        map[string]string
+	CustomFormKeywordValues map[string]string
+}
+
+/**
+获取当前标签页CDP的执行上下文
+*/
+func (tab *Tab) GetExecutor() context.Context {
+	c := chromedp.FromContext(*tab.Ctx)
+	ctx := cdp.WithExecutor(*tab.Ctx, c.Target)
+	return ctx
+}
+
+/**
+处理 401 407 认证弹窗
+*/
+func (tab *Tab) HandleAuthRequired(req *fetch.EventAuthRequired) {
+	defer tab.WG.Done()
+	fmt.Println(color.Yellow("auth required found, auto auth."))
+
+	ctx := tab.GetExecutor()
+	authRes := fetch.AuthChallengeResponse{
+		Response: fetch.AuthChallengeResponseResponseProvideCredentials,
+		Username: "admin",
+		Password: "admin",
+	}
+	// 取消认证
+	_ = fetch.ContinueWithAuth(req.RequestID, &authRes).Do(ctx)
+}
+
+/**
+获取的Body的NodeId 用于之后子节点无等待查询
+最多等待3秒 如果DOM依旧没有渲染完成，则退出
+*/
+func (tab *Tab) getBodyNodeId() bool {
+	var docNodeIDs []cdp.NodeID
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
+	err := chromedp.WaitReady(`body`, chromedp.ByQuery).Do(tCtx)
+	if err != nil {
+		fmt.Println(color.Red("getBodyNodeId WaitReady failed, maybe DOM not ready?"))
+		fmt.Println(color.Red(err))
 		return false
 	}
-	return false
+	// 获取 Frame document root
+	err = chromedp.NodeIDs(`body`, &docNodeIDs, chromedp.ByQuery).Do(tCtx)
+	if len(docNodeIDs) == 0 || err != nil {
+		// not root node yet?
+		fmt.Println(color.Red("getBodyNodeId failed, maybe DOM not ready?"))
+		if err != nil {
+			fmt.Println(color.Red(err))
+		}
+		return false
+	}
+	tab.DocBodyNodeId = docNodeIDs[0]
+	return true
+}
+
+/**
+在DOMContentLoaded完成后执行
+*/
+func (tab *Tab) AfterDOMRun() {
+	defer tab.WG.Done()
+	fmt.Println(color.Green("afterDOMRun start"))
+	// 获取当前body节点的nodeId 用于之后查找子节点
+	if !tab.getBodyNodeId() {
+		fmt.Println(color.Red("no body document NodeID, exit."))
+		return
+	}
+	//填充表单
+	tab.domWG.Add(1)
+	fmt.Println(color.Magenta("The Function tab.fillForm() is call"))
+	go tab.fillForm()
+	tab.domWG.Wait()
+	fmt.Println(color.Green("afterDOMRun end"))
+	tab.WG.Add(1)
+	go tab.AfterLoadedRun()
+}
+
+/**
+在页面Loaded之后执行
+同时等待 afterDOMRun 之后执行
+*/
+func (tab *Tab) AfterLoadedRun() {
+	defer tab.WG.Done()
+	fmt.Println(color.Green("afterLoadedRun start"))
+	tab.formSubmitWG.Add(1)
+	// tab.loadedWG.Add(3)
+	// tab.removeLis.Add(1)
+	fmt.Println(color.Green("formSubmit start"))
+	go tab.CommitBybutton()
+	tab.formSubmitWG.Wait()
+	fmt.Println(color.Green("formSubmit end"))
+
+	// if tab.config.EventTriggerMode == config.EventTriggerAsync {
+	// 	go tab.triggerJavascriptProtocol()
+	// 	go tab.triggerInlineEvents()
+	// 	go tab.triggerDom2Events()
+	// 	tab.loadedWG.Wait()
+	// } else if tab.config.EventTriggerMode == config.EventTriggerSync {
+	// 	tab.triggerInlineEvents()
+	// 	time.Sleep(tab.config.EventTriggerInterval)
+	// 	tab.triggerDom2Events()
+	// 	time.Sleep(tab.config.EventTriggerInterval)
+	// 	tab.triggerJavascriptProtocol()
+	// }
+
+	// 事件触发之后 需要等待一点时间让浏览器成功发出ajax请求 更新DOM
+	time.Sleep(2 * time.Second)
+
+	// go tab.RemoveDOMListener()
+	// tab.removeLis.Wait()
+	fmt.Println(color.Green("afterLoadedRun end"))
 }
 
 //ListenTarget
-func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
-	chromedp.ListenTarget(ctx, func(ev interface{}) {
+func (tab *Tab) ListenTarget(extends interface{}) {
+	var DOMContentLoadedRun = false
+	chromedp.ListenTarget(*tab.Ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
 		// fmt.Println(reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *runtime.EventConsoleAPICalled:
-			//fmt.Printf("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
 				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
 				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
@@ -110,8 +249,8 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 					funk.Contains(ev.Request.URL, "css?") ||
 					funk.Contains(ev.Request.URL, "woff2?") ||
 					funk.Contains(ev.Request.URL, "woff?") ||
-					ev.Request.URL == spider.Scanhostpage {
-					fmt.Println("request:", ev.Request.URL)
+					funk.Contains(ev.Request.URL, tab.NavigateReq.URL.String()) {
+					// fmt.Println("request:", ev.Request.URL)
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
 					fmt.Println("FailRequest:", ev.Request.URL)
@@ -119,8 +258,9 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 					ctx = cdp.WithExecutor(ctx, c.Target)
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
 				}
-				var req reqinfo
-				req.URL = ev.Request.URL
+				var req model2.Request
+				u, _ := url.Parse(ev.Request.URL)
+				req.URL = &model2.URL{*u}
 				req.Method = ev.Request.Method
 				if !strings.HasSuffix(ev.Request.URL, ".css") &&
 					!strings.HasSuffix(ev.Request.URL, ".js") &&
@@ -130,9 +270,9 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 					!funk.Contains(ev.Request.URL, "css?") &&
 					!funk.Contains(ev.Request.URL, "woff2?") &&
 					!funk.Contains(ev.Request.URL, "woff?") {
-					if !funk.Contains(spider.Requests, req) {
-						spider.Requests = append(spider.Requests, req)
-						log.Println("Add crawer url:", req)
+					if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) {
+						tab.AddResultRequest(req)
+						// log.Println("Add crawer url:", req)
 					} else {
 						//log.Println("The url is exist:", req)
 					}
@@ -140,16 +280,16 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 				if err := chromedp.Run(ctx, a); err != nil {
 					log.Println("ListenTarget error", err)
 				}
-			}(ctx, ev)
+			}(*tab.Ctx, ev)
 		case *page.EventJavascriptDialogOpening:
 			log.Println("EventJavascriptDialogOpening url:", ev.URL)
 		case *page.EventNavigatedWithinDocument:
 			log.Println("EventNavigatedWithinDocument url:", ev.URL)
-
 		case *page.EventWindowOpen:
 			log.Println("EventWindowOpen url:", ev.URL)
-			var req reqinfo
-			req.URL = ev.URL
+			var req model2.Request
+			u, _ := url.Parse(ev.URL)
+			req.URL = &model2.URL{*u}
 			req.Method = "GET"
 			if !strings.HasSuffix(ev.URL, ".css") &&
 				!strings.HasSuffix(ev.URL, ".js") &&
@@ -158,8 +298,9 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 				!funk.Contains(ev.URL, "css?") &&
 				!funk.Contains(ev.URL, "woff2?") &&
 				!funk.Contains(ev.URL, "woff?") {
-				if !funk.Contains(spider.Requests, req) {
-					spider.Requests = append(spider.Requests, req)
+				if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) {
+					tab.AddResultRequest(req)
+					// tab.ResultList = append(tab.ResultList, &req)
 					log.Println("EventWindowOpen Add crawer url:", req)
 				} else {
 					//log.Println("The url is exist:", req)
@@ -171,21 +312,27 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 		case *network.EventRequestWillBeSent:
 			//重定向
 			request := ev
-			//fmt.Printf(" request url: %s\n", request.DocumentURL)
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
 				fmt.Printf("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
 			}
-		case *network.EventResponseReceived:
-		case *network.EventResponseReceivedExtraInfo:
-		case *dom.EventDocumentUpdated:
+		case *page.EventDomContentEventFired:
+			if DOMContentLoadedRun {
+				return
+			}
+			DOMContentLoadedRun = true
+			tab.WG.Add(1)
+			go tab.AfterDOMRun()
 		case *page.EventLoadEventFired:
+			if DOMContentLoadedRun {
+				return
+			}
+			DOMContentLoadedRun = true
+			tab.WG.Add(1)
+			go tab.AfterDOMRun()
 		case *page.EventFrameRequestedNavigation:
 			// log.Printf("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
 			// 	ev.FrameID, ev.URL, ev.Disposition, ev.Reason)
-		case *page.EventFrameStoppedLoading:
-		case *dom.EventSetChildNodes:
-		case *page.EventLifecycleEvent:
 
 		}
 
@@ -193,7 +340,6 @@ func (spider *Spider) ListenTarget(ctx context.Context, extends interface{}) {
 }
 
 func (spider *Spider) Init() {
-	spider.Responses = make(chan []map[string]string)
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
@@ -210,163 +356,86 @@ func (spider *Spider) Init() {
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
-	spider.ExecAllocator = append(chromedp.DefaultExecAllocatorOptions[:], options...)
+	ExecAllocator := append(chromedp.DefaultExecAllocatorOptions[:], options...)
 	//NewExecAllocator 是新建一个浏览器
-	c, _ := chromedp.NewExecAllocator(context.Background(), spider.ExecAllocator...)
-	spider.Parentcxt = c
-	spider.ch = make(chan *dom.EventDocumentUpdated, 5)
+	ctx, Cancel := chromedp.NewExecAllocator(context.Background(), ExecAllocator...)
+	lctx, Cancel := chromedp.NewContext(ctx,
+		chromedp.WithLogf(log.Printf),
+	)
+	chromedp.Run(lctx)
+	spider.Ctx = &lctx
+	spider.Cancel = &Cancel
+}
+
+func (spider *Spider) NewTab(timeout time.Duration) (*context.Context, context.CancelFunc) {
+	spider.lock.Lock()
+	ctx, cancel := chromedp.NewContext(*spider.Ctx)
+	tCtx, _ := context.WithTimeout(ctx, timeout)
+	spider.tabs = append(spider.tabs, &tCtx)
+	spider.tabCancels = append(spider.tabCancels, cancel)
+	spider.lock.Unlock()
+	return &tCtx, cancel
+}
+
+func (bro *Spider) Close() {
+	fmt.Println(color.Green("closing browser."))
+	for _, cancel := range bro.tabCancels {
+		cancel()
+	}
+	for _, ctx := range bro.tabs {
+		err := browser.Close().Do(*ctx)
+		if err != nil {
+			fmt.Println(color.Red(err))
+		}
+	}
+	err := browser.Close().Do(*bro.Ctx)
+	if err != nil {
+		fmt.Println(color.Red(err))
+	}
+	(*bro.Cancel)()
+}
+
+func NewTabaObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
+	var tab Tab
+	tab.ExtraHeaders = map[string]interface{}{}
+	tab.Ctx, tab.Cancel = spider.NewTab(20 * time.Second)
+	tab.NavigateReq = navigateReq
+	tab.ListenTarget(nil)
+	return &tab, nil
 }
 
 //Crawler 爬取链接
-func (spider *Spider) Crawler(url string, function interface{}) (context.Context, context.CancelFunc, error) {
-	var (
-		ctx    context.Context
-		cctx   context.Context
-		cancel context.CancelFunc
-		err    error
+func (tab *Tab) Crawler(extends interface{}) error {
+	defer tab.Cancel()
+	fmt.Println(color.Green(tab.NavigateReq.URL.String()))
+	err := chromedp.Run(*tab.Ctx,
+		runtime.Enable(),
+		// 开启网络层API
+		network.Enable(),
+		// 开启请求拦截API
+		fetch.Enable(),
+		// 开启导航
+		chromedp.Navigate(tab.NavigateReq.URL.String()),
 	)
-	//新建一个标签页
-	if v, ok := function.(context.Context); ok {
-		c := chromedp.FromContext(v)
-		cctx = cdp.WithExecutor(v, c.Target)
-		ctx = cctx
-		if _, ok := ctx.Deadline(); ok {
-			ctx, cancel = chromedp.NewContext(spider.Parentcxt)
-		}
-	} else {
-		ctx, cancel = chromedp.NewContext(spider.Parentcxt)
+	if err != nil {
+		return err
 	}
+	//等待DOM更新结束
+	// go func() {
+	// 	// 等待所有协程任务结束
+	// 	tab.WG.Wait()
+	// 	// tab.NavDone <- 1
+	// }()
 
-	if _, ok := function.(context.Context); !ok {
-		for _, Cookies := range spider.Cookies {
-			//设置cookie
-			err = chromedp.Run(
-				ctx,
-				Cookies)
-		}
-		spider.ListenTarget(ctx, spider.Requests)
-		err = chromedp.Run(
-			ctx,
-			//开启拦截请求
-			fetch.Enable(),
-			//禁止链接禁用的url
+	tab.WG.Wait()
 
-			//导航
-			chromedp.Navigate(url),
-		)
-		newctx, _ := context.WithTimeout(ctx, 2*time.Second)
-		err = chromedp.Run(
-			newctx,
-			fetch.Enable(),
-			spider.ChlikByLink(),
-		)
-		if err != nil {
-			log.Println(err.Error())
-		}
-		nctxtimeout, _ := context.WithTimeout(ctx, 2*time.Second)
-		err = chromedp.Run(
+	fmt.Println(color.Green("collectLinks start"))
+	tab.collectLinkWG.Add(3)
+	go tab.CollectLink()
+	tab.collectLinkWG.Wait()
+	fmt.Println(color.Green("collectLinks end"))
 
-			nctxtimeout,
-			//开启拦截请求
-			fetch.Enable(),
-			//导航
-			chromedp.Navigate(url),
-			// 获取获取服务列表HTML
-			spider.CommitBybut(),
-		)
-
-	} else {
-		//第二次请求
-		ctx11, cancel := chromedp.NewContext(ctx)
-		defer cancel()
-		ctx11, cancel = context.WithTimeout(ctx11, 15*time.Second)
-		defer cancel()
-		spider.ListenTarget(ctx11, spider.Requests)
-		err = chromedp.Run(
-			ctx11,
-			chromedp.Navigate(url),
-		)
-		_ctx, _cancel := context.WithTimeout(ctx11, 3*time.Second)
-		defer _cancel()
-		err = chromedp.Run(
-			_ctx,
-			fetch.Enable(),
-			spider.CommitBybut(),
-		)
-		if err != nil {
-			//log.Println(err.Error())
-		}
-		newctx, newcancel := context.WithTimeout(ctx11, 3*time.Second)
-		defer newcancel()
-		//spider.ListenTarget(newctx, spider.Requests)
-		err = chromedp.Run(
-			newctx,
-			fetch.Enable(),
-			spider.ChlikByLink(),
-		)
-		if err != nil {
-			//log.Println(err.Error())
-		}
-	}
-
-	return ctx, cancel, err
-}
-
-func (spider *Spider) ShowCookies() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		cookies, err := network.GetAllCookies().Do(ctx)
-		if err != nil {
-			return err
-		}
-		for i, cookie := range cookies {
-			log.Printf("chrome cookie %d: %+v", i, cookie)
-		}
-		return nil
-	})
-}
-
-func (spider *Spider) SetCookie(name, value, domain, path string, httpOnly, secure bool) chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
-		network.SetCookie(name, value).
-			WithExpires(&expr).
-			WithDomain(domain).
-			WithPath(path).
-			WithHTTPOnly(httpOnly).
-			WithSecure(secure).
-			Do(ctx)
-		return nil
-	})
-}
-
-//GetPageInfomation 获取网页信息
-func (spider *Spider) GetPageInfomation() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		//var res string
-		if err := chromedp.WaitReady(`body`, chromedp.ByQuery).Do(ctx); err != nil {
-			return err
-		}
-
-		chromedp.WaitReady(`a`).Do(ctx)
-		if err := spider.ChlikLink(ctx); err != nil {
-			return err
-		}
-		if err := spider.CommitBybutton(ctx); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
-//CommitBybut 封装提交接口
-func (spider *Spider) CommitBybut() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		//PrintHtml(ctx)
-		if err := spider.CommitBybutton(ctx); err != nil {
-			return err
-		}
-		return nil
-	})
+	return nil
 }
 
 //PrintHtml 打印当前html
@@ -380,17 +449,14 @@ func PrintHtml(ctx context.Context) error {
 	return err
 }
 
-//ChlikByLink 封装提交链接接口
-func (spider *Spider) ChlikByLink() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		return spider.ChlikLink(ctx)
-	})
-}
-
 //CommitBybutton 提交按钮
-func (spider *Spider) CommitBybutton(ctx context.Context) error {
+func (tab *Tab) CommitBybutton() error {
+	defer tab.formSubmitWG.Done()
 	var nodes []*cdp.Node
-	err := chromedp.Nodes("//input[@type='submit']", &nodes, chromedp.BySearch).Do(ctx)
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+	err := chromedp.Nodes("//input[@type='submit']", &nodes, chromedp.BySearch).Do(tCtx)
 	if err != nil {
 		return err
 	}
@@ -399,27 +465,28 @@ func (spider *Spider) CommitBybutton(ctx context.Context) error {
 		return nil
 	}
 	for _, node := range nodes {
-		//自动填写表单
-		spider.fillForm(ctx)
 		if !(node.AttributeValue("type") == "hidden" || node.AttributeValue("display") == "none") {
 			//鼠标移动到button上
-			err := chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(ctx)
+			err := chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(tCtx)
 			if err != nil {
 				//log.Println("CommitBybutton MouseClickNode error:", err)
 			}
 			chromedp.Sleep(1 * time.Second)
 		}
 	}
-
 	return nil
 }
 
 //fillForm 填写表单
-func (spider *Spider) fillForm(ctx context.Context) error {
+func (tab *Tab) fillForm() error {
+	defer tab.domWG.Done()
 	var nodes []*cdp.Node
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
 	//var res string
 	//获取 input节点
-	err := chromedp.Nodes("//input", &nodes).Do(ctx)
+	err := chromedp.Nodes("//input", &nodes).Do(tCtx)
 	if err != nil {
 		fmt.Println("fillForm error: ", err)
 	}
@@ -427,14 +494,14 @@ func (spider *Spider) fillForm(ctx context.Context) error {
 		return errors.New("no find node")
 	}
 	//移除input的 style 属性
-	err = chromedp.Evaluate(removeAttribute, nil).Do(ctx)
+	err = chromedp.Evaluate(removeAttribute, nil).Do(tCtx)
 	if err != nil {
 		log.Fatal("removeAttribute error: ", err)
 	}
 
 	for _, node := range nodes {
 		var ok bool
-		chromedp.EvaluateAsDevTools(fmt.Sprintf(inViewportJS, node.FullXPath()), &ok).Do(ctx)
+		chromedp.EvaluateAsDevTools(fmt.Sprintf(inViewportJS, node.FullXPath()), &ok).Do(tCtx)
 		if err != nil {
 			log.Fatal("got  error:", err)
 		}
@@ -443,12 +510,7 @@ func (spider *Spider) fillForm(ctx context.Context) error {
 			//填写用户名
 			for _, name := range []string{"user", "用户名", "username"} {
 				if v := node.AttributeValue("name"); name == v {
-					//移动鼠标到目标节点上,模拟人类操作，也许会触发标签事件
-					err = chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(ctx)
-					if err != nil {
-						log.Fatal("MouseClickNode error:", err)
-					}
-					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "admin").Do(ctx)
+					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "craw").Do(tCtx)
 					if err != nil {
 						log.Fatal("SendKeys user name error:", err)
 					}
@@ -457,26 +519,9 @@ func (spider *Spider) fillForm(ctx context.Context) error {
 			//填写密码
 			for _, name := range []string{"pwd", "密码", "pass", "password"} {
 				if v := node.AttributeValue("name"); name == v {
-					//移动鼠标到目标节点上,模拟人类操作，也许会触发标签事件
-					err = chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(ctx)
+					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "password").Do(tCtx)
 					if err != nil {
-						log.Fatal("MouseClickNode error:", err)
-					}
-					//println(node.FullXPath())
-					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "password").Do(ctx)
-					if err != nil {
-						log.Fatal("SendKeys user name error:", err)
-					}
-				} else {
-					//移动鼠标到目标节点上,模拟人类操作，也许会触发标签事件
-					err = chromedp.MouseClickNode(node, chromedp.ButtonType(input.Left)).Do(ctx)
-					if err != nil {
-						log.Fatal("MouseClickNode error:", err)
-					}
-					//println(node.FullXPath())
-					err = chromedp.SendKeys(fmt.Sprintf(`input[name=%s]`, v), "1").Do(ctx)
-					if err != nil {
-						log.Fatal("SendKeys user name error:", err)
+						log.Fatal("SendKeys password error:", err)
 					}
 				}
 			}
@@ -487,80 +532,108 @@ func (spider *Spider) fillForm(ctx context.Context) error {
 	return err
 }
 
-//ChlikLink 点击a标签
-func (spider *Spider) ChlikLink(ctx context.Context) error {
+//CollectLink 收集链接
+func (tab *Tab) CollectLink() error {
+	go tab.collectHrefLinks()
+	go tab.collectObjectLinks()
+	go tab.collectCommentLinks()
+	return nil
+}
+
+func (tab *Tab) collectHrefLinks() {
+	defer tab.collectLinkWG.Done()
+	ctx := tab.GetExecutor()
+	// 收集 src href data-url 属性值
+	attrNameList := []string{"src", "href", "data-url", "data-href"}
+	for _, attrName := range attrNameList {
+		tCtx, cancel := context.WithTimeout(ctx, time.Second*1)
+		var attrs []map[string]string
+		_ = chromedp.AttributesAll(fmt.Sprintf(`[%s]`, attrName), &attrs, chromedp.ByQueryAll).Do(tCtx)
+		cancel()
+		for _, attrMap := range attrs {
+			tab.AddResultUrl("GET", attrMap[attrName], "DOM")
+		}
+	}
+}
+
+func (tab *Tab) collectObjectLinks() {
+	defer tab.collectLinkWG.Done()
+	ctx := tab.GetExecutor()
+	// 收集 object[data] links
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*1)
+	defer cancel()
+	var attrs []map[string]string
+	_ = chromedp.AttributesAll(`object[data]`, &attrs, chromedp.ByQueryAll).Do(tCtx)
+	for _, attrMap := range attrs {
+		tab.AddResultUrl("GET", attrMap["data"], "DOM")
+	}
+}
+
+func (tab *Tab) collectCommentLinks() {
+	defer tab.collectLinkWG.Done()
+	ctx := tab.GetExecutor()
+	// 收集注释中的链接
 	var nodes []*cdp.Node
-	var res *runtime.RemoteObject
-	var timestamp interface{}
-	var u string
-	var Linklist []cdp.NodeID
-
-	if err := chromedp.EvaluateAsDevTools(sethreftarget, &res).
-		Do(ctx); err != nil {
-		log.Println("Evaluate: ", err)
-		return err
+	tCtxComment, cancel := context.WithTimeout(ctx, time.Second*1)
+	defer cancel()
+	commentErr := chromedp.Nodes(`//comment()`, &nodes, chromedp.BySearch).Do(tCtxComment)
+	if commentErr != nil {
+		fmt.Println(color.Red("get comment nodes err"))
+		fmt.Println(color.Red(commentErr))
+		return
 	}
+	urlRegex := regexp.MustCompile(`((https?|ftp|file):)?//[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]`)
+	for _, node := range nodes {
+		content := node.NodeValue
+		urlList := urlRegex.FindAllString(content, -1)
+		for _, url := range urlList {
+			tab.AddResultUrl("GET", url, "Comment")
+		}
+	}
+}
 
-	chromedp.Location(&u).Do(ctx)
-
-	err := chromedp.Nodes("a", &nodes, chromedp.ByQueryAll).Do(ctx)
+func (tab *Tab) AddResultUrl(method string, _url string, source string) {
+	navUrl := tab.NavigateReq.URL
+	url, err := model2.GetUrl(_url, *navUrl)
 	if err != nil {
-		log.Println(": ", err)
-		return err
+		return
+	}
+	option := model2.Options{
+		Headers:  map[string]interface{}{},
+		PostData: "",
+	}
+	referer := navUrl.String()
+	// 处理Host绑定
+	if host, ok := tab.NavigateReq.Headers["Host"]; ok {
+		if host != navUrl.Hostname() && url.Hostname() == host {
+			url, _ = model2.GetUrl(strings.Replace(url.String(), "://"+url.Hostname(), "://"+navUrl.Hostname(), -1), *navUrl)
+			option.Headers["Host"] = host
+			referer = strings.Replace(navUrl.String(), navUrl.Host, host.(string), -1)
+		}
+	}
+	// 添加Cookie
+	if cookie, ok := tab.NavigateReq.Headers["Cookie"]; ok {
+		option.Headers["Cookie"] = cookie
 	}
 
-	if err := chromedp.Poll("atags", &timestamp, chromedp.WithPollingInterval(2*time.Second)).Do(ctx); err != nil {
-		log.Println("Poll error: ", err)
-		return err
+	// 修正Referer
+	option.Headers["Referer"] = referer
+	for key, value := range tab.ExtraHeaders {
+		option.Headers[key] = value
 	}
+	req := model2.GetRequest(method, url, option)
+	req.Source = source
 
-	if err := chromedp.WaitReady("a", chromedp.ByQueryAll).Do(ctx); err != nil {
-		log.Println("WaitReady error: ", err)
-		return err
+	tab.lock.Lock()
+	tab.ResultList = append(tab.ResultList, &req)
+	tab.lock.Unlock()
+}
+
+func (tab *Tab) AddResultRequest(req model2.Request) {
+	for key, value := range tab.ExtraHeaders {
+		req.Headers[key] = value
 	}
-	for _, value := range nodes {
-		// log.Println("node id :", value.NodeID)
-		Linklist = append(Linklist, value.NodeID)
-	}
-
-	for _, link := range Linklist {
-		if err := chromedp.EvaluateAsDevTools(sethreftarget, &res).
-			Do(ctx); err != nil {
-			log.Println("Evaluate: ", err)
-			return err
-		}
-		if err := chromedp.Poll("atags", &timestamp, chromedp.WithPollingInterval(2*time.Second)).Do(ctx); err != nil {
-			log.Println("Poll error: ", err)
-			return err
-		}
-		if err := chromedp.WaitReady("a", chromedp.ByQueryAll).Do(ctx); err != nil {
-			log.Println("WaitReady error: ", err)
-			return err
-		}
-
-		err := chromedp.Nodes("a", &nodes, chromedp.ByQueryAll).Do(ctx)
-		if err != nil {
-			log.Println("ChlikLink error: ", err)
-			return err
-		}
-
-		for _, n := range nodes {
-			if n.NodeID == link {
-				if !(n.AttributeValue("type") == "hidden" ||
-					n.AttributeValue("display") == "none" ||
-					n.AttributeValue("href") == "#") {
-					_, err := chromedp.RunResponse(ctx, chromedp.MouseClickNode(n, chromedp.ButtonLeft))
-					if err != nil {
-						// //出现(-32000)error 代表dom节点已经更新，原来chromedp.Nodes获取的节点id失效
-						log.Println("ChlikLink RunResponse error: ", err.Error(), "node Attribute:", n.Attributes)
-					}
-					break
-				}
-				break
-			}
-		}
-
-	}
-
-	return err
+	tab.lock.Lock()
+	tab.ResultList = append(tab.ResultList, &req)
+	tab.lock.Unlock()
 }

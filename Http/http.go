@@ -7,15 +7,16 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"wenscan/Helper"
 	log "wenscan/Log"
-	cf "wenscan/config"
+	ast "wenscan/ast"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	. "github.com/logrusorgru/aurora"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -55,17 +56,6 @@ func (spider *Spider) CheckPayloadbyConsole(types string, xsschecker string) boo
 	return false
 }
 
-func (spider *Spider) SetCookie(conf *cf.Conf) error {
-	for _, i := range conf.Cookies {
-		err := chromedp.Run(*spider.Ctx, SetCookie(i.Name, i.Value, i.Domain, i.Path, i.HttpOnly, i.Secure))
-		if err != nil {
-			log.Error("error:", err)
-			return err
-		}
-	}
-	return nil
-}
-
 func (spider *Spider) Init() error {
 	//gotException := make(chan bool, 1)
 	spider.Responses = make(chan []map[string]string)
@@ -82,7 +72,7 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("block-new-web-contents", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
 		chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
-		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
+		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
 	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
@@ -94,7 +84,7 @@ func (spider *Spider) Init() error {
 		Responses := []map[string]string{}
 		switch ev := ev.(type) {
 		case *runtime.EventConsoleAPICalled:
-			fmt.Printf("* console.%s call:\n", ev.Type)
+			// fmt.Printf("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
 				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
 				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
@@ -128,6 +118,18 @@ func (spider *Spider) Init() error {
 			}()
 		case *network.EventRequestWillBeSent:
 		case *network.EventResponseReceived:
+		case *page.EventJavascriptDialogOpening:
+			fmt.Printf("* EventJavascriptDialogOpening.%s call:\n", ev.Type)
+			fmt.Println(Red(ev.Message))
+			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
+			Responses = append(Responses, Response)
+			go func() {
+				c := chromedp.FromContext(ctx)
+				ctx := cdp.WithExecutor(ctx, c.Target)
+				//关闭弹窗
+				page.HandleJavaScriptDialog(false).Do(ctx)
+				spider.Responses <- Responses
+			}()
 		}
 	})
 	spider.Cancel = &cancel
@@ -160,33 +162,6 @@ func (spider *Spider) Sendreq() (string, error) {
 	return res, err
 }
 
-func ShowCookies() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		cookies, err := network.GetAllCookies().Do(ctx)
-		if err != nil {
-			return err
-		}
-		for i, cookie := range cookies {
-			log.Printf("chrome cookie %d: %+v", i, cookie)
-		}
-		return nil
-	})
-}
-
-func SetCookie(name, value, domain, path string, httpOnly, secure bool) chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
-		network.SetCookie(name, value).
-			WithExpires(&expr).
-			WithDomain(domain).
-			WithPath(path).
-			WithHTTPOnly(httpOnly).
-			WithSecure(secure).
-			Do(ctx)
-		return nil
-	})
-}
-
 func (spider *Spider) GetRequrlparam() (url.Values, error) {
 	if len(spider.Url.String()) == 0 {
 		panic("request url is emtry")
@@ -200,7 +175,7 @@ func (spider *Spider) GetRequrlparam() (url.Values, error) {
 }
 
 //GetReqLensByHtml 二度获取请求的长度
-func (spider *Spider) GetReqLensByHtml(JsonUrls *Helper.JsonUrl) error {
+func (spider *Spider) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 	if len(spider.Url.String()) == 0 {
 		panic("request url is emtry")
 	}
@@ -314,6 +289,12 @@ func (spider *Spider) CheckPayloadNormal(newpayload string, f func(html string) 
 			if f(html) {
 				return true
 			}
+			// spider.ReqMode = "Get"
+			// spider.Url, _ = url.Parse("http://35.227.24.107/54313949cf/index.php")
+			// gethtml, err := spider.Sendreq()
+			// if f(gethtml) {
+			// 	return true
+			// }
 		}
 		return false
 	}

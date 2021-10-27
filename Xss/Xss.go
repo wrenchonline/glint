@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"wenscan/Helper"
 	log "wenscan/Log"
+	ast "wenscan/ast"
 	http "wenscan/http"
 
 	"github.com/thoas/go-funk"
@@ -49,7 +49,7 @@ func RandStringRunes(n int) string {
 
 var (
 	script_payload string = "<ScRiPt>%s</sCrIpT>"
-	img_payload    string = "<iMg SrC=1 oNeRrOr=%s>"
+	img_payload    string = "<img src/onerror=alert(1)>"
 	//img_payload1   string = "\u003c\u0069\u006d\u0067\u0020\u0073\u0072\u0063\u003d\u0078\u0020\u006f\u006e\u0065\u0072\u0072\u006f\u0072\u003d\u0061\u006c\u0065\u0072\u0074\u0028\u002f\u0064\u006f\u006d\u002d\u0078\u0073\u0073\u002f\u0029"
 	href_payload   string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
 	svg_payload    string = "<sVg/OnLoAd=%s>"
@@ -116,9 +116,9 @@ type PayloadMode struct {
 }
 
 //CheckHtmlNodeAttributesKey 检测是否存在对应的key值
-func CheckHtmlNodeAttributes(s Helper.Occurence, types string, name string, HasPrefix bool) (bool, Kv) {
+func CheckHtmlNodeAttributes(s ast.Occurence, types string, name string, HasPrefix bool) (bool, Kv) {
 	var Attributes Kv
-	c := funk.Map(*s.Details.Attributes, func(A Helper.Attribute) bool {
+	c := funk.Map(*s.Details.Attributes, func(A ast.Attribute) bool {
 		if HasPrefix {
 			if types == "key" {
 				if strings.HasPrefix(A.Key, name) {
@@ -165,8 +165,8 @@ func CheckHtmlNodeAttributes(s Helper.Occurence, types string, name string, HasP
 }
 
 func Test_CheckHtmlNodeAttributesKey() {
-	detail := Helper.Node{Tagname: "attibute", Content: "key", Attributes: &[]Helper.Attribute{{Key: "srcdoc", Val: "dsadsadadsa"}}}
-	test := Helper.Occurence{Details: detail}
+	detail := ast.Node{Tagname: "attibute", Content: "key", Attributes: &[]ast.Attribute{{Key: "srcdoc", Val: "dsadsadadsa"}}}
+	test := ast.Occurence{Details: detail}
 	if ok, _ := CheckHtmlNodeAttributes(test, "key", "srcdoc", false); ok {
 		log.Debug("ok")
 	}
@@ -213,7 +213,7 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 		g.mapmode(CheckTag, true)
 	} else if Attibute == Tagmode {
 		switch s := extension.(type) {
-		case Helper.Occurence:
+		case ast.Occurence:
 			if funk.Contains(s.Type, "key") {
 				KeyPayload := []string{script_payload,
 					img_payload,
@@ -260,7 +260,7 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 				//处理onerror等on开头的属性情况
 				if ok, Kv := CheckHtmlNodeAttributes(s, "key", "on", true); ok {
 					script := Kv.V.String()
-					payload, err := Helper.AnalyseJSFuncByFlag(flag, script)
+					payload, err := ast.AnalyseJSFuncByFlag(flag, script)
 					if err != nil {
 						return err
 					}
@@ -279,14 +279,16 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, extension interfa
 		}
 	} else if Script == Tagmode {
 		switch s := extension.(type) {
-		case Helper.Occurence:
-			payload, err := Helper.AnalyseJSFuncByFlag(flag, s.Details.Content)
+		case ast.Occurence:
+			payload, err := ast.AnalyseJSFuncByFlag(flag, s.Details.Content)
 			if err != nil {
 				return err
 			}
 			log.Info("Script generator payload:%s", payload)
 			payloads := []string{payload}
 			g.words = append(g.words, payloads...)
+			test1 := fmt.Sprintf("';alert(%s);//", flag)
+			g.words = append(g.words, test1)
 			g.mapmode(CheckConsoleLog, false)
 		}
 	}
@@ -313,7 +315,7 @@ func (g *Generator) GetPayloadValue() (string, int) {
 }
 
 //CheckXssVul 检测Xss漏洞
-func (g *Generator) CheckXssVul(locations []Helper.Occurence, methods int, extension interface{}) bool {
+func (g *Generator) CheckXssVul(locations []ast.Occurence, methods int, extension interface{}) bool {
 	var VulOK bool
 	if methods == CheckValue {
 		for _, location := range locations {

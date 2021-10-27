@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 	"testing"
-	Helper "wenscan/Helper"
+	ast "wenscan/ast"
 	cf "wenscan/config"
 	http "wenscan/http"
 	sql "wenscan/sql"
@@ -22,9 +22,9 @@ func TestSqlerror(t *testing.T) {
 	conf := c.GetConf()
 	Spider.ReqMode = conf.ReqMode
 
-	if err := Spider.SetCookie(conf); err != nil {
-		panic(err)
-	}
+	// if err := Spider.SetCookie(conf); err != nil {
+	// 	panic(err)
+	// }
 	jsonFile, err := os.Open("result.json")
 
 	// 最好要处理以下错误
@@ -36,7 +36,7 @@ func TestSqlerror(t *testing.T) {
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-	var JsonUrls []Helper.JsonUrl
+	var JsonUrls []ast.JsonUrl
 
 	err = json.Unmarshal([]byte(byteValue), &JsonUrls)
 	// 最好要处理以下错误

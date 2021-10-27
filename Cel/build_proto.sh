@@ -1,0 +1,1 @@
+protoc --plugin=protoc-gen-go=/D/GOPATH/bin/protoc-gen-gogo.exe --go_out=. /http.proto

