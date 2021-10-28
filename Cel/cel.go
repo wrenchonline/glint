@@ -4,404 +4,438 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
-	"wenscan/utils"
-
-	color "github.com/logrusorgru/aurora"
+	log "wenscan/Log"
+	"wenscan/proto"
+	reverse2 "wenscan/reverse"
+	"wenscan/util"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter/functions"
+
+	// "github.com/jweny/pocassist/pkg/util"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"gopkg.in/yaml.v2"
 )
 
-func NewEnv(c *CustomLib) (*cel.Env, error) {
-	return cel.NewEnv(cel.Lib(c))
+//	判断s1是否包含s2
+var containsFunc = &functions.Overload{
+	Operator: "contains_string",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to contains", lhs.Type())
+		}
+		v2, ok := rhs.(types.String)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to contains", rhs.Type())
+		}
+		return types.Bool(strings.Contains(string(v1), string(v2)))
+	},
 }
 
-func Evaluate(env *cel.Env, expression string, params map[string]interface{}) (ref.Val, error) {
-	ast, iss := env.Compile(expression)
-	if iss.Err() != nil {
-		fmt.Println(color.Red("compile: ", iss.Err()))
-		// utils.Error("compile: ", iss.Err())
-		return nil, iss.Err()
-	}
-
-	prg, err := env.Program(ast)
-	if err != nil {
-		fmt.Println(color.Red("Program creation error: ", err))
-		// utils.ErrorF("Program creation error: %v", err)
-		return nil, err
-	}
-
-	out, _, err := prg.Eval(params)
-	if err != nil {
-		fmt.Println(color.Red("Evaluation error: ", err))
-		// utils.ErrorF("Evaluation error: %v", err)
-		return nil, err
-	}
-	return out, nil
+// 判断s1是否包含s2, 忽略大小写
+var iContainsDec = decls.NewFunction("icontains", decls.NewInstanceOverload("string_icontains_string", []*exprpb.Type{decls.String, decls.String}, decls.Bool))
+var iContainsFunc = &functions.Overload{
+	Operator: "string_icontains_string",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to icontains", lhs.Type())
+		}
+		v2, ok := rhs.(types.String)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to icontains", rhs.Type())
+		}
+		return types.Bool(strings.Contains(strings.ToLower(string(v1)), strings.ToLower(string(v2))))
+	},
 }
 
-func UrlTypeToString(u *UrlType) string {
-	var buf strings.Builder
-	if u.Scheme != "" {
-		buf.WriteString(u.Scheme)
-		buf.WriteByte(':')
-	}
-	if u.Scheme != "" || u.Host != "" {
-		if u.Host != "" || u.Path != "" {
-			buf.WriteString("//")
+//	判断b1 是否包含 b2
+var bcontainsDec = decls.NewFunction("bcontains", decls.NewInstanceOverload("bytes_bcontains_bytes", []*exprpb.Type{decls.Bytes, decls.Bytes}, decls.Bool))
+var bcontainsFunc = &functions.Overload{
+	Operator: "bytes_bcontains_bytes",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to bcontains", lhs.Type())
 		}
-		if h := u.Host; h != "" {
-			buf.WriteString(u.Host)
+		v2, ok := rhs.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to bcontains", rhs.Type())
 		}
-	}
-	path := u.Path
-	if path != "" && path[0] != '/' && u.Host != "" {
-		buf.WriteByte('/')
-	}
-	if buf.Len() == 0 {
-		if i := strings.IndexByte(path, ':'); i > -1 && strings.IndexByte(path[:i], '/') == -1 {
-			buf.WriteString("./")
-		}
-	}
-	buf.WriteString(path)
+		return types.Bool(bytes.Contains(v1, v2))
+	},
+}
 
-	if u.Query != "" {
-		buf.WriteByte('?')
-		buf.WriteString(u.Query)
-	}
-	if u.Fragment != "" {
-		buf.WriteByte('#')
-		buf.WriteString(u.Fragment)
-	}
-	return buf.String()
+//	使用正则表达式s1来匹配s2
+var matchFunc = &functions.Overload{
+	Operator: "matches_string",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to match", lhs.Type())
+		}
+		v2, ok := rhs.(types.String)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to match", rhs.Type())
+		}
+		ok, err := regexp.Match(string(v1), []byte(v2))
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.Bool(ok)
+	},
+}
+
+//	使用正则表达式s1 来 匹配b1
+var bmatchDec = decls.NewFunction("bmatches",
+	decls.NewInstanceOverload("string_bmatch_bytes",
+		[]*exprpb.Type{decls.String, decls.Bytes},
+		decls.Bool))
+
+var bmatchFunc = &functions.Overload{
+	Operator: "string_bmatch_bytes",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to bmatch", lhs.Type())
+		}
+		v2, ok := rhs.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to bmatch", rhs.Type())
+		}
+		ok, err := regexp.Match(string(v1), v2)
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.Bool(ok)
+	},
+}
+
+//	map 中是否包含某个 key，目前只有 headers 是 map[string][string] 类型
+var inDec = decls.NewFunction("in", decls.NewInstanceOverload("string_in_map_key", []*exprpb.Type{decls.String, decls.NewMapType(decls.String, decls.String)}, decls.Bool))
+var inFunc = &functions.Overload{
+	Operator: "string_in_map_key",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to in", lhs.Type())
+		}
+		v2, ok := rhs.(types.Bytes)
+		// 临时方案 判断字符串是否在 map中
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to in", lhs.Type())
+		}
+		ok = strings.Contains(string(v2), string(v1))
+		return types.Bool(ok)
+	},
+}
+
+//  字符串的 md5
+var md5Dec = decls.NewFunction("md5", decls.NewOverload("md5_string", []*exprpb.Type{decls.String}, decls.String))
+var md5Func = &functions.Overload{
+	Operator: "md5_string",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.String)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to md5_string", value.Type())
+		}
+		return types.String(fmt.Sprintf("%x", md5.Sum([]byte(v))))
+	},
+}
+
+//	两个范围内的随机数
+var randomIntDec = decls.NewFunction("randomInt", decls.NewOverload("randomInt_int_int", []*exprpb.Type{decls.Int, decls.Int}, decls.Int))
+var randomIntFunc = &functions.Overload{
+	Operator: "randomInt_int_int",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		from, ok := lhs.(types.Int)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to randomInt", lhs.Type())
+		}
+		to, ok := rhs.(types.Int)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to randomInt", rhs.Type())
+		}
+		min, max := int(from), int(to)
+		return types.Int(rand.Intn(max-min) + min)
+	},
+}
+
+//	指定长度的小写字母组成的随机字符串
+var randomLowercaseDec = decls.NewFunction("randomLowercase", decls.NewOverload("randomLowercase_int", []*exprpb.Type{decls.Int}, decls.String))
+var randomLowercaseFunc = &functions.Overload{
+	Operator: "randomLowercase_int",
+	Unary: func(value ref.Val) ref.Val {
+		n, ok := value.(types.Int)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to randomLowercase", value.Type())
+		}
+		return types.String(util.RandLetters(int(n)))
+	},
+}
+
+//	将字符串进行 base64 编码
+var base64StringDec = decls.NewFunction("base64", decls.NewOverload("base64_string", []*exprpb.Type{decls.String}, decls.String))
+var base64StringFunc = &functions.Overload{
+	Operator: "base64_string",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.String)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to base64_string", value.Type())
+		}
+		return types.String(base64.StdEncoding.EncodeToString([]byte(v)))
+	},
+}
+
+//	将bytes进行 base64 编码
+var base64BytesDec = decls.NewFunction("base64", decls.NewOverload("base64_bytes", []*exprpb.Type{decls.Bytes}, decls.String))
+var base64BytesFunc = &functions.Overload{
+	Operator: "base64_bytes",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to base64_bytes", value.Type())
+		}
+		return types.String(base64.StdEncoding.EncodeToString(v))
+	},
+}
+
+//	将字符串进行 base64 解码
+var base64DecodeStringDec = decls.NewFunction("base64Decode", decls.NewOverload("base64Decode_string", []*exprpb.Type{decls.String}, decls.String))
+var base64DecodeStringFunc = &functions.Overload{
+	Operator: "base64Decode_string",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.String)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to base64Decode_string", value.Type())
+		}
+		decodeBytes, err := base64.StdEncoding.DecodeString(string(v))
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.String(decodeBytes)
+	},
+}
+
+//	将bytes进行 base64 编码
+var base64DecodeBytesDec = decls.NewFunction("base64Decode", decls.NewOverload("base64Decode_bytes", []*exprpb.Type{decls.Bytes}, decls.String))
+var base64DecodeBytesFunc = &functions.Overload{
+	Operator: "base64Decode_bytes",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to base64Decode_bytes", value.Type())
+		}
+		decodeBytes, err := base64.StdEncoding.DecodeString(string(v))
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.String(decodeBytes)
+	},
+}
+
+//	将字符串进行 urlencode 编码
+var urlencodeStringDec = decls.NewFunction("urlencode", decls.NewOverload("urlencode_string", []*exprpb.Type{decls.String}, decls.String))
+var urlencodeStringFunc = &functions.Overload{
+	Operator: "urlencode_string",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.String)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to urlencode_string", value.Type())
+		}
+		return types.String(url.QueryEscape(string(v)))
+	},
+}
+
+//	将bytes进行 urlencode 编码
+var urlencodeBytesDec = decls.NewFunction("urlencode", decls.NewOverload("urlencode_bytes", []*exprpb.Type{decls.Bytes}, decls.String))
+var urlencodeBytesFunc = &functions.Overload{
+	Operator: "urlencode_bytes",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to urlencode_bytes", value.Type())
+		}
+		return types.String(url.QueryEscape(string(v)))
+	},
+}
+
+//	将字符串进行 urldecode 解码
+var urldecodeStringDec = decls.NewFunction("urldecode", decls.NewOverload("urldecode_string", []*exprpb.Type{decls.String}, decls.String))
+var urldecodeStringFunc = &functions.Overload{
+	Operator: "urldecode_string",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.String)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to urldecode_string", value.Type())
+		}
+		decodeString, err := url.QueryUnescape(string(v))
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.String(decodeString)
+	},
+}
+
+//	将 bytes 进行 urldecode 解码
+var urldecodeBytesDec = decls.NewFunction("urldecode", decls.NewOverload("urldecode_bytes", []*exprpb.Type{decls.Bytes}, decls.String))
+var urldecodeBytesFunc = &functions.Overload{
+	Operator: "urldecode_bytes",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.Bytes)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to urldecode_bytes", value.Type())
+		}
+		decodeString, err := url.QueryUnescape(string(v))
+		if err != nil {
+			return types.NewErr("%v", err)
+		}
+		return types.String(decodeString)
+	},
+}
+
+//	截取字符串
+var substrDec = decls.NewFunction("substr", decls.NewOverload("substr_string_int_int", []*exprpb.Type{decls.String, decls.Int, decls.Int}, decls.String))
+var substrFunc = &functions.Overload{
+	Operator: "substr_string_int_int",
+	Function: func(values ...ref.Val) ref.Val {
+		if len(values) == 3 {
+			str, ok := values[0].(types.String)
+			if !ok {
+				return types.NewErr("invalid string to 'substr'")
+			}
+			start, ok := values[1].(types.Int)
+			if !ok {
+				return types.NewErr("invalid start to 'substr'")
+			}
+			length, ok := values[2].(types.Int)
+			if !ok {
+				return types.NewErr("invalid length to 'substr'")
+			}
+			runes := []rune(str)
+			if start < 0 || length < 0 || int(start+length) > len(runes) {
+				return types.NewErr("invalid start or length to 'substr'")
+			}
+			return types.String(runes[start : start+length])
+		} else {
+			return types.NewErr("too many arguments to 'substr'")
+		}
+	},
+}
+
+//	暂停执行等待指定的秒数
+var sleepDec = decls.NewFunction("sleep", decls.NewOverload("sleep_int", []*exprpb.Type{decls.Int}, decls.Null))
+var sleepFunc = &functions.Overload{
+	Operator: "sleep_int",
+	Unary: func(value ref.Val) ref.Val {
+		v, ok := value.(types.Int)
+		if !ok {
+			return types.ValOrErr(value, "unexpected type '%v' passed to sleep", value.Type())
+		}
+		time.Sleep(time.Duration(v) * time.Second)
+		return nil
+	},
+}
+
+//	反连平台结果
+var reverseWaitDec = decls.NewFunction("wait", decls.NewInstanceOverload("reverse_wait_int", []*exprpb.Type{decls.Any, decls.Int}, decls.Bool))
+var reverseWaitFunc = &functions.Overload{
+	Operator: "reverse_wait_int",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		reverse, ok := lhs.Value().(*proto.Reverse)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to 'wait'", lhs.Type())
+		}
+		timeout, ok := rhs.Value().(int64)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to 'wait'", rhs.Type())
+		}
+		return types.Bool(reverse2.ReverseCheck(reverse, timeout))
+	},
 }
 
 type CustomLib struct {
-	envOptions     []cel.EnvOption
+	// 声明
+	envOptions []cel.EnvOption
+	// 实现
 	programOptions []cel.ProgramOption
 }
 
-func NewEnvOption() CustomLib {
-	c := CustomLib{}
-
-	c.envOptions = []cel.EnvOption{
-		cel.Container("cel"),
+// 第一步定义 cel options
+func InitCelOptions() CustomLib {
+	custom := CustomLib{}
+	custom.envOptions = []cel.EnvOption{
+		cel.Container("proto"),
+		//	类型注入
 		cel.Types(
-			&UrlType{},
-			&Request{},
-			&Response{},
-			&Reverse{},
+			&proto.UrlType{},
+			&proto.Request{},
+			&proto.Response{},
+			&proto.Reverse{},
 		),
+		// 定义变量变量
 		cel.Declarations(
-			decls.NewIdent("request", decls.NewObjectType("cel.Request"), nil),
-			decls.NewIdent("response", decls.NewObjectType("cel.Response"), nil),
-			//decls.NewIdent("reverse", decls.NewObjectType("lib.Reverse"), nil),
+			decls.NewVar("request", decls.NewObjectType("proto.Request")),
+			decls.NewVar("response", decls.NewObjectType("proto.Response")),
 		),
+		// 定义
 		cel.Declarations(
-			// functions
-			decls.NewFunction("bcontains",
-				decls.NewInstanceOverload("bytes_bcontains_bytes",
-					[]*exprpb.Type{decls.Bytes, decls.Bytes},
-					decls.Bool)),
-			decls.NewFunction("bmatches",
-				decls.NewInstanceOverload("string_bmatches_bytes",
-					[]*exprpb.Type{decls.String, decls.Bytes},
-					decls.Bool)),
-			decls.NewFunction("md5",
-				decls.NewOverload("md5_string",
-					[]*exprpb.Type{decls.String},
-					decls.String)),
-			decls.NewFunction("randomInt",
-				decls.NewOverload("randomInt_int_int",
-					[]*exprpb.Type{decls.Int, decls.Int},
-					decls.Int)),
-			decls.NewFunction("randomLowercase",
-				decls.NewOverload("randomLowercase_int",
-					[]*exprpb.Type{decls.Int},
-					decls.String)),
-			decls.NewFunction("base64",
-				decls.NewOverload("base64_string",
-					[]*exprpb.Type{decls.String},
-					decls.String)),
-			decls.NewFunction("base64",
-				decls.NewOverload("base64_bytes",
-					[]*exprpb.Type{decls.Bytes},
-					decls.String)),
-			decls.NewFunction("base64Decode",
-				decls.NewOverload("base64Decode_string",
-					[]*exprpb.Type{decls.String},
-					decls.String)),
-			decls.NewFunction("base64Decode",
-				decls.NewOverload("base64Decode_bytes",
-					[]*exprpb.Type{decls.Bytes},
-					decls.String)),
-			decls.NewFunction("urlencode",
-				decls.NewOverload("urlencode_string",
-					[]*exprpb.Type{decls.String},
-					decls.String)),
-			decls.NewFunction("urlencode",
-				decls.NewOverload("urlencode_bytes",
-					[]*exprpb.Type{decls.Bytes},
-					decls.String)),
-			decls.NewFunction("urldecode",
-				decls.NewOverload("urldecode_string",
-					[]*exprpb.Type{decls.String},
-					decls.String)),
-			decls.NewFunction("urldecode",
-				decls.NewOverload("urldecode_bytes",
-					[]*exprpb.Type{decls.Bytes},
-					decls.String)),
-			decls.NewFunction("substr",
-				decls.NewOverload("substr_string_int_int",
-					[]*exprpb.Type{decls.String, decls.Int, decls.Int},
-					decls.String)),
-			decls.NewFunction("wait",
-				decls.NewInstanceOverload("reverse_wait_int",
-					[]*exprpb.Type{decls.Any, decls.Int},
-					decls.Bool)),
-			decls.NewFunction("icontains",
-				decls.NewInstanceOverload("icontains_string",
-					[]*exprpb.Type{decls.String, decls.String},
-					decls.Bool)),
+			bcontainsDec, iContainsDec, bmatchDec, md5Dec,
+			//startsWithDec, endsWithDec,
+			inDec, randomIntDec, randomLowercaseDec,
+			base64StringDec, base64BytesDec, base64DecodeStringDec, base64DecodeBytesDec,
+			urlencodeStringDec, urlencodeBytesDec, urldecodeStringDec, urldecodeBytesDec,
+			substrDec, sleepDec, reverseWaitDec,
 		),
 	}
-	c.programOptions = []cel.ProgramOption{
-		cel.Functions(
-			&functions.Overload{
-				Operator: "bytes_bcontains_bytes",
-				Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-					v1, ok := lhs.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(lhs, "unexpected type '%v' passed to bcontains", lhs.Type())
-					}
-					v2, ok := rhs.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(rhs, "unexpected type '%v' passed to bcontains", rhs.Type())
-					}
-					return types.Bool(bytes.Contains(v1, v2))
-				},
-			},
-			&functions.Overload{
-				Operator: "string_bmatch_bytes",
-				Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-					v1, ok := lhs.(types.String)
-					if !ok {
-						return types.ValOrErr(lhs, "unexpected type '%v' passed to bmatch", lhs.Type())
-					}
-					v2, ok := rhs.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(rhs, "unexpected type '%v' passed to bmatch", rhs.Type())
-					}
-					ok, err := regexp.Match(string(v1), v2)
-					if err != nil {
-						return types.NewErr("%v", err)
-					}
-					return types.Bool(ok)
-				},
-			},
-			&functions.Overload{
-				Operator: "md5_string",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.String)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to md5_string", value.Type())
-					}
-					return types.String(fmt.Sprintf("%x", md5.Sum([]byte(v))))
-				},
-			},
-			&functions.Overload{
-				Operator: "randomInt_int_int",
-				Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-					from, ok := lhs.(types.Int)
-					if !ok {
-						return types.ValOrErr(lhs, "unexpected type '%v' passed to randomInt", lhs.Type())
-					}
-					to, ok := rhs.(types.Int)
-					if !ok {
-						return types.ValOrErr(rhs, "unexpected type '%v' passed to randomInt", rhs.Type())
-					}
-					min, max := int(from), int(to)
-					return types.Int(rand.Intn(max-min) + min)
-				},
-			},
-			&functions.Overload{
-				Operator: "randomLowercase_int",
-				Unary: func(value ref.Val) ref.Val {
-					n, ok := value.(types.Int)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to randomLowercase", value.Type())
-					}
-					return types.String(randomLowercase(int(n)))
-				},
-			},
-			&functions.Overload{
-				Operator: "base64_string",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.String)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to base64_string", value.Type())
-					}
-					return types.String(base64.StdEncoding.EncodeToString([]byte(v)))
-				},
-			},
-			&functions.Overload{
-				Operator: "base64_bytes",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to base64_bytes", value.Type())
-					}
-					return types.String(base64.StdEncoding.EncodeToString(v))
-				},
-			},
-			&functions.Overload{
-				Operator: "base64Decode_string",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.String)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to base64Decode_string", value.Type())
-					}
-					decodeBytes, err := base64.StdEncoding.DecodeString(string(v))
-					if err != nil {
-						return types.NewErr("%v", err)
-					}
-					return types.String(decodeBytes)
-				},
-			},
-			&functions.Overload{
-				Operator: "base64Decode_bytes",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to base64Decode_bytes", value.Type())
-					}
-					decodeBytes, err := base64.StdEncoding.DecodeString(string(v))
-					if err != nil {
-						return types.NewErr("%v", err)
-					}
-					return types.String(decodeBytes)
-				},
-			},
-			&functions.Overload{
-				Operator: "urlencode_string",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.String)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to urlencode_string", value.Type())
-					}
-					return types.String(url.QueryEscape(string(v)))
-				},
-			},
-			&functions.Overload{
-				Operator: "urlencode_bytes",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to urlencode_bytes", value.Type())
-					}
-					return types.String(url.QueryEscape(string(v)))
-				},
-			},
-			&functions.Overload{
-				Operator: "urldecode_string",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.String)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to urldecode_string", value.Type())
-					}
-					decodeString, err := url.QueryUnescape(string(v))
-					if err != nil {
-						return types.NewErr("%v", err)
-					}
-					return types.String(decodeString)
-				},
-			},
-			&functions.Overload{
-				Operator: "urldecode_bytes",
-				Unary: func(value ref.Val) ref.Val {
-					v, ok := value.(types.Bytes)
-					if !ok {
-						return types.ValOrErr(value, "unexpected type '%v' passed to urldecode_bytes", value.Type())
-					}
-					decodeString, err := url.QueryUnescape(string(v))
-					if err != nil {
-						return types.NewErr("%v", err)
-					}
-					return types.String(decodeString)
-				},
-			},
-			&functions.Overload{
-				Operator: "substr_string_int_int",
-				Function: func(values ...ref.Val) ref.Val {
-					if len(values) == 3 {
-						str, ok := values[0].(types.String)
-						if !ok {
-							return types.NewErr("invalid string to 'substr'")
-						}
-						start, ok := values[1].(types.Int)
-						if !ok {
-							return types.NewErr("invalid start to 'substr'")
-						}
-						length, ok := values[2].(types.Int)
-						if !ok {
-							return types.NewErr("invalid length to 'substr'")
-						}
-						runes := []rune(str)
-						if start < 0 || length < 0 || int(start+length) > len(runes) {
-							return types.NewErr("invalid start or length to 'substr'")
-						}
-						return types.String(runes[start : start+length])
-					} else {
-						return types.NewErr("too many arguments to 'substr'")
-					}
-				},
-			},
-			&functions.Overload{
-				Operator: "reverse_wait_int",
-				Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-					reverse, ok := lhs.Value().(*Reverse)
-					if !ok {
-						return types.ValOrErr(lhs, "unexpected type '%v' passed to 'wait'", lhs.Type())
-					}
-					timeout, ok := rhs.Value().(int64)
-					if !ok {
-						return types.ValOrErr(rhs, "unexpected type '%v' passed to 'wait'", rhs.Type())
-					}
-					return types.Bool(reverseCheck(reverse, timeout))
-				},
-			},
-			&functions.Overload{
-				Operator: "icontains_string",
-				Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-					v1, ok := lhs.(types.String)
-					if !ok {
-						return types.ValOrErr(lhs, "unexpected type '%v' passed to bcontains", lhs.Type())
-					}
-					v2, ok := rhs.(types.String)
-					if !ok {
-						return types.ValOrErr(rhs, "unexpected type '%v' passed to bcontains", rhs.Type())
-					}
-					// 不区分大小写包含
-					return types.Bool(strings.Contains(strings.ToLower(string(v1)), strings.ToLower(string(v2))))
-				},
-			},
-		),
-	}
-	return c
+	// 实现
+	custom.programOptions = []cel.ProgramOption{cel.Functions(
+		containsFunc, iContainsFunc, bcontainsFunc, matchFunc, bmatchFunc, md5Func,
+		//startsWithFunc,  endsWithFunc,
+		inFunc, randomIntFunc, randomLowercaseFunc,
+		base64StringFunc, base64BytesFunc, base64DecodeStringFunc, base64DecodeBytesFunc,
+		urlencodeStringFunc, urlencodeBytesFunc, urldecodeStringFunc, urldecodeBytesFunc,
+		substrFunc, sleepFunc, reverseWaitFunc,
+	)}
+	return custom
 }
 
-// 声明环境中的变量类型和函数
+//	如果有set：追加set变量到 cel options
+func (c *CustomLib) AddRuleSetOptions(args []yaml.MapItem) {
+	for _, arg := range args {
+		// 在执行之前是不知道变量的类型的，所以统一声明为字符型
+		// 所以randomInt虽然返回的是int型，在运算中却被当作字符型进行计算，需要重载string_*_string
+		k := arg.Key.(string)
+		v := arg.Value.(string)
+
+		var d *exprpb.Decl
+		if strings.HasPrefix(v, "randomInt") {
+			d = decls.NewVar(k, decls.Int)
+		} else if strings.HasPrefix(v, "newReverse") {
+			d = decls.NewVar(k, decls.NewObjectType("proto.Reverse"))
+		} else {
+			d = decls.NewVar(k, decls.String)
+		}
+		c.envOptions = append(c.envOptions, cel.Declarations(d))
+	}
+}
+
+// 第二步 根据cel options 创建 cel环境
+func InitCelEnv(c *CustomLib) (*cel.Env, error) {
+	return cel.NewEnv(cel.Lib(c))
+}
+
 func (c *CustomLib) CompileOptions() []cel.EnvOption {
 	return c.envOptions
 }
@@ -410,46 +444,81 @@ func (c *CustomLib) ProgramOptions() []cel.ProgramOption {
 	return c.programOptions
 }
 
-func (c *CustomLib) UpdateCompileOptions(args map[string]string) {
-	for k, v := range args {
-		// 在执行之前是不知道变量的类型的，所以统一声明为字符型
-		// 所以randomInt虽然返回的是int型，在运算中却被当作字符型进行计算，需要重载string_*_string
-		var d *exprpb.Decl
-		if strings.HasPrefix(v, "randomInt") {
-			d = decls.NewIdent(k, decls.Int, nil)
-		} else if strings.HasPrefix(v, "newReverse") {
-			d = decls.NewIdent(k, decls.NewObjectType("cel.Reverse"), nil)
-		} else {
-			d = decls.NewIdent(k, decls.String, nil)
-		}
-		c.envOptions = append(c.envOptions, cel.Declarations(d))
+//	计算单个表达式
+func Evaluate(env *cel.Env, expression string, params map[string]interface{}) (ref.Val, error) {
+	ast, iss := env.Compile(expression)
+	if iss.Err() != nil {
+		return nil, iss.Err()
 	}
-}
-
-func randomLowercase(n int) string {
-	lowercase := "abcdefghijklmnopqrstuvwxyz"
-	randSource := rand.New(rand.NewSource(time.Now().Unix()))
-	return utils.RandomStr(randSource, lowercase, n)
-}
-
-func reverseCheck(r *Reverse, timeout int64) bool {
-	if ceyeApi == "" || r.Domain == "" {
-		return false
-	}
-	time.Sleep(time.Second * time.Duration(timeout))
-	sub := strings.Split(r.Domain, ".")[0]
-	urlStr := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=dns&filter=%s", ceyeApi, sub)
-	fmt.Println(color.Green(urlStr))
-	req, _ := http.NewRequest("GET", urlStr, nil)
-	resp, err := DoRequest(req, false)
+	prg, err := env.Program(ast)
 	if err != nil {
-		fmt.Println(color.Red(err))
-		return false
+		return nil, err
 	}
-	fmt.Println(color.Yellow(urlStr))
-	//fmt.Println(string(resp.Body))
-	if !bytes.Contains(resp.Body, []byte(`"data": []`)) { // api返回结果不为空
-		return true
+	out, _, err := prg.Eval(params)
+	if err != nil {
+		return nil, err
 	}
-	return false
+	return out, nil
+}
+
+// set
+func (rule *Rule) ReplaceSet(varMap map[string]interface{}) {
+	for setKey, setValue := range varMap {
+		// 过滤掉 map
+		_, isMap := setValue.(map[string]string)
+		if isMap {
+			continue
+		}
+		value := fmt.Sprintf("%v", setValue)
+		// 替换请求头中的 自定义字段
+		for headerKey, headerValue := range rule.Headers {
+			rule.Headers[headerKey] = strings.ReplaceAll(headerValue, "{{"+setKey+"}}", value)
+		}
+		// 替换请求路径中的 自定义字段
+		rule.Path = strings.ReplaceAll(strings.TrimSpace(rule.Path), "{{"+setKey+"}}", value)
+		// 替换body的 自定义字段
+		rule.Body = strings.ReplaceAll(strings.TrimSpace(rule.Body), "{{"+setKey+"}}", value)
+	}
+}
+
+// search
+func (rule *Rule) ReplaceSearch(resp *proto.Response, varMap map[string]interface{}) map[string]interface{} {
+	result := doSearch(strings.TrimSpace(rule.Search), string(resp.Body))
+	if result != nil && len(result) > 0 { // 正则匹配成功
+		for k, v := range result {
+			varMap[k] = v
+		}
+	}
+	return varMap
+}
+
+// 校验rule格式
+func (rule *Rule) Verify() error {
+	// 限制rule中的path必须以"/"开头
+	if strings.HasPrefix(rule.Path, "/") == false {
+		errorMsg := "POC rule path must startWith \"/\""
+		log.Error("rule/rule.go:Verify error]", errorMsg)
+		return errors.New(errorMsg)
+	}
+	return nil
+}
+
+// 实现 search
+func doSearch(re string, body string) map[string]string {
+	r, err := regexp.Compile(re)
+	if err != nil {
+		return nil
+	}
+	result := r.FindStringSubmatch(body)
+	names := r.SubexpNames()
+	if len(result) > 1 && len(names) > 1 {
+		paramsMap := make(map[string]string)
+		for i, name := range names {
+			if i > 0 && i <= len(result) {
+				paramsMap[name] = result[i]
+			}
+		}
+		return paramsMap
+	}
+	return nil
 }
