@@ -438,16 +438,16 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	return nil
 }
 
-//PrintHtml 打印当前html
-func PrintHtml(ctx context.Context) error {
-	var html string
-	err := chromedp.OuterHTML("body", &html, chromedp.BySearch).Do(ctx)
-	if err != nil {
-		log.Println("PrintHtml error:", err.Error())
-	}
-	fmt.Println(html)
-	return err
-}
+// //PrintHtml 打印当前html
+// func PrintHtml(ctx context.Context) error {
+// 	var html string
+// 	err := chromedp.OuterHTML("body", &html, chromedp.BySearch).Do(ctx)
+// 	if err != nil {
+// 		log.Println("PrintHtml error:", err.Error())
+// 	}
+// 	fmt.Println(html)
+// 	return err
+// }
 
 //CommitBybutton 提交按钮
 func (tab *Tab) CommitBybutton() error {

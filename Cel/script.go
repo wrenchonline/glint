@@ -9,7 +9,7 @@ import (
 	"strings"
 	"wenscan/util"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 type ScriptScanArgs struct {

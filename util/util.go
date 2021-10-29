@@ -15,7 +15,7 @@ func Setup() {
 	// 请求限速 limiter 初始化
 	InitRate()
 	// fasthttp client 初始化
-	DownProxy := ""
+	DownProxy := "127.0.0.1:8080"
 	client := &fasthttp.Client{
 		// If InsecureSkipVerify is true, TLS accepts any certificate
 		TLSConfig:                &tls.Config{InsecureSkipVerify: true},
@@ -30,7 +30,7 @@ func Setup() {
 	fasthttpClient = client
 
 	// jwt secret 初始化
-	jwtSecret = []byte("test")
+	// jwtSecret = []byte("test")
 }
 
 func IsFileExist(path string) bool {

@@ -71,7 +71,7 @@ func InitPocController(req *RequestController, plugin *Plugin, cel *CelControlle
 	controller.Request = req
 	controller.Plugin = plugin
 	controller.CEL = cel
-	// controller.Handles = handles
+	controller.Handles = handles
 	controller.Debug = false
 	return controller
 }

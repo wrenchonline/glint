@@ -2,16 +2,29 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 	cel "wenscan/cel"
+	"wenscan/util"
 
 	color "github.com/logrusorgru/aurora"
 )
 
 func Test_xray_payload(t *testing.T) {
-	c := cel.InitCelOptions()
-	_, err := cel.InitCelEnv(&c)
+	util.Setup()
+	poc, err := cel.LoadPoc("../xray-pocs/apache-httpd-cve-2021-41773-path-traversal.yml", "Yaml")
 	if err != nil {
-		fmt.Println(color.Sprintf("environment creation error: %s\n", color.Red(err)))
+		fmt.Println(color.Sprintf("[Test_xray_payload] LoadPoc  error: %s\n", color.Red(err)))
 	}
+	Plugin := &cel.Plugin{VulId: "0", Affects: "directory", JsonPoc: poc, Enable: true}
+	httpreq, err := http.NewRequest("Get", "http://192.168.166.192/", nil)
+	if err != nil {
+		fmt.Println(color.Sprintf("[Test_xray_payload] NewRequest error: %s\n", color.Red(err)))
+	}
+	ScanItem := cel.ScanItem{OriginalReq: httpreq, Plugin: Plugin}
+	result, err := cel.RunPoc(&ScanItem, true)
+	if err != nil {
+		fmt.Println(color.Sprintf("[Test_xray_payload] RunPoc error: %s\n", color.Red(err)))
+	}
+	fmt.Println(*result)
 }

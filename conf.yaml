@@ -4,7 +4,6 @@ crawler:
   brokenurl: 
     - 'http://localhost/logout.php'
 reqmode: 'GET'
-# welcome=1; rui=am5DSHA0NnYzWlp5Y2twYXlEeU1ZQT09; cui=M3FNY29EbmJGNTRSZldHYTNUTkdOQT09
 cookies: [{
     name: "welcome",
     value: "1",
