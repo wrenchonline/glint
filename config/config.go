@@ -8,12 +8,12 @@ import (
 )
 
 type Conf struct {
-	Crawler   Crawler   `yaml:"crawler"`
-	SqlInject SqlInject `yaml:"sqlinject"`
-	Url       string    `yaml:"url"`
-	Xss       Xss       `yaml:"xss"`
-	ReqMode   string    `yaml:"reqmode"`
-	Cookies   []Cookies `yaml:"cookies"`
+	Crawler   Crawler                `yaml:"crawler"`
+	SqlInject SqlInject              `yaml:"sqlinject"`
+	Url       string                 `yaml:"url"`
+	Xss       Xss                    `yaml:"xss"`
+	ReqMode   string                 `yaml:"reqmode"`
+	Headers   map[string]interface{} `yaml:"headers"`
 }
 
 type SqlInject struct {
@@ -30,14 +30,14 @@ type Crawler struct {
 	Brokenurl []string `yaml:"brokenurl"`
 }
 
-type Cookies struct {
-	Name     string `yaml:"name"`
-	Value    string `yaml:"value"`
-	Domain   string `yaml:"domain"`
-	Path     string `yaml:"path"`
-	HttpOnly bool   `yaml:"httpOnly"`
-	Secure   bool   `yaml:"secure"`
-}
+// type Cookies struct {
+// 	Name     string `yaml:"name"`
+// 	Value    string `yaml:"value"`
+// 	Domain   string `yaml:"domain"`
+// 	Path     string `yaml:"path"`
+// 	HttpOnly bool   `yaml:"httpOnly"`
+// 	Secure   bool   `yaml:"secure"`
+// }
 
 func (conf *Conf) GetConf() *Conf {
 	yamlFile, err := ioutil.ReadFile("conf.yaml")

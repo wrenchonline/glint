@@ -452,14 +452,32 @@ const TriggerJavascriptProtocol = `
 `
 
 const FormNodeClickJS = `
-(function(a) {
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+  }
+(async function(a) {
 	try {
 		a.click();
+		await sleep(2000);
 		return true;
 	} catch(e) {
+		await sleep(2000);
 		return false;
 	}
-})(%s)
+})(%s);
+`
+
+var WaitExecuteJS = `
+	var %s = new Proxy(
+		{},
+		{
+		  set: function(obj, prop, value) {
+			obj[prop] = value;
+			%s
+			return true;
+		  }
+		}
+	  );
 `
 
 func Snippet(js string, f func(n *cdp.Node) string, sel string, n *cdp.Node, v ...interface{}) string {
