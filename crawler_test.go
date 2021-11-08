@@ -24,6 +24,7 @@ func Test_Crawler(t *testing.T) {
 	navigateReq.URL = &model2.URL{*u}
 	navigateReq.Headers = Conf.Headers
 	tab, err := craw.NewTabaObject(&Spider, navigateReq)
+
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,10 +35,18 @@ func Test_Crawler(t *testing.T) {
 	}
 
 	for _, value := range tab.ResultList {
-		fmt.Println(color.Sprintf("Url:%s Method:%s ", color.Cyan(value.URL.String()), color.Cyan(value.Method)))
+		fmt.Println(color.Sprintf("Url:%s Method:%s GroupsID:%s ", color.Cyan(value.URL.String()), color.Cyan(value.Method), color.Cyan(value.GroupsId)))
 		if value.PostData != "" {
 			fmt.Println(color.Sprintf("POST:%s", color.Cyan(value.PostData)))
 		}
 	}
 
+}
+
+func Test_filter(t *testing.T) {
+	const url = `https://ka-f.fontawesome.com/releases/v5.15.4/webfonts/free-fa-solid-900.woff2`
+	if craw.FilterKey(url, craw.ForbidenKey) {
+	} else {
+		t.Errorf("test FilterKey() fail")
+	}
 }

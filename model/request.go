@@ -35,6 +35,7 @@ type Request struct {
 	Source          string
 	RedirectionFlag bool
 	Proxy           string
+	GroupsId        string //针对爬虫的时候触发某个js事件因此触发其他Url请求，使用此ID作为同一群组的标识符
 }
 
 var supportContentType = []string{"application/json", "application/x-www-form-urlencoded"}

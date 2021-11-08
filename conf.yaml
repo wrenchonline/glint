@@ -7,7 +7,7 @@ reqmode: 'GET'
 headers:
   Cookie: 'welcome=1; rui=OUJyS1VuRkVqVjZnWFp2M0o3SkxwUT09'
 url:
-  'http://35.227.24.107/232ac53663/index.php'
+  'http://35.190.155.168/a981c8e758/index.php'
 reqsleep:
    1000   #设置1秒沉睡，因为js渲染新节点会造成页面发生变化，等待js渲染完成是不可能的事，有可能js代码一直改变节点让他永远不完成加载...。固设置超时机制
 sqlinject:

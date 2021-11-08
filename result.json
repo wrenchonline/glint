@@ -1,5 +1,5 @@
 [
-    {
+    [{
         "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
         "method": "POST",
         "headers": {
@@ -12,5 +12,33 @@
         },
         "data": "msg=",
         "source": "XHR"
-    }
+    },{
+        "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
+        "method": "POST",
+        "headers": {
+            "Accept": "*/*",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Cookie": "welcome=1",
+            "DNT":"1",
+            "Referer": "http://35.227.24.107/54313949cf/index.php",
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
+        },
+        "data": "msg=",
+        "source": "XHR"
+    }],[
+        {
+            "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
+            "method": "POST",
+            "headers": {
+                "Accept": "*/*",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "welcome=1",
+                "DNT":"1",
+                "Referer": "http://35.227.24.107/54313949cf/index.php",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
+            },
+            "data": "msg=",
+            "source": "XHR"
+        }
+    ]
 ]

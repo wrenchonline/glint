@@ -12,6 +12,7 @@ import (
 	"time"
 
 	model2 "wenscan/model"
+	"wenscan/util"
 
 	color "github.com/logrusorgru/aurora"
 
@@ -71,13 +72,21 @@ type Spider struct {
 	lock         sync.Mutex
 }
 
+type Eventchanel struct {
+	GroupsId       string    //针对爬虫的时候触发某个js事件因此触发其他Url请求，使用此ID作为同一群组的标识符
+	ButtonCheckUrl chan bool //Button按钮的上下文
+	QueueRep       chan string
+	EventInfo      map[string]bool
+	exit           chan int
+}
+
 type Tab struct {
-	Ctx            *context.Context
-	Cancel         context.CancelFunc
-	NavigateReq    model2.Request
-	ExtraHeaders   map[string]interface{}
-	ResultList     []*model2.Request
-	ButtonCheckUrl bool //Button按钮的上下文
+	Ctx          *context.Context
+	Cancel       context.CancelFunc
+	NavigateReq  model2.Request
+	ExtraHeaders map[string]interface{}
+	ResultList   []*model2.Request
+	Eventchanel  Eventchanel
 	// TopFrameId       string
 	// LoaderID         string
 	// NavNetworkID     string
@@ -198,6 +207,7 @@ func (tab *Tab) AfterLoadedRun() {
 	tab.formSubmitWG.Add(2)
 	// tab.loadedWG.Add(3)
 	// tab.removeLis.Add(1)
+
 	fmt.Println(color.Green("formSubmit start"))
 	go tab.CommitBySubmit()
 	go tab.clickAllButton()
@@ -231,7 +241,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 	chromedp.ListenTarget(*tab.Ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
-		// fmt.Println(reflect.TypeOf(ev))
+		// fmt.Println(color.Yellow(reflect.TypeOf(ev)))
 		switch ev := ev.(type) {
 		case *runtime.EventConsoleAPICalled:
 			for _, arg := range ev.Args {
@@ -245,16 +255,9 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 
 			go func(ctx context.Context, ev *fetch.EventRequestPaused) {
 				var a chromedp.Action
-				// fmt.Println(color.Sprintf("EventRequestPaused FrameID: %s url: %s requestid: %s", color.Red(ev.FrameID), color.Red(ev.Request.URL), color.Red(ev.RequestID)))
-				if strings.HasSuffix(ev.Request.URL, ".css") ||
-					strings.HasSuffix(ev.Request.URL, ".js") ||
-					strings.HasSuffix(ev.Request.URL, ".ico") ||
-					strings.HasSuffix(ev.Request.URL, "#") ||
-					funk.Contains(ev.Request.URL, "js?") ||
-					funk.Contains(ev.Request.URL, "css?") ||
-					funk.Contains(ev.Request.URL, "woff2?") ||
-					funk.Contains(ev.Request.URL, "woff?") ||
-					funk.Contains(ev.Request.URL, tab.NavigateReq.URL.String()) || ev.Request.Method == "POST" {
+				if FilterKey(ev.Request.URL, ForbidenKey) ||
+					ev.Request.URL == tab.NavigateReq.URL.String() ||
+					ev.Request.Method == "POST" {
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
 					fmt.Println("FailRequest:", ev.Request.URL)
@@ -268,21 +271,22 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				req.Method = ev.Request.Method
 				req.Headers = map[string]interface{}{}
 				req.PostData = ev.Request.PostData
-				if !strings.HasSuffix(ev.Request.URL, ".css") &&
-					!strings.HasSuffix(ev.Request.URL, ".js") &&
-					!strings.HasSuffix(ev.Request.URL, ".ico") &&
-					!strings.HasSuffix(ev.Request.URL, "#") &&
-					!funk.Contains(ev.Request.URL, "js?") &&
-					!funk.Contains(ev.Request.URL, "css?") &&
-					!funk.Contains(ev.Request.URL, "woff2?") &&
-					!funk.Contains(ev.Request.URL, "woff?") {
-					if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) || req.Method == "POST" {
-						if tab.ButtonCheckUrl {
-							fmt.Println(color.Magenta("取消"))
-							tab.ButtonCheckUrl = false
+				if !FilterKey(req.URL.String(), ForbidenKey) {
+					if b, ok := tab.Eventchanel.EventInfo["Button"]; ok {
+						if b {
+							tab.Eventchanel.GroupsId =
+								fmt.Sprintf("ButtonDoM-%s", util.RandLetterNumbers(5))
+							req.GroupsId =
+								tab.Eventchanel.GroupsId
+						} else {
+							req.GroupsId =
+								tab.Eventchanel.GroupsId
 						}
-						tab.AddResultRequest(req)
+					} else {
+						req.GroupsId = "Normal"
 					}
+					fmt.Println(color.Red(req.URL.String()))
+					tab.AddResultRequest(req)
 				}
 				if err := chromedp.Run(ctx, a); err != nil {
 					log.Println("ListenTarget error", err)
@@ -294,6 +298,8 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			go tab.dismissDialog()
 		case *page.EventNavigatedWithinDocument:
 			log.Println("EventNavigatedWithinDocument url:", ev.URL)
+		case *page.EventFrameStoppedLoading:
+
 		case *page.EventWindowOpen:
 			log.Println("EventWindowOpen url:", ev.URL)
 			var req model2.Request
@@ -301,13 +307,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			req.URL = &model2.URL{*u}
 			req.Method = "GET"
 			req.Headers = map[string]interface{}{}
-			if !strings.HasSuffix(ev.URL, ".css") &&
-				!strings.HasSuffix(ev.URL, ".js") &&
-				!strings.HasSuffix(ev.URL, ".ico") &&
-				!funk.Contains(ev.URL, "js?") &&
-				!funk.Contains(ev.URL, "css?") &&
-				!funk.Contains(ev.URL, "woff2?") &&
-				!funk.Contains(ev.URL, "woff?") {
+			if !FilterKey(req.URL.String(), ForbidenKey) {
 				if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) {
 					tab.AddResultRequest(req)
 					log.Println("EventWindowOpen Add crawer url:", req)
@@ -408,9 +408,13 @@ func (bro *Spider) Close() {
 func NewTabaObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
 	var tab Tab
 	tab.ExtraHeaders = map[string]interface{}{}
-	tab.Ctx, tab.Cancel = spider.NewTab(20 * time.Second)
+	tab.Ctx, tab.Cancel = spider.NewTab(time.Minute)
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
+	tab.Eventchanel.EventInfo = make(map[string]bool)
+	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
+	tab.Eventchanel.QueueRep = make(chan string)
+	tab.Eventchanel.exit = make(chan int)
 	tab.ListenTarget(nil)
 	return &tab, nil
 }
@@ -418,6 +422,9 @@ func NewTabaObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
 //Crawler 爬取链接
 func (tab *Tab) Crawler(extends interface{}) error {
 	defer tab.Cancel()
+	defer func() { tab.Eventchanel.exit <- 1 }()
+
+	go tab.Watch()
 	fmt.Println(color.Green(tab.NavigateReq.URL.String()))
 	err := chromedp.Run(*tab.Ctx,
 		runtime.Enable(),
@@ -444,13 +451,11 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	// }()
 
 	tab.WG.Wait()
-
 	fmt.Println(color.Green("collectLinks start"))
 	tab.collectLinkWG.Add(3)
 	go tab.CollectLink()
 	tab.collectLinkWG.Wait()
 	fmt.Println(color.Green("collectLinks end"))
-
 	return nil
 }
 
@@ -727,39 +732,15 @@ func (tab *Tab) clickAllButton() {
 		return
 	}
 
-	// for _, v := range ButtonNodes {
-	// 	s := []cdp.NodeID{v.NodeID}
-	// 	chromedp.Click(s, chromedp.ByNodeID).Do(ctx)
-	// }
-
-	// var timestamp int
 	for _, node := range ButtonNodes {
+		tab.Eventchanel.ButtonCheckUrl <- true
+		<-tab.Eventchanel.QueueRep
 		_ = tab.EvaluateWithNode(FormNodeClickJS, node)
-		tab.lock.Lock()
-		tab.ButtonCheckUrl = true
-		// 获取所有的button标签
-		// btnNodeIDs, bErr := tab.GetNodeIDs(`button`)
-		// if bErr != nil || len(btnNodeIDs) == 0 {
-		// 	fmt.Println(color.Red("clickAllButton: get button element err"))
-		// 	if bErr != nil {
-		// 		fmt.Println(color.Red(bErr))
-		// 	}
-		// 	return
-		// }
-		// tCtx, cancel1 := context.WithTimeout(ctx, time.Second*2)
-		// defer cancel1()
-		// _ = chromedp.Click(btnNodeIDs, chromedp.ByNodeID).Do(tCtx)
-		// 使用JS的click方法进行点击
-		// var btnNodes []*cdp.Node
-		// tCtx2, cancel2 := context.WithTimeout(ctx, time.Second*2)
-		// defer cancel2()
-		// err := chromedp.Nodes(btnNodeIDs, &btnNodes, chromedp.ByNodeID).Do(tCtx2)
-		// if err != nil {
-		// 	return
-		// }
-		tab.lock.Unlock()
 		//使用sleep顺序执行
 		time.Sleep(time.Millisecond * 500)
+		tab.Eventchanel.ButtonCheckUrl <- false
+		<-tab.Eventchanel.QueueRep
+		time.Sleep(time.Millisecond * 500)
 	}
-
+	delete(tab.Eventchanel.EventInfo, "Button")
 }

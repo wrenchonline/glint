@@ -25,11 +25,14 @@ type JsonUrl struct {
 	Source  string            `json:"source"`
 }
 
-// type headers struct {
-// 	Cookie    string `json:"Cookie"`
-// 	Referer   string `json:"Referer"`
-// 	UserAgent string `json:"User-Agent"`
-// }
+type Groups struct {
+	GroupsId string `json:"groupsid"`
+	Json     []JsonUrl
+}
+
+type CrawURL struct {
+	Groups string `json:"groups"`
+}
 
 type Attribute struct {
 	Key string

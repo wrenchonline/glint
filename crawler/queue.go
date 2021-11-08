@@ -1,17 +1,36 @@
 package crawler
 
-import "context"
+import (
+	"fmt"
+)
 
-func (tab *Tab) watch(ctx context.Context, typename string) {
+func (tab *Tab) Watch() {
+	var (
+		b  bool
+		bq bool
+	)
+
 	for {
 		select {
-		case <-ctx.Done():
-			if typename == "Button" {
-				// tab.ButtonCancel = nil
+		case b = <-tab.Eventchanel.ButtonCheckUrl:
+			tab.lock.Lock()
+			if b {
+				tab.Eventchanel.EventInfo["Button"] = true
+				tab.Eventchanel.QueueRep <- "checkButton"
+			} else {
+				tab.Eventchanel.EventInfo["Button"] = false
+				tab.Eventchanel.QueueRep <- "checkButton"
 			}
-			return
-		default:
+			tab.lock.Unlock()
+		case <-tab.Eventchanel.exit:
+			bq = true
+			goto end
+		}
 
+	end:
+		if bq {
+			fmt.Println("Watch Thread Exit")
+			break
 		}
 	}
 }
