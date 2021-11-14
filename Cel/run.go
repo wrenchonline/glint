@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	log "wenscan/Log"
+	log "wenscan/log"
 	"wenscan/util"
 )
 

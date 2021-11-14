@@ -1,18 +1,35 @@
-Xss:
-  [
-    {
-    Payload: "<ScRiPt>%s</sCrIpT>",
-    CheckTag: "ScRiPt",
-    CheckType: "Value",
-    },
-    {
-    Payload: "';alert(%s);//",
-    CheckTag: "",
-    CheckType: "Dialog",
-    },
-    {
-      Payload: " <img src/onerror=alert(1)>",
-      CheckTag: "img",
+xss:
+  html:
+    [
+      {
+      PayLoad: "<ScRiPt>'%s'</sCrIpT>",
+      CheckTag: "script",
+      CheckType: "Value",
+      },
+      {
+        PayLoad: "<img src/onerror='%s'/>",
+        CheckTag: "img",
+        CheckType: "Value",
+      },
+    ]
+  attibute:
+    [
+      {
+        PayLoad: "'><%s>//",
+        CheckTag: "%s",
+        CheckType: "Value",
+      }, 
+    ]
+  script:
+    [
+      {
+      PayLoad: "javascript:console.log('%s')",
+      CheckTag: "",
+      CheckType: "Console",
+      },
+      {
+      PayLoad: "';alert(%s);//",
+      CheckTag: "",
       CheckType: "Dialog",
-    }
-  ]
+      },
+    ]

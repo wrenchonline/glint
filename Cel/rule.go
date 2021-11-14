@@ -2,7 +2,7 @@ package cel
 
 import (
 	"fmt"
-	log "wenscan/Log"
+	log "wenscan/log"
 	"wenscan/proto"
 	"wenscan/reverse"
 	"wenscan/util"

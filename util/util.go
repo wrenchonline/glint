@@ -3,7 +3,7 @@ package util
 import (
 	"crypto/tls"
 	"os"
-	log "wenscan/Log"
+	log "wenscan/log"
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"
@@ -42,4 +42,14 @@ func IsFileExist(path string) bool {
 		return false
 	}
 	return true
+}
+
+func MergeMap(mObj ...map[int]interface{}) map[int]interface{} {
+	newObj := map[int]interface{}{}
+	for _, m := range mObj {
+		for k, v := range m {
+			newObj[k] = v
+		}
+	}
+	return newObj
 }

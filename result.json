@@ -1,44 +1,25 @@
-[
-    [{
-        "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
-        "method": "POST",
-        "headers": {
-            "Accept": "*/*",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Cookie": "welcome=1",
-            "DNT":"1",
-            "Referer": "http://35.227.24.107/54313949cf/index.php",
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
-        },
-        "data": "msg=",
-        "source": "XHR"
-    },{
-        "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
-        "method": "POST",
-        "headers": {
-            "Accept": "*/*",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Cookie": "welcome=1",
-            "DNT":"1",
-            "Referer": "http://35.227.24.107/54313949cf/index.php",
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
-        },
-        "data": "msg=",
-        "source": "XHR"
-    }],[
+{
+    "ButtonDoM-WpfTy": [
         {
-            "url": "http://35.227.24.107/54313949cf/api/action.php?act=comment",
+            "url": "http://35.227.24.107/68fba0189f/api/action.php?act=report",
             "method": "POST",
             "headers": {
-                "Accept": "*/*",
-                "Content-Type": "application/x-www-form-urlencoded",
                 "Cookie": "welcome=1",
-                "DNT":"1",
-                "Referer": "http://35.227.24.107/54313949cf/index.php",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
+                "Referer": "http://35.227.24.107/68fba0189f/index.php",
+                "Accept-Encoding": "gzip, deflate",
+                "Content-Type":"application/x-www-form-urlencoded"
             },
-            "data": "msg=",
+            "data": "username=\u0026msg=",
             "source": "XHR"
+        },
+        {
+            "url": "http://35.227.24.107/68fba0189f/index.php",
+            "method": "GET",
+            "headers": {
+                "Cookie": "welcome=1"
+            },
+            "data": "",
+            "source": "Document"
         }
     ]
-]
+}

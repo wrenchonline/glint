@@ -30,7 +30,7 @@ func SingleVersionCompare(verCurrent string, verVul string) (int, error) {
 		if partCurrent == partVul {
 			continue
 		} else {
-			return partVul-partCurrent, nil
+			return partVul - partCurrent, nil
 		}
 	}
 	return 0, nil

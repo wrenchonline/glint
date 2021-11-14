@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	log "wenscan/Log"
+	log "wenscan/log"
 	"wenscan/proto"
 	reverse2 "wenscan/reverse"
 	"wenscan/util"

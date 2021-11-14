@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	log "wenscan/Log"
+	log "wenscan/log"
 	"wenscan/proto"
 	"wenscan/util"
 

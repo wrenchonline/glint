@@ -16,7 +16,7 @@ import (
 
 	color "github.com/logrusorgru/aurora"
 
-	//log "wenscan/Log"
+	//log "wenscan/log"
 
 	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/cdp"
@@ -36,8 +36,17 @@ const (
 		var r = a[0].getBoundingClientRect();
 		return r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth;
 	})($x('%s'))`
-	level         = 3 //网页抓取深度页数
+	level = 3 //网页抓取深度页数
+
 	sethreftarget = `atags = document.getElementsByTagName('a');for(i=0;i<=atags.length;i++) { if(atags[i]){atags[i].setAttribute('target', '')}}`
+)
+
+type GroupsType string
+
+const (
+	GroupsButton GroupsType = "Button"
+	GroupsNormal GroupsType = "Normal"
+	GroupsEmtry  GroupsType = ""
 )
 
 // type chromecontext struct {
@@ -257,7 +266,8 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				var a chromedp.Action
 				if FilterKey(ev.Request.URL, ForbidenKey) ||
 					ev.Request.URL == tab.NavigateReq.URL.String() ||
-					ev.Request.Method == "POST" {
+					ev.ResourceType == network.ResourceTypeXHR {
+					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
 					fmt.Println("FailRequest:", ev.Request.URL)
@@ -271,6 +281,10 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				req.Method = ev.Request.Method
 				req.Headers = map[string]interface{}{}
 				req.PostData = ev.Request.PostData
+				// 修正Referer
+				req.Headers["Referer"] = ev.Request.Headers["Referer"]
+				req.Source = string(ev.ResourceType)
+
 				if !FilterKey(req.URL.String(), ForbidenKey) {
 					if b, ok := tab.Eventchanel.EventInfo["Button"]; ok {
 						if b {
@@ -318,10 +332,16 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 		case *page.EventDocumentOpened:
 			log.Println("EventDocumentOpened url:", ev.Frame.URL)
 		case *network.EventRequestWillBeSentExtraInfo:
+		case *network.EventResponseReceived:
+			if ev.Type == "XHR" {
+
+			}
 		case *network.EventRequestWillBeSent:
 			//fmt.Println(color.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", color.Red(ev.Request.URL), color.Red(ev.RequestID)))
 			//重定向
+
 			request := ev
+
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
 				fmt.Printf("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
@@ -363,7 +383,7 @@ func (spider *Spider) Init() {
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("block-new-web-contents", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
+		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
 	ExecAllocator := append(chromedp.DefaultExecAllocatorOptions[:], options...)
@@ -405,7 +425,7 @@ func (bro *Spider) Close() {
 	(*bro.Cancel)()
 }
 
-func NewTabaObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
+func NewTabObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
 	var tab Tab
 	tab.ExtraHeaders = map[string]interface{}{}
 	tab.Ctx, tab.Cancel = spider.NewTab(time.Minute)
@@ -684,7 +704,7 @@ func (tab *Tab) AddResultUrl(method string, _url string, source string) {
 	}
 	req := model2.GetRequest(method, url, option)
 	req.Source = source
-
+	req.GroupsId = "CollectLink"
 	tab.lock.Lock()
 	tab.ResultList = append(tab.ResultList, &req)
 	tab.lock.Unlock()

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	log "wenscan/Log"
+	log "wenscan/log"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
@@ -18,20 +18,11 @@ import (
 )
 
 type JsonUrl struct {
-	Url     string            `json:"url"`
-	MetHod  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Data    string            `json:"data"` //post数据
-	Source  string            `json:"source"`
-}
-
-type Groups struct {
-	GroupsId string `json:"groupsid"`
-	Json     []JsonUrl
-}
-
-type CrawURL struct {
-	Groups string `json:"groups"`
+	Url     string                 `json:"url"`
+	MetHod  string                 `json:"method"`
+	Headers map[string]interface{} `json:"headers"`
+	Data    string                 `json:"data"` //post数据
+	Source  string                 `json:"source"`
 }
 
 type Attribute struct {
@@ -114,7 +105,7 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 	//['url', 'id', 'myfunc', 'strs', 'str', 'i', 'strSub','testName']
 	tokenizer.Ascend(nil, func(item interface{}) bool {
 		kvi := item.(*Node)
-		log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
+		// log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
 		if kvi.Tagname == "input" {
 			for _, Attribute := range *kvi.Attributes {
 				if Attribute.Key == "name" {
@@ -232,7 +223,7 @@ func (parser *Parser) GetTokenizer() []Node {
 	var tokens []Node
 	parser.tokenizer.Ascend(nil, func(item interface{}) bool {
 		kvi := item.(*Node)
-		log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
+		//log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
 		tokens = append(tokens, *kvi)
 		return true
 	})
@@ -250,12 +241,20 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	}
 	parse.HttpParser(body)
 	tokens := parse.GetTokenizer()
+	// fmt.Println(aurora.Cyan(tokens))
 	if len(tokens) == 0 {
 		log.Error("SearchInputInResponse tokens 没有发现节点")
 		return Occurences
 	}
 	for _, token := range tokens {
 		tagname := token.Tagname
+		// if token.Tagname == "img" {
+		// 	for _, v := range *token.Attributes {
+		// 		if v.Key == "onerror" {
+		// 			fmt.Println("find")
+		// 		}
+		// 	}
+		// }
 		content := token.Content
 		attibutes := token.Attributes
 		if input == tagname {
@@ -273,7 +272,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 				for _, attibute := range *attibutes {
 					//log.Info("attibute.Val: %s", attibute.Val)
 					if input == attibute.Key {
-						detail := Node{Tagname: "attibute", Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+						detail := Node{Tagname: tagname, Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 						Occurences = append(
 							Occurences,
 							Occurence{
@@ -282,7 +281,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 								Details:  detail})
 						//使用funk.Contains是因为有可能是Val是脚本
 					} else if funk.Contains(attibute.Val, input) {
-						detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+						detail := Node{Tagname: tagname, Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 						Occurences = append(
 							Occurences,
 							Occurence{
@@ -295,7 +294,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 		} else {
 			for _, attibute := range *attibutes {
 				if input == attibute.Key {
-					detail := Node{Tagname: "attibute", Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+					detail := Node{Tagname: tagname, Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 					Occurences = append(
 						Occurences,
 						Occurence{
@@ -303,7 +302,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 							Position: Index,
 							Details:  detail})
 				} else if funk.Contains(attibute.Val, input) {
-					detail := Node{Tagname: "attibute", Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
+					detail := Node{Tagname: tagname, Content: "val", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 					Occurences = append(
 						Occurences,
 						Occurence{

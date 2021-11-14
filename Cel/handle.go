@@ -2,7 +2,7 @@ package cel
 
 import (
 	"strconv"
-	log "wenscan/Log"
+	log "wenscan/log"
 )
 
 type HandlerFunc func(ctx controllerContext)

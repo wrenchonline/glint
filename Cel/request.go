@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	log "wenscan/Log"
+	log "wenscan/log"
 	"wenscan/proto"
 	"wenscan/util"
 
