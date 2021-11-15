@@ -25,7 +25,7 @@ func TestXSS(t *testing.T) {
 	log.DebugEnable(false)
 	Spider := http.Spider{}
 	Spider.Init()
-	// defer Spider.Close()
+	defer Spider.Close()
 
 	jsonFile, err := os.Open("result.json")
 	if err != nil {

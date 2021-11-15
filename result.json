@@ -1,11 +1,11 @@
 {
     "ButtonDoM-WpfTy": [
         {
-            "url": "http://35.227.24.107/68fba0189f/api/action.php?act=report",
+            "url": "http://35.227.24.107/0ae504b518/api/action.php?act=report",
             "method": "POST",
             "headers": {
                 "Cookie": "welcome=1",
-                "Referer": "http://35.227.24.107/68fba0189f/index.php",
+                "Referer": "http://35.227.24.107/0ae504b518/index.php",
                 "Accept-Encoding": "gzip, deflate",
                 "Content-Type":"application/x-www-form-urlencoded"
             },
@@ -13,7 +13,7 @@
             "source": "XHR"
         },
         {
-            "url": "http://35.227.24.107/68fba0189f/index.php",
+            "url": "http://35.227.24.107/0ae504b518/index.php",
             "method": "GET",
             "headers": {
                 "Cookie": "welcome=1"

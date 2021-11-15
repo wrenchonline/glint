@@ -1,4 +1,4 @@
-package Http
+package http
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("allow-running-insecure-content", true),
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
-		// chromedp.Flag("blink-settings", "imagesEnabled=false"),
+		chromedp.Flag("blink-settings", "imagesEnabled=false"),
 		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
@@ -78,16 +78,6 @@ func (spider *Spider) Init() error {
 		// fmt.Println(Yellow(reflect.TypeOf(ev)))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
-			// go func() {
-			// 	var res string
-			// 	c := chromedp.FromContext(ctx)
-			// 	ctx := cdp.WithExecutor(ctx, c.Target)
-			// 	// time.Sleep(time.Second * 2)
-			// 	// node, _ := dom.GetDocument().Do(ctx)
-			// 	// res, _ = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			// 	chromedp.OuterHTML("html", &res, chromedp.ByQuery).Do(ctx)
-			// 	spider.Source <- res
-			// }()
 		case *runtime.EventConsoleAPICalled:
 			fmt.Printf("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
@@ -148,30 +138,21 @@ func (spider *Spider) Init() error {
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (spider *Spider) Sendreq() (string, error) {
-
-	// var mutex sync.Mutex
-	// mutex.Lock()
+	// newTabCtx, _ := chromedp.NewContext(*spider.Ctx)
+	// c := chromedp.FromContext(newTabCtx)
+	// ctx := cdp.WithExecutor(newTabCtx, c.Target)
+	// timeoutCtx, _ := context.WithTimeout(ctx, 30*time.Second)
+	// defer cancel()
 	var res string
 	err := chromedp.Run(
 		*spider.Ctx,
 		chromedp.Navigate(spider.Url.String()),
-		// chromedp.Sleep(time.Second),
-		// chromedp.ActionFunc(func(ctx context.Context) error {
-		// 	node, err := dom.GetDocument().Do(ctx)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	res, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-		// 	return err
-		// }),
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
 		log.Error("error:", err)
 	}
-	// res := <-spider.Source
 	res = html.UnescapeString(res)
-	// fmt.Println(Red(res))
 	return res, err
 }
 
