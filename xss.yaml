@@ -11,6 +11,11 @@ xss:
         CheckTag: "img",
         CheckType: "Value",
       },
+      {
+        PayLoad: "<BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=%s>",
+        CheckTag: "body",
+        CheckType: "Value",
+      },
     ]
   attibute:
     [
