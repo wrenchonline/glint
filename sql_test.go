@@ -8,13 +8,13 @@ import (
 	"os"
 	"testing"
 	ast "wenscan/ast"
+	brohttp "wenscan/brohttp"
 	cf "wenscan/config"
-	http "wenscan/http"
 	sql "wenscan/sql"
 )
 
 func TestSqlerror(t *testing.T) {
-	Spider := http.Spider{}
+	Spider := brohttp.Spider{}
 	Spider.Init()
 	defer Spider.Close()
 	c := cf.Conf{}

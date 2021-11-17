@@ -3,16 +3,15 @@ package xss
 import (
 	"bytes"
 	"fmt"
+	aurora "github.com/logrusorgru/aurora"
 	"math/rand"
 	"net/url"
 	"strings"
 	"time"
 	ast "wenscan/ast"
-	http "wenscan/http"
+	brohttp "wenscan/brohttp"
 	log "wenscan/log"
 	"wenscan/payload"
-
-	aurora "github.com/logrusorgru/aurora"
 
 	"github.com/thoas/go-funk"
 )
@@ -428,7 +427,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	}
 	//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
 	if methods == CheckConsoleLog {
-		ev := extension.(*http.Spider)
+		ev := extension.(*brohttp.Spider)
 		select {
 		case responseS := <-ev.Responses:
 			for _, response := range responseS {
@@ -448,7 +447,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	return VulOK
 }
 
-func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *http.Spider) bool {
+func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) bool {
 	g := new(Generator)
 	var htmls []string
 	payloadinfo := make(map[string]stf)
@@ -459,7 +458,7 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *http.S
 	for _, v := range ReponseInfo {
 		vlen := len(v)
 		for i := 0; i < vlen; i++ {
-			urlocc := v[i].(http.UrlOCC)
+			urlocc := v[i].(brohttp.UrlOCC)
 			nodes := urlocc.OCC
 			if len(nodes) != 0 {
 				funk.Map(nodes, func(n ast.Occurence) interface{} {
@@ -488,9 +487,9 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *http.S
 		for _, v := range ReponseInfo {
 			vlen := len(v)
 			for i := 0; i < vlen; i++ {
-				urlocc := v[i].(http.UrlOCC)
+				urlocc := v[i].(brohttp.UrlOCC)
 				spider.CopyRequest(urlocc.Request)
-				response, _ := spider.CheckPayloadNormal(payload)
+				response, _ := spider.CheckPayloadLocation(payload)
 				htmls = append(htmls, response...)
 			}
 		}

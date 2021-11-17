@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 	ast "wenscan/ast"
-	http "wenscan/http"
+	"wenscan/brohttp"
 )
 
 var Notes = []string{
@@ -69,7 +69,7 @@ func Generatepayloadpasswaf() {
 
 }
 
-func Validationsqlerror(Spider *http.Spider) (map[string]string, error) {
+func Validationsqlerror(Spider *brohttp.Spider) (map[string]string, error) {
 	result := make(map[string]string)
 	if len(Spider.Url.String()) == 0 {
 		panic("request url is emtry")
@@ -115,7 +115,7 @@ func Validationsqlerror(Spider *http.Spider) (map[string]string, error) {
 	return result, nil
 }
 
-func ValidationDigit(Spider *http.Spider) (map[string]string, error) {
+func ValidationDigit(Spider *brohttp.Spider) (map[string]string, error) {
 	result := make(map[string]string)
 	if len(Spider.Url.String()) == 0 {
 		panic("request url is emtry")
@@ -195,7 +195,7 @@ func ValidationDigit(Spider *http.Spider) (map[string]string, error) {
 }
 
 //ValidationChar 验证字符型sql漏洞
-func ValidationChar(Spider *http.Spider) (map[string]string, error) {
+func ValidationChar(Spider *brohttp.Spider) (map[string]string, error) {
 	result := make(map[string]string)
 	if len(Spider.Url.String()) == 0 {
 		panic("request url is emtry")
@@ -280,7 +280,7 @@ func ValidationChar(Spider *http.Spider) (map[string]string, error) {
 }
 
 //GetReqLensByHtml 二度获取请求的长度
-func GetReqLensByHtml(Spider *http.Spider, JsonUrls *ast.JsonUrl) error {
+func GetReqLensByHtml(Spider *brohttp.Spider, JsonUrls *ast.JsonUrl) error {
 	if len(Spider.Url.String()) == 0 {
 		panic("request url is emtry")
 	}

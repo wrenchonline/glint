@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 	"wenscan/ast"
-	http "wenscan/http"
+	brohttp "wenscan/brohttp"
 	log "wenscan/log"
 
 	"github.com/logrusorgru/aurora"
@@ -13,7 +13,7 @@ import (
 
 func TestCheckPayloadNormal(t *testing.T) {
 	var err error
-	Spider := http.Spider{}
+	Spider := brohttp.Spider{}
 	log.DebugEnable(true)
 	Spider.Init()
 	defer Spider.Close()
@@ -24,13 +24,13 @@ func TestCheckPayloadNormal(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	playload := "67pSvN6I"
-	htmls, _ := Spider.CheckPayloadNormal(playload)
+	htmls, _ := Spider.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		ast.SearchInputInResponse(playload, v)
 		// fmt.Println(aurora.Red(OCC))
 	}
 
-	htmls, _ = Spider.CheckPayloadNormal(playload)
+	htmls, _ = Spider.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		OCC := ast.SearchInputInResponse(playload, v)
 		fmt.Println(aurora.Red(OCC))

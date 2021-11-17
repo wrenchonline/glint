@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 	"time"
-	xss "wenscan/Xss"
 	"wenscan/ast"
 	log "wenscan/log"
+	xss "wenscan/xss"
 
-	http "wenscan/http"
+	brohttp "wenscan/brohttp"
 
 	"github.com/k0kubun/go-ansi"
 	. "github.com/logrusorgru/aurora"
@@ -23,7 +23,7 @@ import (
 
 func TestXSS(t *testing.T) {
 	log.DebugEnable(false)
-	Spider := http.Spider{}
+	Spider := brohttp.Spider{}
 	Spider.Init()
 	defer Spider.Close()
 
@@ -48,7 +48,7 @@ func TestXSS(t *testing.T) {
 			resources := make([]map[int]interface{}, len(jsoninfo))
 			for _, Urlinfo := range jsoninfo {
 				Spider.CopyRequest(Urlinfo)
-				b, Occ := Spider.CheckRandOnHtml(flag)
+				b, Occ := Spider.CheckRandOnHtmlS(flag)
 				if b {
 					bflag = true
 				}
@@ -66,7 +66,7 @@ func TestXSS(t *testing.T) {
 
 func TestURL(t *testing.T) {
 	log.DebugEnable(false)
-	Spider := http.Spider{}
+	Spider := brohttp.Spider{}
 	Spider.Init()
 	Headers := make(map[string]interface{})
 	Headers["Cookies"] = "welcome=1"

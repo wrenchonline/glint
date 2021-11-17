@@ -1,4 +1,4 @@
-package http
+package brohttp
 
 import (
 	"context"
@@ -250,7 +250,7 @@ func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname str
 	return nil
 }
 
-func (spider *Spider) CheckPayloadNormal(newpayload string) ([]string, error) {
+func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) {
 	var htmls []string
 	if spider.ReqMode == "GET" {
 		params, err := spider.GetRequrlparam()
@@ -293,10 +293,10 @@ func (spider *Spider) CheckPayloadNormal(newpayload string) ([]string, error) {
 	}
 }
 
-func (spider *Spider) CheckRandOnHtml(playload string) (bool, map[int]interface{}) {
+func (spider *Spider) CheckRandOnHtmlS(playload string) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
-	htmls, _ := spider.CheckPayloadNormal(playload)
+	htmls, _ := spider.CheckPayloadLocation(playload)
 	var bOnhtml bool = false
 	for i, html := range htmls {
 		Node := ast.SearchInputInResponse(playload, html)
@@ -323,7 +323,6 @@ func (spider *Spider) CopyRequest(data interface{}) {
 		spider.PostData = []byte(v.Data)
 		spider.Headers = v.Headers
 	}
-
 }
 
 func (spider *Spider) ReqtoJson() ast.JsonUrl {
