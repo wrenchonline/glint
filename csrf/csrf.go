@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"wenscan/config"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/valyala/fasthttp"
 )
 
@@ -32,7 +33,7 @@ func Origin(k string, v []interface{}) error {
 		}
 		b2 := resp.Body()
 		if len(b1) == len(b2) {
-			fmt.Println("Heuristics reveal endpoint might be VULNERABLE to Origin Based CSRFs...")
+			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Based CSRFs..."))
 		}
 	}
 	return nil
@@ -63,7 +64,7 @@ func Referer(k string, v []interface{}) error {
 		}
 		b2 := resp.Body()
 		if len(b1) == len(b2) {
-			fmt.Println("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")
+			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))
 		}
 	}
 	return nil
