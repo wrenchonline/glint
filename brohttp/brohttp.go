@@ -53,7 +53,7 @@ func (spider *Spider) Init() error {
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
@@ -64,7 +64,7 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
+		chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
@@ -93,25 +93,30 @@ func (spider *Spider) Init() error {
 			go func() {
 				c := chromedp.FromContext(ctx)
 				ctx := cdp.WithExecutor(ctx, c.Target)
-				var req *fetch.ContinueRequestParams
+				// var req *fetch.ContinueRequestParams
+				req := fetch.ContinueRequest(ev.RequestID)
+				// req.URL = spider.Url.String()
+				req.Headers = []*fetch.HeaderEntry{}
+				//设置文件头
+				for key, value := range spider.Headers {
+					req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+				}
 				if spider.ReqMode == "POST" {
-					req = fetch.ContinueRequest(ev.RequestID)
-					req.URL = spider.Url.String()
-					req.Headers = []*fetch.HeaderEntry{}
-					//设置文件头
-					for key, value := range spider.Headers {
-						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
-					}
 					req.Method = "POST"
 					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
-				} else {
-					req = fetch.ContinueRequest(ev.RequestID)
 				}
 				if err := req.Do(ctx); err != nil {
 					log.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
 			}()
 		case *network.EventRequestWillBeSent:
+			//fmt.Println(color.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", color.Red(ev.Request.URL), color.Red(ev.RequestID)))
+			//重定向
+			request := ev
+			if ev.RedirectResponse != nil {
+				//url = request.DocumentURL
+				fmt.Printf("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
+			}
 		case *network.EventResponseReceived:
 		case *page.EventJavascriptDialogOpening:
 			fmt.Printf("* EventJavascriptDialogOpening.%s call:\n", ev.Type)
@@ -150,7 +155,7 @@ func (spider *Spider) Sendreq() (string, error) {
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
-		log.Error("error:", err)
+		log.Error("Sendreq error:", err)
 	}
 	res = html.UnescapeString(res)
 	return res, err
@@ -257,14 +262,23 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		if err != nil {
 			panic(err.Error())
 		}
-		for param, _ := range params {
-			spider.PayloadHandle(newpayload, "GET", param)
+		if spider.Headers["Referer"] == spider.Url.String() {
 			html, err := spider.Sendreq()
 			if err != nil {
 				return nil, err
 			}
 			htmls = append(htmls, html)
+		} else {
+			for param, _ := range params {
+				spider.PayloadHandle(newpayload, "GET", param)
+				html, err := spider.Sendreq()
+				if err != nil {
+					return nil, err
+				}
+				htmls = append(htmls, html)
+			}
 		}
+
 		if len(params) == 0 {
 			html, err := spider.Sendreq()
 			if err != nil {
@@ -277,10 +291,15 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		PostData := spider.PostData
 		params := strings.Split(string(PostData), "&")
 		var newpayload1 string
+
 		for i, _ := range params {
-			newpayload := params[i] + newpayload
-			newpayload1 = strings.ReplaceAll(string(PostData), params[i], newpayload)
-			PostData = []byte(newpayload1)
+			// k := strings.Split(string(params[i]), "=")[0]
+			v := strings.Split(string(params[i]), "=")[1]
+			if v == "" || len(v) == 8 { //8 是payload得长度
+				newpayload := params[i] + newpayload
+				newpayload1 = strings.ReplaceAll(string(PostData), params[i], newpayload)
+				PostData = []byte(newpayload1)
+			}
 		}
 		spider.PostData = PostData
 		spider.PayloadHandle(newpayload1, "POST", "")

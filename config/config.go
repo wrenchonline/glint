@@ -68,7 +68,7 @@ func ReadConf(file string, data *map[string][]interface{}) error {
 
 type CrawCallback func(k string, v []interface{}) error
 
-func HandleConf(data *map[string][]interface{}, callback CrawCallback) interface{} {
+func HandleConf(data map[string][]interface{}, callback CrawCallback) interface{} {
 	errlist := funk.Map(data, func(k string, v []interface{}) error {
 		err := callback(k, v)
 		return err

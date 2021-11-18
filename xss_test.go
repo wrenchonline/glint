@@ -48,6 +48,23 @@ func TestXSS(t *testing.T) {
 			resources := make([]map[int]interface{}, len(jsoninfo))
 			for _, Urlinfo := range jsoninfo {
 				Spider.CopyRequest(Urlinfo)
+				println(Spider.Url.String())
+				b, Occ := Spider.CheckRandOnHtmlS(flag)
+				if b {
+					bflag = true
+				}
+				resources = append(resources, Occ)
+			}
+			if !bflag {
+				return nil
+			}
+			xss.CheckXss(resources, flag, &Spider)
+		} else {
+			flag := funk.RandomString(8)
+			bflag := false
+			resources := make([]map[int]interface{}, len(jsoninfo))
+			for _, Urlinfo := range jsoninfo {
+				Spider.CopyRequest(Urlinfo)
 				b, Occ := Spider.CheckRandOnHtmlS(flag)
 				if b {
 					bflag = true

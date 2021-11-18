@@ -1,0 +1,27 @@
+{
+    "": [
+        {
+            "url": "http://www.rongji.com/wSearch.sp?act=search\u0026siteId=0008\u0026q=%E8%AF%B7%E8%BE%93%E5%85%A5%E5%85%B3%E9%94%AE%E5%AD%97",
+            "method": "GET",
+            "headers": {
+                "Accept-Encoding": "gzip, deflate",
+                "Cookie": "welcome=1"
+            },
+            "data": "",
+            "source": ""
+        }
+    ],
+    "Normal": [
+        {
+            "url": "http://www.rongji.com/",
+            "method": "GET",
+            "headers": {
+                "Accept-Encoding": "gzip, deflate",
+                "Cookie": "welcome=1",
+                "Referer": null
+            },
+            "data": "",
+            "source": "Document"
+        }
+    ]
+}

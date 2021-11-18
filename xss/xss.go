@@ -3,7 +3,6 @@ package xss
 import (
 	"bytes"
 	"fmt"
-	aurora "github.com/logrusorgru/aurora"
 	"math/rand"
 	"net/url"
 	"strings"
@@ -12,6 +11,8 @@ import (
 	brohttp "wenscan/brohttp"
 	log "wenscan/log"
 	"wenscan/payload"
+
+	aurora "github.com/logrusorgru/aurora"
 
 	"github.com/thoas/go-funk"
 )
@@ -232,40 +233,45 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 	} else if Comment == Tagmode {
 		g.CopyPayLoadtoXSS(payloaddata, "comment", nil)
 	} else if Attibute == Tagmode {
-		Occurence := extension.(ast.Occurence)
-		if funk.Contains(Occurence.Type, "key") {
-			g.CopyPayLoadtoXSS(payloaddata, "html", nil)
-		} else {
-			//替换'<'和'>'为 url 编码
-			if ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "srcdoc", false); ok {
-				g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
-					Lstr := strings.Replace(payload, "<", "%26lt;", -1)
-					Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
-					return Rstr
-				})
-			}
-			//处理链接属性
-			ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "href", false)
-			ok1, _ := CheckHtmlNodeAttributes(Occurence, "val", flag, false)
-			if ok && ok1 {
-				g.CopyPayLoadtoXSS(payloaddata, "script", func(payload string) string {
-					Lstr := strings.Replace(payload, "<", "%26lt;", -1)
-					Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
-					return Rstr
-				})
-			}
-			//处理onerror等on开头的属性情况
-			if ok, Kv := CheckHtmlNodeAttributes(Occurence, "key", "on", true); ok {
-				script := Kv.V.String()
-				payload, err := ast.AnalyseJSFuncByFlag(flag, script)
-				if err != nil {
-					return err
+		Occurences := extension.([]ast.Occurence)
+		for _, Occurence := range Occurences {
+			if funk.Contains(Occurence.Type, "key") {
+				g.CopyPayLoadtoXSS(payloaddata, "html", nil)
+			} else {
+				//替换'<'和'>'为 url 编码
+				if ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "srcdoc", false); ok {
+					g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
+						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
+						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
+						return Rstr
+					})
 				}
-				log.Info("Attributes generator payload:%s", payload)
-				g.words = append(g.words, payload)
-				g.mapmode(CheckConsoleLog, "", false)
+				//处理链接属性
+				ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "href", false)
+				ok1, _ := CheckHtmlNodeAttributes(Occurence, "val", flag, false)
+				if ok && ok1 {
+					g.CopyPayLoadtoXSS(payloaddata, "script", func(payload string) string {
+						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
+						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
+						return Rstr
+					})
+				}
+				//处理onerror等on开头的属性情况
+				if ok, Kv := CheckHtmlNodeAttributes(Occurence, "key", "on", true); ok {
+					script := Kv.V.String()
+					payload, err := ast.AnalyseJSFuncByFlag(flag, script)
+					if err != nil {
+						return err
+					}
+					log.Info("Attributes generator payload:%s", payload)
+					g.words = append(g.words, payload)
+					g.mapmode(CheckConsoleLog, "", false)
+				}
+				g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
+					Rstr := `'">` + payload
+					return Rstr
+				})
 			}
-
 		}
 
 	} else if Script == Tagmode {
@@ -488,6 +494,7 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohtt
 			vlen := len(v)
 			for i := 0; i < vlen; i++ {
 				urlocc := v[i].(brohttp.UrlOCC)
+				// urlocc.Request.Data = payload
 				spider.CopyRequest(urlocc.Request)
 				response, _ := spider.CheckPayloadLocation(payload)
 				htmls = append(htmls, response...)
