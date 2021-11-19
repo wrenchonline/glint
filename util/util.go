@@ -1,7 +1,9 @@
 package util
 
 import (
+	"crypto/md5"
 	"crypto/tls"
+	"encoding/hex"
 	"os"
 	log "wenscan/log"
 
@@ -52,4 +54,10 @@ func MergeMap(mObj ...map[int]interface{}) map[int]interface{} {
 		}
 	}
 	return newObj
+}
+
+func StrMd5(str string) string {
+	h := md5.New()
+	h.Write([]byte(str))
+	return hex.EncodeToString(h.Sum(nil))
 }

