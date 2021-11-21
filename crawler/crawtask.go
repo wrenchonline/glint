@@ -27,3 +27,26 @@ type CrawlerTask struct {
 	crawledCount  int            // 爬取过的数量
 	taskCountLock sync.Mutex     // 已爬取的任务总数锁
 }
+
+type tabTask struct {
+	crawlerTask *CrawlerTask
+	browser     *Spider
+	req         *model.Request
+	pool        *ants.Pool
+}
+
+/**
+根据请求列表生成tabTask协程任务列表
+*/
+func (t *CrawlerTask) generateTabTask(req *model.Request) *tabTask {
+	task := tabTask{
+		crawlerTask: t,
+		browser:     t.Browser,
+		req:         req,
+	}
+	return &task
+}
+
+func (t *CrawlerTask) Run() {
+
+}
