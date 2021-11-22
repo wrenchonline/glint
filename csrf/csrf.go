@@ -2,7 +2,7 @@ package csrf
 
 import (
 	"fmt"
-	"wenscan/config"
+	"wenscan/fastreq"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/valyala/fasthttp"
@@ -41,23 +41,23 @@ var anti_csrf = []string{
 func Origin(k string, v []interface{}) error {
 	ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	for _, url := range v {
-		fastReq := fasthttp.AcquireRequest()
-		err := config.CopyConfReq(url, fastReq)
+		Req := fasthttp.AcquireRequest()
+		err := fastreq.CopyConfReq(url, Req)
 		if err != nil {
 			return err
 		}
 		resp := &fasthttp.Response{}
 		client := &fasthttp.Client{}
-		if err := client.Do(fastReq, resp); err != nil {
+		if err := client.Do(Req, resp); err != nil {
 			fmt.Println("request fail:", err.Error())
 			return err
 		}
 		b1 := resp.Body()
-		fastReq2 := fasthttp.AcquireRequest()
-		fastReq.CopyTo(fastReq2)
-		fastReq2.Header.Set("Origin", ORIGIN_URL)
+		Req2 := fasthttp.AcquireRequest()
+		Req.CopyTo(Req2)
+		Req2.Header.Set("Origin", ORIGIN_URL)
 		client2 := &fasthttp.Client{}
-		if err := client2.Do(fastReq, resp); err != nil {
+		if err := client2.Do(Req, resp); err != nil {
 			fmt.Println("request fail:", err.Error())
 			return err
 		}
@@ -72,23 +72,23 @@ func Origin(k string, v []interface{}) error {
 func Referer(k string, v []interface{}) error {
 	REFERER_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	for _, url := range v {
-		fastReq := fasthttp.AcquireRequest()
-		err := config.CopyConfReq(url, fastReq)
+		Req := fasthttp.AcquireRequest()
+		err := fastreq.CopyConfReq(url, Req)
 		if err != nil {
 			return err
 		}
 		resp := &fasthttp.Response{}
 		client := &fasthttp.Client{}
-		if err := client.Do(fastReq, resp); err != nil {
+		if err := client.Do(Req, resp); err != nil {
 			fmt.Println("request fail:", err.Error())
 			return err
 		}
 		b1 := resp.Body()
-		fastReq2 := fasthttp.AcquireRequest()
-		fastReq.CopyTo(fastReq2)
-		fastReq2.Header.Set("Referer", REFERER_URL)
+		Req2 := fasthttp.AcquireRequest()
+		Req.CopyTo(Req2)
+		Req2.Header.Set("Referer", REFERER_URL)
 		client2 := &fasthttp.Client{}
-		if err := client2.Do(fastReq, resp); err != nil {
+		if err := client2.Do(Req, resp); err != nil {
 			fmt.Println("request fail:", err.Error())
 			return err
 		}

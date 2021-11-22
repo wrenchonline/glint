@@ -4,14 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/url"
 	"os"
-	"strings"
-	"wenscan/util"
 
 	"github.com/thoas/go-funk"
-	"github.com/valyala/fasthttp"
 	"gopkg.in/yaml.v2"
 )
 
@@ -74,31 +69,4 @@ func HandleConf(data map[string][]interface{}, callback CrawCallback) interface{
 		return err
 	})
 	return errlist
-}
-
-func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
-	req := http.Request{}
-	var (
-		err  error
-		Data []byte
-	)
-	switch json := data.(type) {
-	case map[string]interface{}:
-		req.Method = json["method"].(string)
-		req.URL, _ = url.Parse(json["url"].(string))
-		postform := url.Values{}
-		postvalues := strings.Split(json["data"].(string), "&")
-		for _, value := range postvalues {
-			k := strings.Split(value, "=")[0]
-			v := strings.Split(value, "=")[1]
-			postform[k] = []string{v}
-		}
-		req.PostForm = postform
-		for k, v := range json["headers"].(map[string]interface{}) {
-			req.Header.Set(k, v.(string))
-		}
-		Data, err = util.GetOriginalReqBody(&req)
-		util.CopyRequest(&req, dstRequest, Data)
-	}
-	return err
 }

@@ -23,6 +23,7 @@ require (
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/panjf2000/ants/v2 v2.4.6
+	github.com/pkg/errors v0.9.1
 	github.com/tdewolff/parse/v2 v2.5.22
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v0.6.1

@@ -1,9 +1,12 @@
 package util
 
 import (
+	"bufio"
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/hex"
+	"fmt"
+	"io"
 	"os"
 	log "wenscan/log"
 
@@ -60,4 +63,31 @@ func StrMd5(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func ConvertHeaders(h map[string]interface{}) map[string]string {
+	a := map[string]string{}
+	for key, value := range h {
+		a[key] = value.(string)
+	}
+	return a
+}
+
+func ReadFile(filePath string) []string {
+	filePaths := []string{}
+	f, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
+	defer f.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		rd := bufio.NewReader(f)
+		for {
+			line, err := rd.ReadString('\n')
+			if err != nil || io.EOF == err {
+				break
+			}
+			filePaths = append(filePaths, line)
+		}
+	}
+	return filePaths
 }
