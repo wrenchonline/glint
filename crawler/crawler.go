@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"wenscan/log"
 	model2 "wenscan/model"
 	"wenscan/util"
 
@@ -270,7 +270,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
-					fmt.Println("FailRequest:", ev.Request.URL)
+					log.Debug("FailRequest:", ev.Request.URL)
 					c := chromedp.FromContext(ctx)
 					ctx = cdp.WithExecutor(ctx, c.Target)
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
@@ -303,19 +303,19 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					tab.AddResultRequest(req)
 				}
 				if err := chromedp.Run(ctx, a); err != nil {
-					log.Println("ListenTarget error", err)
+					log.Error("ListenTarget error %s", err.Error())
 				}
 			}(*tab.Ctx, ev)
 		case *page.EventJavascriptDialogOpening:
-			log.Println("EventJavascriptDialogOpening url:", ev.URL)
+			// log.Println("EventJavascriptDialogOpening url:", ev.URL)
 			tab.WG.Add(1)
 			go tab.dismissDialog()
 		case *page.EventNavigatedWithinDocument:
-			log.Println("EventNavigatedWithinDocument url:", ev.URL)
+			// log.Println("EventNavigatedWithinDocument url:", ev.URL)
 		case *page.EventFrameStoppedLoading:
 
 		case *page.EventWindowOpen:
-			log.Println("EventWindowOpen url:", ev.URL)
+			// log.Println("EventWindowOpen url:", ev.URL)
 			var req model2.Request
 			u, _ := url.Parse(ev.URL)
 			req.URL = &model2.URL{*u}
@@ -324,13 +324,13 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			if !FilterKey(req.URL.String(), ForbidenKey) {
 				if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) {
 					tab.AddResultRequest(req)
-					log.Println("EventWindowOpen Add crawer url:", req)
+					// log.Println("EventWindowOpen Add crawer url:", req)
 				} else {
 					//log.Println("The url is exist:", req)
 				}
 			}
 		case *page.EventDocumentOpened:
-			log.Println("EventDocumentOpened url:", ev.Frame.URL)
+			// log.Println("EventDocumentOpened url:", ev.Frame.URL)
 		case *network.EventRequestWillBeSentExtraInfo:
 		case *network.EventResponseReceived:
 			if ev.Type == "XHR" {
@@ -435,12 +435,12 @@ func (bro *Spider) Close() {
 	for _, ctx := range bro.tabs {
 		err := browser.Close().Do(*ctx)
 		if err != nil {
-			fmt.Println(color.Red(err))
+			// fmt.Println(color.Red(err))
 		}
 	}
 	err := browser.Close().Do(*bro.Ctx)
 	if err != nil {
-		fmt.Println(color.Red(err))
+		// fmt.Println(color.Red(err))
 	}
 	(*bro.Cancel)()
 }

@@ -1,7 +1,7 @@
 package crawler
 
 import (
-	"fmt"
+	"wenscan/log"
 )
 
 func (tab *Tab) Watch() {
@@ -29,7 +29,7 @@ func (tab *Tab) Watch() {
 
 	end:
 		if bq {
-			fmt.Println("Watch Thread Exit")
+			log.Debug("Watch Thread Exit")
 			break
 		}
 	}

@@ -15,6 +15,7 @@ import (
 )
 
 func Test_Crawler(t *testing.T) {
+	log.DebugEnable(false)
 	TaskConfig := config.TaskConfig{}
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
 	if err != nil {
@@ -44,7 +45,10 @@ func Test_Crawler(t *testing.T) {
 	log.Info("Start crawling.")
 	task.Run()
 	result := task.Result
-	fmt.Println(aurora.Red(result.ReqList))
+	for _, rest := range result.ReqList {
+		fmt.Println(aurora.Red(rest))
+	}
+
 }
 
 func Test_filter(t *testing.T) {
