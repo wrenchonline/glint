@@ -1,8 +1,10 @@
 package crawler
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
+	"wenscan/config"
 	"wenscan/log"
 	"wenscan/model"
 
@@ -38,31 +40,38 @@ type tabTask struct {
 }
 
 type TaskConfig struct {
-	MaxCrawlCount           int    // 最大爬取的数量
-	FilterMode              string // simple、smart、strict
-	ExtraHeaders            map[string]interface{}
-	ExtraHeadersString      string
-	AllDomainReturn         bool // 全部域名收集
-	SubDomainReturn         bool // 子域名收集
-	IncognitoContext        bool // 开启隐身模式
-	NoHeadless              bool // headless模式
-	DomContentLoadedTimeout time.Duration
-	TabRunTimeout           time.Duration          // 单个标签页超时
-	PathByFuzz              bool                   // 通过字典进行Path Fuzz
-	FuzzDictPath            string                 // Fuzz目录字典
-	PathFromRobots          bool                   // 解析Robots文件找出路径
-	MaxTabsCount            int                    // 允许开启的最大标签页数量 即同时爬取的数量
-	ChromiumPath            string                 // Chromium的程序路径  `/home/zhusiyu1/chrome-linux/chrome`
-	EventTriggerMode        string                 // 事件触发的调用方式： 异步 或 顺序
-	EventTriggerInterval    time.Duration          // 事件触发的间隔
-	BeforeExitDelay         time.Duration          // 退出前的等待时间，等待DOM渲染，等待XHR发出捕获
-	EncodeURLWithCharset    bool                   // 使用检测到的字符集自动编码URL
-	IgnoreKeywords          []string               // 忽略的关键字，匹配上之后将不再扫描且不发送请求
-	Proxy                   string                 // 请求代理
-	CustomFormValues        map[string]string      // 自定义表单填充参数
-	CustomFormKeywordValues map[string]string      // 自定义表单关键词填充内容
-	XssPayloads             map[string]interface{} // Xss的payload数据结构
+	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
+	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict
+	ExtraHeaders            map[string]interface{} `yaml:"ExtraHeaders"`
+	ExtraHeadersString      string                 `yaml:"ExtraHeadersString"`
+	AllDomainReturn         bool                   `yaml:"AllDomainReturn"`  // 全部域名收集
+	SubDomainReturn         bool                   `yaml:"SubDomainReturn"`  // 子域名收集
+	IncognitoContext        bool                   `yaml:"IncognitoContext"` // 开启隐身模式
+	NoHeadless              bool                   `yaml:"NoHeadless"`       // headless模式
+	DomContentLoadedTimeout time.Duration          `yaml:"DomContentLoadedTimeout"`
+	TabRunTimeout           time.Duration          `yaml:"TabRunTimeout"`           // 单个标签页超时
+	PathByFuzz              bool                   `yaml:"PathByFuzz"`              // 通过字典进行Path Fuzz
+	FuzzDictPath            string                 `yaml:"FuzzDictPath"`            // Fuzz目录字典
+	PathFromRobots          bool                   `yaml:"PathFromRobots"`          // 解析Robots文件找出路径
+	MaxTabsCount            int                    `yaml:"MaxTabsCount"`            // 允许开启的最大标签页数量 即同时爬取的数量
+	ChromiumPath            string                 `yaml:"ChromiumPath"`            // Chromium的程序路径  `/home/zhusiyu1/chrome-linux/chrome`
+	EventTriggerMode        string                 `yaml:"EventTriggerMode"`        // 事件触发的调用方式： 异步 或 顺序
+	EventTriggerInterval    time.Duration          `yaml:"EventTriggerInterval"`    // 事件触发的间隔
+	BeforeExitDelay         time.Duration          `yaml:"BeforeExitDelay"`         // 退出前的等待时间，等待DOM渲染，等待XHR发出捕获
+	EncodeURLWithCharset    bool                   `yaml:"EncodeURLWithCharset"`    // 使用检测到的字符集自动编码URL
+	IgnoreKeywords          []string               `yaml:"IgnoreKeywords"`          // 忽略的关键字，匹配上之后将不再扫描且不发送请求
+	Proxy                   string                 `yaml:"Proxy"`                   // 请求代理
+	CustomFormValues        map[string]string      `yaml:"CustomFormValues"`        // 自定义表单填充参数
+	CustomFormKeywordValues map[string]string      `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
+	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // Xss的payload数据结构
 }
+
+// 过滤模式
+const (
+	SimpleFilterMode = "simple"
+	SmartFilterMode  = "smart"
+	StrictFilterMode = "strict"
+)
 
 /**
 根据请求列表生成tabTask协程任务列表
@@ -152,7 +161,7 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 */
 func (t *tabTask) Task() {
 	defer t.crawlerTask.taskWG.Done()
-	tab := NewTab(t.browser, *t.req, TabConfig{
+	config := TabConfig{
 		TabRunTimeout:           t.crawlerTask.Config.TabRunTimeout,
 		DomContentLoadedTimeout: t.crawlerTask.Config.DomContentLoadedTimeout,
 		EventTriggerMode:        t.crawlerTask.Config.EventTriggerMode,
@@ -162,8 +171,9 @@ func (t *tabTask) Task() {
 		IgnoreKeywords:          t.crawlerTask.Config.IgnoreKeywords,
 		CustomFormValues:        t.crawlerTask.Config.CustomFormValues,
 		CustomFormKeywordValues: t.crawlerTask.Config.CustomFormKeywordValues,
-	})
-	tab.Start()
+	}
+	tab, _ := NewTab(t.browser, *t.req, config)
+	tab.Crawler(nil)
 
 	// 收集结果
 	t.crawlerTask.Result.resultLock.Lock()
@@ -171,7 +181,7 @@ func (t *tabTask) Task() {
 	t.crawlerTask.Result.resultLock.Unlock()
 
 	for _, req := range tab.ResultList {
-		if t.crawlerTask.Config.FilterMode == config.SimpleFilterMode {
+		if t.crawlerTask.Config.FilterMode == SimpleFilterMode {
 			if !t.crawlerTask.smartFilter.SimpleFilter.DoFilter(req) {
 				t.crawlerTask.Result.resultLock.Lock()
 				t.crawlerTask.Result.ReqList = append(t.crawlerTask.Result.ReqList, req)
@@ -191,4 +201,92 @@ func (t *tabTask) Task() {
 			}
 		}
 	}
+}
+
+/**
+新建爬虫任务
+*/
+func NewCrawlerTask(targets []*model.Request, taskConf TaskConfig) (*CrawlerTask, error) {
+	crawlerTask := CrawlerTask{
+		Result: &Result{},
+		Config: &taskConf,
+		smartFilter: SmartFilter{
+			SimpleFilter: SimpleFilter{
+				HostLimit: targets[0].URL.Host,
+			},
+		},
+	}
+
+	if len(targets) == 1 {
+		_newReq := *targets[0]
+		newReq := &_newReq
+		_newURL := *_newReq.URL
+		newReq.URL = &_newURL
+		if targets[0].URL.Scheme == "http" {
+			newReq.URL.Scheme = "https"
+		} else {
+			newReq.URL.Scheme = "http"
+		}
+		targets = append(targets, newReq)
+	}
+	crawlerTask.Targets = targets[:]
+
+	for _, req := range targets {
+		req.Source = config.FromTarget
+	}
+
+	if taskConf.TabRunTimeout == 0 {
+		taskConf.TabRunTimeout = config.TabRunTimeout
+	}
+
+	if taskConf.MaxTabsCount == 0 {
+		taskConf.MaxTabsCount = config.MaxTabsCount
+	}
+
+	if taskConf.FilterMode == config.StrictFilterMode {
+		crawlerTask.smartFilter.StrictMode = true
+	}
+
+	if taskConf.MaxCrawlCount == 0 {
+		taskConf.MaxCrawlCount = config.MaxCrawlCount
+	}
+
+	if taskConf.DomContentLoadedTimeout == 0 {
+		taskConf.DomContentLoadedTimeout = config.DomContentLoadedTimeout
+	}
+
+	if taskConf.EventTriggerInterval == 0 {
+		taskConf.EventTriggerInterval = config.EventTriggerInterval
+	}
+
+	if taskConf.BeforeExitDelay == 0 {
+		taskConf.BeforeExitDelay = config.BeforeExitDelay
+	}
+
+	if taskConf.EventTriggerMode == "" {
+		taskConf.EventTriggerMode = config.DefaultEventTriggerMode
+	}
+
+	if len(taskConf.IgnoreKeywords) == 0 {
+		taskConf.IgnoreKeywords = config.DefaultIgnoreKeywords
+	}
+
+	if taskConf.ExtraHeadersString != "" {
+		err := json.Unmarshal([]byte(taskConf.ExtraHeadersString), &taskConf.ExtraHeaders)
+		if err != nil {
+			log.Error("custom headers can't be Unmarshal.")
+			return nil, err
+		}
+	}
+
+	crawlerTask.Browser = InitSpider(taskConf.ChromiumPath, taskConf.IncognitoContext, taskConf.ExtraHeaders, taskConf.Proxy, taskConf.NoHeadless)
+	crawlerTask.RootDomain = targets[0].URL.RootDomain()
+
+	crawlerTask.smartFilter.Init()
+
+	// 创建协程池
+	p, _ := ants.NewPool(taskConf.MaxTabsCount)
+	crawlerTask.Pool = p
+
+	return &crawlerTask, nil
 }

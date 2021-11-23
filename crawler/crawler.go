@@ -368,9 +368,16 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 	})
 }
 
-func (spider *Spider) Init() {
+func InitSpider(
+	ChromiumPath string,
+	IncognitoContext bool,
+	ExtraHeaders map[string]interface{},
+	Proxy string,
+	NoHeadless bool) *Spider {
+
+	spider := Spider{}
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", NoHeadless),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-images", true),
 		chromedp.Flag("disable-web-security", true),
@@ -383,7 +390,7 @@ func (spider *Spider) Init() {
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("block-new-web-contents", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
+		chromedp.Flag("proxy-server", Proxy),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
 	ExecAllocator := append(chromedp.DefaultExecAllocatorOptions[:], options...)
@@ -395,16 +402,29 @@ func (spider *Spider) Init() {
 	chromedp.Run(lctx)
 	spider.Ctx = &lctx
 	spider.Cancel = &Cancel
+	return &spider
 }
 
-func NewTab(spider *Spider, config TabConfig) (*context.Context, context.CancelFunc) {
+func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab, error) {
+
+	var tab Tab
 	spider.lock.Lock()
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
 	tCtx, _ := context.WithTimeout(ctx, config.TabRunTimeout)
 	spider.tabs = append(spider.tabs, &tCtx)
 	spider.tabCancels = append(spider.tabCancels, cancel)
 	spider.lock.Unlock()
-	return &tCtx, cancel
+	tab.ExtraHeaders = map[string]interface{}{}
+	tab.Ctx = &tCtx
+	tab.Cancel = cancel
+	tab.NavigateReq = navigateReq
+	tab.ExtraHeaders = navigateReq.Headers
+	tab.Eventchanel.EventInfo = make(map[string]bool)
+	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
+	tab.Eventchanel.QueueRep = make(chan string)
+	tab.Eventchanel.exit = make(chan int)
+	tab.ListenTarget(nil)
+	return &tab, nil
 }
 
 func (bro *Spider) Close() {
@@ -423,20 +443,6 @@ func (bro *Spider) Close() {
 		fmt.Println(color.Red(err))
 	}
 	(*bro.Cancel)()
-}
-
-func NewTabObject(spider *Spider, config TabConfig, navigateReq model2.Request) (*Tab, error) {
-	var tab Tab
-	tab.ExtraHeaders = map[string]interface{}{}
-	tab.Ctx, tab.Cancel = NewTab(spider, config)
-	tab.NavigateReq = navigateReq
-	tab.ExtraHeaders = navigateReq.Headers
-	tab.Eventchanel.EventInfo = make(map[string]bool)
-	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
-	tab.Eventchanel.QueueRep = make(chan string)
-	tab.Eventchanel.exit = make(chan int)
-	tab.ListenTarget(nil)
-	return &tab, nil
 }
 
 //Crawler 爬取链接

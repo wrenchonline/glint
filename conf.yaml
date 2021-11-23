@@ -1,21 +1,31 @@
-crawler:
-  url: 
-    - 'http://localhost/login.php'
-  brokenurl: 
-    - 'http://localhost/logout.php'
-reqmode: 'GET'
-headers:
-  Cookie: 'welcome=1'
-  Accept-Encoding: 'gzip, deflate'
-url:
-  'http://www.rongji.com/'
-reqsleep:
-   1000   #设置1秒沉睡，因为js渲染新节点会造成页面发生变化，等待js渲染完成是不可能的事，有可能js代码一直改变节点让他永远不完成加载...。固设置超时机制
-sqlinject:
-  attacktype: 'len'
-  attackpayloads:
-xss:
-  xsspayload: 
-    - ""
-post:
-  data:
+MaxCrawlCount: 20
+
+FilterMode: "simple"
+
+ExtraHeaders:
+    Referer: "http://www.rongji.com/dfish_sso/login.sp?act=index",
+    Cache-Control: "max-age=0",
+    Upgrade-Insecure-Requests: "1",
+    Content-Type: "application/x-www-form-urlencoded",
+    DNT: "1",
+    Cookie: "JSESSIONID=65EDE1C0D22029D647613E2759B2E88A; JSESSIONID=18DDAC56BAEA231D324209626359AF9B",
+    Origin: "http://www.rongji.com",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    Accept-Encoding: "gzip, deflate",
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+
+ExtraHeadersString:
+
+AllDomainReturn: false
+
+SubDomainReturn: true
+
+IncognitoContext: false
+
+NoHeadless: true
+
+Proxy: "http://127.0.0.1:8080"
+
+
+
+
