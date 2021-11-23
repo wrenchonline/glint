@@ -1,34 +1,50 @@
 package main
 
 import (
+	"fmt"
+	"net/url"
+	"os"
 	"testing"
+	"wenscan/config"
+	"wenscan/crawler"
 	craw "wenscan/crawler"
+	log "wenscan/log"
+	"wenscan/model"
+
+	"github.com/logrusorgru/aurora"
 )
 
 func Test_Crawler(t *testing.T) {
-
-	// results := []ast.Groups{}
-
-	// List := make(map[string][]ast.JsonUrl)
-	// funk.Map(tab.ResultList, func(r *model2.Request) bool {
-	// 	element := ast.JsonUrl{
-	// 		Url:     r.URL.String(),
-	// 		MetHod:  r.Method,
-	// 		Headers: r.Headers,
-	// 		Data:    r.PostData,
-	// 		Source:  r.Source}
-	// 	List[r.GroupsId] = append(List[r.GroupsId], element)
-	// 	return false
-	// })
-	// data, err := json.Marshal(List)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// err = ioutil.WriteFile("./result.json", data, 666)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
+	TaskConfig := config.TaskConfig{}
+	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
+	if err != nil {
+		t.Errorf("test ReadTaskConf() fail")
+	}
+	murl, _ := url.Parse("http://www.rongji.com")
+	Headers := make(map[string]interface{})
+	Headers["HOST"] = "www.rongji.com"
+	targets := []*model.Request{
+		&model.Request{
+			URL:           &model.URL{URL: *murl},
+			Method:        "GET",
+			FasthttpProxy: TaskConfig.Proxy,
+			Headers:       Headers,
+		},
+	}
+	task, err := crawler.NewCrawlerTask(targets, TaskConfig)
+	if err != nil {
+		t.Errorf("create crawler task failed.")
+		os.Exit(-1)
+	}
+	if len(targets) != 0 {
+		log.Info(fmt.Sprintf("Init crawler task, host: %s, max tab count: %d, max crawl count: %d.",
+			targets[0].URL.Host, TaskConfig.MaxTabsCount, TaskConfig.MaxCrawlCount))
+		log.Info("filter mode: %s", TaskConfig.FilterMode)
+	}
+	log.Info("Start crawling.")
+	task.Run()
+	result := task.Result
+	fmt.Println(aurora.Red(result.ReqList))
 }
 
 func Test_filter(t *testing.T) {

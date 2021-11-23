@@ -9,6 +9,7 @@ import (
 	"time"
 	"wenscan/util"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
@@ -91,6 +92,13 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 	verb = strings.ToUpper(verb)
 	//bodyReader := bytes.NewReader(body)
 	req := fasthttp.AcquireRequest()
+
+	req.SetRequestURI(url)
+	// 设置Host头
+	if host, ok := headers["Host"]; ok {
+		req.Header.Set("Host", host)
+	}
+
 	//设置自定义header
 	for k, v := range headers {
 		req.Header.Set(k, v)
@@ -101,6 +109,7 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 		"Range":      fmt.Sprintf("bytes=0-%d", defaultResponseLength),
 		"Connection": "close",
 	}
+
 	for k, v := range defaultHeaders {
 		if _, ok := headers[k]; !ok {
 			req.Header.Set(k, v)
@@ -132,7 +141,8 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 		if sess.AllowRedirect {
 			err = sess.client.DoRedirects(req, resp, 5)
 		} else {
-			err = sess.client.DoTimeout(req, resp, sess.ReqOptions.Timeout)
+			//sess.ReqOptions.Timeout
+			err = sess.client.DoTimeout(req, resp, 2*time.Second)
 		}
 		if err != nil {
 			time.Sleep(100 * time.Microsecond)
@@ -141,7 +151,9 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 			break
 		}
 	}
+
 	if err != nil {
+		fmt.Println(aurora.Red(err))
 		return nil, errors.Wrap(err, "error occurred during request")
 	}
 	// 带Range头后一般webserver响应都是206 PARTIAL CONTENT，修正为200 OK
@@ -196,7 +208,7 @@ func getSessionByOptions(options *ReqOptions) *session {
 	// client.MaxConnWaitTimeout = timeout
 	//设置代理
 	if options.Proxy != "" {
-		client.Dial = fasthttpproxy.FasthttpSocksDialer(options.Proxy)
+		client.Dial = fasthttpproxy.FasthttpHTTPDialer(options.Proxy)
 	}
 
 	// 设置是否跟踪跳转

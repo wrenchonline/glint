@@ -11,10 +11,11 @@ import (
 	"wenscan/util"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/logrusorgru/aurora"
 	"github.com/panjf2000/ants/v2"
 )
 
-const pathStr = "11/123/2017/2018/message/mis/model/abstract/account/act/action" +
+const pathStr = "dfish_sso/11/123/2017/2018/message/mis/model/abstract/account/act/action" +
 	"/activity/ad/address/ajax/alarm/api/app/ar/attachment/auth/authority/award/back/backup/bak/base" +
 	"/bbs/bbs1/cms/bd/gallery/game/gift/gold/bg/bin/blacklist/blog/bootstrap/brand/build/cache/caches" +
 	"/caching/cacti/cake/captcha/category/cdn/ch/check/city/class/classes/classic/client/cluster" +
@@ -144,14 +145,17 @@ func (s singleFuzz) doRequest() {
 
 	url := fmt.Sprintf(`%s://%s/%s`, s.navReq.URL.Scheme, s.navReq.URL.Host, s.path)
 	resp, errs := fastreq.Get(url, util.ConvertHeaders(s.navReq.Headers),
-		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: false, Proxy: s.navReq.FasthttpProxy})
+		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
 	if errs != nil {
+		// log.Info("doRequest err: %s", errs.Error())
 		return
 	}
 	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
 		validateUrl.Add(url)
-	} else if resp.StatusCode() == 301 {
+	} else if resp.StatusCode() == 301 || resp.StatusCode() == 302 {
 		validateUrl.Add(url)
+		Header := resp.Header.String()
+		fmt.Println(aurora.Magenta(Header))
 		// locations := resp.Header["Location"]
 		// if len(locations) == 0 {
 		// 	return

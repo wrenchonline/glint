@@ -3,7 +3,6 @@ package crawler
 import (
 	"encoding/json"
 	"sync"
-	"time"
 	"wenscan/config"
 	"wenscan/log"
 	"wenscan/model"
@@ -20,16 +19,16 @@ type Result struct {
 }
 
 type CrawlerTask struct {
-	Browser       *Spider          //
-	RootDomain    string           // 当前爬取根域名 用于子域名收集
-	Targets       []*model.Request // 输入目标
-	Result        *Result          // 最终结果
-	Config        *TaskConfig      // 配置信息
-	smartFilter   SmartFilter      // 过滤对象
-	Pool          *ants.Pool       // 协程池
-	taskWG        sync.WaitGroup   // 等待协程池所有任务结束
-	crawledCount  int              // 爬取过的数量
-	taskCountLock sync.Mutex       // 已爬取的任务总数锁
+	Browser       *Spider            //
+	RootDomain    string             // 当前爬取根域名 用于子域名收集
+	Targets       []*model.Request   // 输入目标
+	Result        *Result            // 最终结果
+	Config        *config.TaskConfig // 配置信息
+	smartFilter   SmartFilter        // 过滤对象
+	Pool          *ants.Pool         // 协程池
+	taskWG        sync.WaitGroup     // 等待协程池所有任务结束
+	crawledCount  int                // 爬取过的数量
+	taskCountLock sync.Mutex         // 已爬取的任务总数锁
 }
 
 type tabTask struct {
@@ -37,33 +36,6 @@ type tabTask struct {
 	browser     *Spider
 	req         *model.Request
 	pool        *ants.Pool
-}
-
-type TaskConfig struct {
-	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
-	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict
-	ExtraHeaders            map[string]interface{} `yaml:"ExtraHeaders"`
-	ExtraHeadersString      string                 `yaml:"ExtraHeadersString"`
-	AllDomainReturn         bool                   `yaml:"AllDomainReturn"`  // 全部域名收集
-	SubDomainReturn         bool                   `yaml:"SubDomainReturn"`  // 子域名收集
-	IncognitoContext        bool                   `yaml:"IncognitoContext"` // 开启隐身模式
-	NoHeadless              bool                   `yaml:"NoHeadless"`       // headless模式
-	DomContentLoadedTimeout time.Duration          `yaml:"DomContentLoadedTimeout"`
-	TabRunTimeout           time.Duration          `yaml:"TabRunTimeout"`           // 单个标签页超时
-	PathByFuzz              bool                   `yaml:"PathByFuzz"`              // 通过字典进行Path Fuzz
-	FuzzDictPath            string                 `yaml:"FuzzDictPath"`            // Fuzz目录字典
-	PathFromRobots          bool                   `yaml:"PathFromRobots"`          // 解析Robots文件找出路径
-	MaxTabsCount            int                    `yaml:"MaxTabsCount"`            // 允许开启的最大标签页数量 即同时爬取的数量
-	ChromiumPath            string                 `yaml:"ChromiumPath"`            // Chromium的程序路径  `/home/zhusiyu1/chrome-linux/chrome`
-	EventTriggerMode        string                 `yaml:"EventTriggerMode"`        // 事件触发的调用方式： 异步 或 顺序
-	EventTriggerInterval    time.Duration          `yaml:"EventTriggerInterval"`    // 事件触发的间隔
-	BeforeExitDelay         time.Duration          `yaml:"BeforeExitDelay"`         // 退出前的等待时间，等待DOM渲染，等待XHR发出捕获
-	EncodeURLWithCharset    bool                   `yaml:"EncodeURLWithCharset"`    // 使用检测到的字符集自动编码URL
-	IgnoreKeywords          []string               `yaml:"IgnoreKeywords"`          // 忽略的关键字，匹配上之后将不再扫描且不发送请求
-	Proxy                   string                 `yaml:"Proxy"`                   // 请求代理
-	CustomFormValues        map[string]string      `yaml:"CustomFormValues"`        // 自定义表单填充参数
-	CustomFormKeywordValues map[string]string      `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
-	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // Xss的payload数据结构
 }
 
 // 过滤模式
@@ -206,7 +178,7 @@ func (t *tabTask) Task() {
 /**
 新建爬虫任务
 */
-func NewCrawlerTask(targets []*model.Request, taskConf TaskConfig) (*CrawlerTask, error) {
+func NewCrawlerTask(targets []*model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
 	crawlerTask := CrawlerTask{
 		Result: &Result{},
 		Config: &taskConf,

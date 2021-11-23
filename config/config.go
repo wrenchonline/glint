@@ -11,67 +11,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Conf struct {
-	Crawler   Crawler                `yaml:"crawler"`
-	SqlInject SqlInject              `yaml:"sqlinject"`
-	Url       string                 `yaml:"url"`
-	Xss       Xss                    `yaml:"xss"`
-	ReqMode   string                 `yaml:"reqmode"`
-	Headers   map[string]interface{} `yaml:"headers"`
-}
-
-type SqlInject struct {
-	Attacktype     string   `yaml:"attacktype"`
-	Attackpayloads []string `yaml:"attackpayloads"`
-}
-
-type Xss struct {
-	Xsspayload []string `yaml:"xsspayload"`
-}
-
-type Crawler struct {
-	Url       []string `yaml:"url"`
-	Brokenurl []string `yaml:"brokenurl"`
-}
-
-func (conf *Conf) GetConf() *Conf {
-	yamlFile, err := ioutil.ReadFile("conf.yaml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	err = yaml.Unmarshal(yamlFile, conf)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return conf
-}
-
-func ReadConf(file string, data *map[string][]interface{}) error {
-	jsonFile, err := os.Open(file)
-	if err != nil {
-		fmt.Println(err)
-	}
-	// 要记得关闭
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	// FileJsonUrls := make(map[string]interface{})
-	err = json.Unmarshal([]byte(byteValue), data)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return err
-}
-
-type CrawCallback func(k string, v []interface{}) error
-
-func HandleConf(data map[string][]interface{}, callback CrawCallback) interface{} {
-	errlist := funk.Map(data, func(k string, v []interface{}) error {
-		err := callback(k, v)
-		return err
-	})
-	return errlist
-}
-
 const (
 	DefaultUA               = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36"
 	MaxTabsCount            = 10
@@ -198,4 +137,108 @@ var InputTextMap = map[string]map[string]interface{}{
 		"keyword": []string{"day", "age", "num", "count"},
 		"value":   "10",
 	},
+}
+
+type TaskConfig struct {
+	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
+	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict
+	ExtraHeaders            map[string]interface{} `yaml:"ExtraHeaders"`
+	ExtraHeadersString      string                 `yaml:"ExtraHeadersString"`
+	AllDomainReturn         bool                   `yaml:"AllDomainReturn"`  // 全部域名收集
+	SubDomainReturn         bool                   `yaml:"SubDomainReturn"`  // 子域名收集
+	IncognitoContext        bool                   `yaml:"IncognitoContext"` // 开启隐身模式
+	NoHeadless              bool                   `yaml:"NoHeadless"`       // headless模式
+	DomContentLoadedTimeout time.Duration          `yaml:"DomContentLoadedTimeout"`
+	TabRunTimeout           time.Duration          `yaml:"TabRunTimeout"`           // 单个标签页超时
+	PathByFuzz              bool                   `yaml:"PathByFuzz"`              // 通过字典进行Path Fuzz
+	FuzzDictPath            string                 `yaml:"FuzzDictPath"`            // Fuzz目录字典
+	PathFromRobots          bool                   `yaml:"PathFromRobots"`          // 解析Robots文件找出路径
+	MaxTabsCount            int                    `yaml:"MaxTabsCount"`            // 允许开启的最大标签页数量 即同时爬取的数量
+	ChromiumPath            string                 `yaml:"ChromiumPath"`            // Chromium的程序路径  `/home/zhusiyu1/chrome-linux/chrome`
+	EventTriggerMode        string                 `yaml:"EventTriggerMode"`        // 事件触发的调用方式： 异步 或 顺序
+	EventTriggerInterval    time.Duration          `yaml:"EventTriggerInterval"`    // 事件触发的间隔
+	BeforeExitDelay         time.Duration          `yaml:"BeforeExitDelay"`         // 退出前的等待时间，等待DOM渲染，等待XHR发出捕获
+	EncodeURLWithCharset    bool                   `yaml:"EncodeURLWithCharset"`    // 使用检测到的字符集自动编码URL
+	IgnoreKeywords          []string               `yaml:"IgnoreKeywords"`          // 忽略的关键字，匹配上之后将不再扫描且不发送请求
+	Proxy                   string                 `yaml:"Proxy"`                   // 请求代理
+	CustomFormValues        map[string]string      `yaml:"CustomFormValues"`        // 自定义表单填充参数
+	CustomFormKeywordValues map[string]string      `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
+	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // Xss的payload数据结构
+}
+
+type Conf struct {
+	Crawler   Crawler                `yaml:"crawler"`
+	SqlInject SqlInject              `yaml:"sqlinject"`
+	Url       string                 `yaml:"url"`
+	Xss       Xss                    `yaml:"xss"`
+	ReqMode   string                 `yaml:"reqmode"`
+	Headers   map[string]interface{} `yaml:"headers"`
+}
+
+type SqlInject struct {
+	Attacktype     string   `yaml:"attacktype"`
+	Attackpayloads []string `yaml:"attackpayloads"`
+}
+
+type Xss struct {
+	Xsspayload []string `yaml:"xsspayload"`
+}
+
+type Crawler struct {
+	Url       []string `yaml:"url"`
+	Brokenurl []string `yaml:"brokenurl"`
+}
+
+func (conf *Conf) GetConf() *Conf {
+	yamlFile, err := ioutil.ReadFile("conf.yaml")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = yaml.Unmarshal(yamlFile, conf)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return conf
+}
+
+func ReadResultConf(file string, data *map[string][]interface{}) error {
+	jsonFile, err := os.Open(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// 要记得关闭
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	// FileJsonUrls := make(map[string]interface{})
+	err = json.Unmarshal([]byte(byteValue), data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return err
+}
+
+func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
+	YamlFile, err := os.Open(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// 要记得关闭
+	defer YamlFile.Close()
+	byteValue, _ := ioutil.ReadAll(YamlFile)
+	// FileJsonUrls := make(map[string]interface{})
+	err = yaml.Unmarshal([]byte(byteValue), TaskConfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return err
+}
+
+type CrawCallback func(k string, v []interface{}) error
+
+func HandleResult(data map[string][]interface{}, callback CrawCallback) interface{} {
+	errlist := funk.Map(data, func(k string, v []interface{}) error {
+		err := callback(k, v)
+		return err
+	})
+	return errlist
 }
