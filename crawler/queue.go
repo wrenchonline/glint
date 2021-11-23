@@ -16,10 +16,20 @@ func (tab *Tab) Watch() {
 			tab.lock.Lock()
 			if b {
 				tab.Eventchanel.EventInfo["Button"] = true
-				tab.Eventchanel.QueueRep <- "checkButton"
+				tab.Eventchanel.ButtonRep <- "checkButton"
 			} else {
 				tab.Eventchanel.EventInfo["Button"] = false
-				tab.Eventchanel.QueueRep <- "checkButton"
+				tab.Eventchanel.ButtonRep <- "checkButton"
+			}
+			tab.lock.Unlock()
+		case b = <-tab.Eventchanel.SubmitCheckUrl:
+			tab.lock.Lock()
+			if b {
+				tab.Eventchanel.EventInfo["Submit"] = true
+				tab.Eventchanel.SubmitRep <- "checkSubmit"
+			} else {
+				tab.Eventchanel.EventInfo["Submit"] = false
+				tab.Eventchanel.SubmitRep <- "checkSubmit"
 			}
 			tab.lock.Unlock()
 		case <-tab.Eventchanel.exit:

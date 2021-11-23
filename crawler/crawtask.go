@@ -73,7 +73,7 @@ func (t *CrawlerTask) Run() {
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	} else if t.Config.PathByFuzz {
 		reqsByFuzz := GetPathsByFuzz(*t.Targets[0])
-		log.Info("get paths by fuzzing: %s", len(reqsByFuzz))
+		log.Info("get paths by fuzzing:%d", len(reqsByFuzz))
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	}
 	t.Result.AllReqList = t.Targets[:]

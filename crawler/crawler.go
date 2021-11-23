@@ -84,7 +84,9 @@ type Spider struct {
 type Eventchanel struct {
 	GroupsId       string    //针对爬虫的时候触发某个js事件因此触发其他Url请求，使用此ID作为同一群组的标识符
 	ButtonCheckUrl chan bool //Button按钮的上下文
-	QueueRep       chan string
+	SubmitCheckUrl chan bool //Submit按钮的上下文
+	ButtonRep      chan string
+	SubmitRep      chan string
 	EventInfo      map[string]bool
 	exit           chan int
 }
@@ -296,6 +298,17 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 							req.GroupsId =
 								tab.Eventchanel.GroupsId
 						}
+					}
+					if b, ok := tab.Eventchanel.EventInfo["Submit"]; ok {
+						if b {
+							tab.Eventchanel.GroupsId =
+								fmt.Sprintf("SubmitDoM-%s", util.RandLetterNumbers(5))
+							req.GroupsId =
+								tab.Eventchanel.GroupsId
+						} else {
+							req.GroupsId =
+								tab.Eventchanel.GroupsId
+						}
 					} else {
 						req.GroupsId = "Normal"
 					}
@@ -344,7 +357,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
-				fmt.Printf("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
+				log.Debug("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *page.EventDomContentEventFired:
 			if DOMContentLoadedRun {
@@ -361,7 +374,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			tab.WG.Add(1)
 			go tab.AfterDOMRun()
 		case *page.EventFrameRequestedNavigation:
-			log.Printf("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
+			log.Debug("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
 				ev.FrameID, ev.URL, ev.Disposition, ev.Reason)
 		}
 
@@ -421,7 +434,9 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	tab.ExtraHeaders = navigateReq.Headers
 	tab.Eventchanel.EventInfo = make(map[string]bool)
 	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
-	tab.Eventchanel.QueueRep = make(chan string)
+	tab.Eventchanel.SubmitCheckUrl = make(chan bool)
+	tab.Eventchanel.ButtonRep = make(chan string)
+	tab.Eventchanel.SubmitRep = make(chan string)
 	tab.Eventchanel.exit = make(chan int)
 	tab.ListenTarget(nil)
 	return &tab, nil
@@ -515,7 +530,18 @@ func (tab *Tab) CommitBySubmit() error {
 	}
 	tCtx2, cancel2 := context.WithTimeout(ctx, time.Second*2)
 	defer cancel2()
-	_ = chromedp.Click(inputNodes, chromedp.ByNodeID).Do(tCtx2)
+	for _, v := range inputNodes {
+		tab.Eventchanel.SubmitCheckUrl <- true
+		<-tab.Eventchanel.SubmitRep
+		Nodes := []cdp.NodeID{v}
+		_ = chromedp.Click(Nodes, chromedp.ByNodeID).Do(tCtx2)
+		//使用sleep顺序执行
+		time.Sleep(time.Millisecond * 500)
+		tab.Eventchanel.SubmitCheckUrl <- false
+		<-tab.Eventchanel.SubmitRep
+		time.Sleep(time.Millisecond * 500)
+
+	}
 	return nil
 }
 
@@ -588,16 +614,16 @@ func (tab *Tab) fillForm() error {
 				Jump = true
 			}
 
-			if funk.Contains("textarea", node.LocalName) {
-				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "testtextarea").Do(tCtx)
-				if err != nil {
-					fmt.Println(color.Sprintf("textarea SendKeys error: %s", err.Error()))
-					return err
-				}
-			}
+			// if funk.Contains("textarea", node.LocalName) {
+			// 	err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "testtextarea").Do(tCtx)
+			// 	if err != nil {
+			// 		fmt.Println(color.Sprintf("textarea SendKeys error: %s", err.Error()))
+			// 		return err
+			// 	}
+			// }
 
 			if !Jump && funk.Contains("input", node.LocalName) {
-				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "testinput").Do(tCtx)
+				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "test1234").Do(tCtx)
 				if err != nil {
 					fmt.Println(color.Sprintf("SendKeys %s %s", node.LocalName, err.Error()))
 					return err
@@ -760,12 +786,12 @@ func (tab *Tab) clickAllButton() {
 
 	for _, node := range ButtonNodes {
 		tab.Eventchanel.ButtonCheckUrl <- true
-		<-tab.Eventchanel.QueueRep
+		<-tab.Eventchanel.ButtonRep
 		_ = tab.EvaluateWithNode(FormNodeClickJS, node)
 		//使用sleep顺序执行
 		time.Sleep(time.Millisecond * 500)
 		tab.Eventchanel.ButtonCheckUrl <- false
-		<-tab.Eventchanel.QueueRep
+		<-tab.Eventchanel.ButtonRep
 		time.Sleep(time.Millisecond * 500)
 	}
 	delete(tab.Eventchanel.EventInfo, "Button")
