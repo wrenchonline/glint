@@ -397,10 +397,10 @@ func (spider *Spider) Init() {
 	spider.Cancel = &Cancel
 }
 
-func (spider *Spider) NewTab(timeout time.Duration) (*context.Context, context.CancelFunc) {
+func NewTab(spider *Spider, config TabConfig) (*context.Context, context.CancelFunc) {
 	spider.lock.Lock()
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
-	tCtx, _ := context.WithTimeout(ctx, timeout)
+	tCtx, _ := context.WithTimeout(ctx, config.TabRunTimeout)
 	spider.tabs = append(spider.tabs, &tCtx)
 	spider.tabCancels = append(spider.tabCancels, cancel)
 	spider.lock.Unlock()
@@ -425,10 +425,10 @@ func (bro *Spider) Close() {
 	(*bro.Cancel)()
 }
 
-func NewTabObject(spider *Spider, navigateReq model2.Request) (*Tab, error) {
+func NewTabObject(spider *Spider, config TabConfig, navigateReq model2.Request) (*Tab, error) {
 	var tab Tab
 	tab.ExtraHeaders = map[string]interface{}{}
-	tab.Ctx, tab.Cancel = spider.NewTab(time.Minute)
+	tab.Ctx, tab.Cancel = NewTab(spider, config)
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
 	tab.Eventchanel.EventInfo = make(map[string]bool)

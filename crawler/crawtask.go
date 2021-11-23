@@ -152,7 +152,7 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 */
 func (t *tabTask) Task() {
 	defer t.crawlerTask.taskWG.Done()
-	tab := engine2.NewTab(t.browser, *t.req, engine2.TabConfig{
+	tab := NewTab(t.browser, *t.req, TabConfig{
 		TabRunTimeout:           t.crawlerTask.Config.TabRunTimeout,
 		DomContentLoadedTimeout: t.crawlerTask.Config.DomContentLoadedTimeout,
 		EventTriggerMode:        t.crawlerTask.Config.EventTriggerMode,
