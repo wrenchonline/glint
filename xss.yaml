@@ -20,20 +20,20 @@ xss:
   attibute:
     [
       {
-        PayLoad: "'><%s>//",
-        CheckTag: "%s",
+        PayLoad: "'><flag>//",
+        CheckTag: "flag",
         CheckType: "Value",
       }, 
     ]
   script:
     [
       {
-      PayLoad: "javascript:console.log('%s')",
+      PayLoad: "javascript:console.log('flag')",
       CheckTag: "",
       CheckType: "Console",
       },
       {
-      PayLoad: "';alert(%s);//",
+      PayLoad: "';alert(flag);//",
       CheckTag: "",
       CheckType: "Dialog",
       },

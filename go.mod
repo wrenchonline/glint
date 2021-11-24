@@ -27,6 +27,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.5.22
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v0.6.1
+	github.com/urfave/cli/v2 v2.3.0
 	github.com/valyala/fasthttp v1.31.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/net v0.0.0-20211020060615-d418f374d309
