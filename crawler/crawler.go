@@ -283,6 +283,8 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				req.Method = ev.Request.Method
 				req.Headers = map[string]interface{}{}
 				req.PostData = ev.Request.PostData
+
+				req.Headers = ev.Request.Headers
 				// 修正Referer
 				req.Headers["Referer"] = ev.Request.Headers["Referer"]
 				req.Source = string(ev.ResourceType)
@@ -571,13 +573,13 @@ func (tab *Tab) fillForm() error {
 		return errors.New("no find node")
 	}
 
-	err = chromedp.Nodes("//textarea", &TextareaNodes).Do(tCtx)
-	if err != nil {
-		fmt.Println("fillForm error: ", err)
-	}
-	if len(TextareaNodes) == 0 {
-		return errors.New("no find node")
-	}
+	// err = chromedp.Nodes("//textarea", &TextareaNodes).Do(tCtx)
+	// if err != nil {
+	// 	fmt.Println("fillForm error: ", err)
+	// }
+	// if len(TextareaNodes) == 0 {
+	// 	return errors.New("no find node")
+	// }
 
 	InputNodes = append(TextareaNodes, InputNodes...)
 

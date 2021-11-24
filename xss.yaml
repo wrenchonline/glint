@@ -2,12 +2,17 @@ xss:
   html:
     [
       {
-      PayLoad: "<ScRiPt>'%s'</sCrIpT>",
+        PayLoad: "()%26%25<acx><ScRiPt%20>flag</ScRiPt>",
+        CheckTag: "script",
+        CheckType: "Value",
+      },
+      {
+      PayLoad: "<ScRiPt>flag</sCrIpT>",
       CheckTag: "script",
       CheckType: "Value",
       },
       {
-        PayLoad: "<img src/onerror='%s'/>",
+        PayLoad: "<img src/onerror='flag'/>",
         CheckTag: "img",
         CheckType: "Value",
       },

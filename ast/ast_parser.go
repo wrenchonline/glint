@@ -159,23 +159,28 @@ func (parser *Parser) HttpParser(body string) bool {
 				}
 			}
 			cx := string(array)
-			if cx == "br" {
-				log.Debug(" html.StartTagToken 发现br标签,忽略")
-			} else {
-				Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
-			}
+			// if cx == "br" {
+			// 	log.Debug(" html.StartTagToken 发现br标签,忽略")
+			// } else {
 
+			// }
+			Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 		case html.EndTagToken:
 			name, _ := z.TagName()
 			log.Debug("html.EndTagToken:%s", string(z.Raw()))
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
-						parser.tokenizer.Set(Tree.PopMax())
+						if Tree.Len() != 0 {
+							parser.tokenizer.Set(Tree.PopMax())
+						}
 						break
 					}
 					//color.Red("field.Tagname:%s  local TagName:%s", field.Tagname, name)
-					parser.tokenizer.Set(Tree.PopMax())
+					if Tree.Len() != 0 {
+						parser.tokenizer.Set(Tree.PopMax())
+					}
+
 				}
 			}
 
@@ -200,10 +205,14 @@ func (parser *Parser) HttpParser(body string) bool {
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
-						parser.tokenizer.Set(Tree.PopMax())
+						if Tree.Len() != 0 {
+							parser.tokenizer.Set(Tree.PopMax())
+						}
 						break
 					}
-					parser.tokenizer.Set(Tree.PopMax())
+					if Tree.Len() != 0 {
+						parser.tokenizer.Set(Tree.PopMax())
+					}
 				}
 			}
 

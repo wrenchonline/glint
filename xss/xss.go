@@ -261,7 +261,8 @@ func (g *Generator) GetPayloadValue() (string, Checktype, string) {
 		if g.IsNeedFlag {
 			switch v := g.Value().(type) {
 			case string:
-				return fmt.Sprintf(v, g.flag), g.mode, g.Tag
+				v = strings.ReplaceAll(v, "flag", g.flag)
+				return v, g.mode, g.Tag
 			}
 		} else {
 			switch v := g.Value().(type) {
@@ -338,7 +339,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 
 func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) bool {
 	g := new(Generator)
-	var htmls []string
+
 	payloadinfo := make(map[string]stf)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
@@ -366,6 +367,7 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohtt
 	}
 
 	for {
+		var htmls []string
 		payload, Evalmode, tag := g.GetPayloadValue()
 		if payload == "" {
 			break
@@ -383,20 +385,21 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohtt
 				htmls = append(htmls, response...)
 			}
 		}
-	}
-
-	for _, html := range htmls {
-		// fmt.Println(aurora.Red(html))
-		for payload, checkfilter := range payloadinfo {
-			Node := ast.SearchInputInResponse(playload, html)
-			if len(Node) == 0 {
-				break
-			}
-			if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
-				fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-				return true
+		for _, html := range htmls {
+			// fmt.Println(aurora.Red(html))
+			for payload, checkfilter := range payloadinfo {
+				Node := ast.SearchInputInResponse(playload, html)
+				if len(Node) == 0 {
+					break
+				}
+				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
+					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
+					return true
+				}
 			}
 		}
+		htmls = []string{}
 	}
+
 	return false
 }
