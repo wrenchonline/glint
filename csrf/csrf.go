@@ -99,10 +99,3 @@ func Referer(k string, v []interface{}) error {
 	}
 	return nil
 }
-
-// func Token(k string, v []interface{}) error {
-// 	for _, url := range v {
-
-// 	}
-// 	return nil
-// }
