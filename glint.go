@@ -9,6 +9,7 @@ import (
 	"glint/model"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 )
@@ -37,16 +38,16 @@ func main() {
 		Flags: []cli.Flag{
 			//设置配置文件路径
 			&cli.StringFlag{
-				Name:        "config",
-				Aliases:     []string{"c"},
+				Name: "config",
+				// Aliases:     []string{"c"},
 				Usage:       "Scan Profile, Example `-c config.yaml`",
 				Value:       DefaultConfigPath,
 				Destination: &ConfigpPath,
 			},
 			//设置需要开启的插件
 			&cli.StringSliceFlag{
-				Name:        "plugin",
-				Aliases:     []string{"p"},
+				Name: "plugin",
+				// Aliases:     []string{"p"},
 				Usage:       "Vulnerable Plugin, Example `--plugin xss csrf ..., The same moudle`",
 				Value:       DefaultPlugins,
 				Destination: &Plugins,
@@ -63,6 +64,7 @@ func main() {
 
 func run(c *cli.Context) error {
 	// var req model.Request
+	Plugins := Plugins.Get().([]string)
 	targets := []*model.Request{}
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
@@ -79,12 +81,16 @@ func run(c *cli.Context) error {
 	}
 
 	for _, _url := range c.Args().Slice() {
+		if !strings.HasPrefix(_url, "http") {
+			log.Error(`Parameter Error,Please "http(s)://" start with Url `)
+			os.Exit(-1)
+		}
 		url, err := model.GetUrl(_url)
 		if err != nil {
 			log.Error(err.Error())
 		}
 		Headers := make(map[string]interface{})
-		Headers["HOST"] = url.Host
+		Headers["HOST"] = url.Path
 		targets = append(targets, &model.Request{
 			URL:           url,
 			Method:        "GET",
@@ -100,6 +106,10 @@ func run(c *cli.Context) error {
 	result := task.Result
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
+
+	for _, Plugin := range Plugins {
+
+	}
 
 	return nil
 }
