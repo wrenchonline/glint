@@ -236,9 +236,13 @@ func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
 type CrawCallback func(k string, v []interface{}) error
 
 func HandleResult(data map[string][]interface{}, callback CrawCallback) interface{} {
-	errlist := funk.Map(data, func(k string, v []interface{}) error {
+	// for k, v := range data {
+	// 	println(k)
+	// 	println(v)
+	// }
+	funk.Map(data, func(k string, v []interface{}) error {
 		err := callback(k, v)
 		return err
 	})
-	return errlist
+	return nil
 }

@@ -62,6 +62,7 @@ const defaultTimeout int = 15
 
 func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
 	req := http.Request{}
+	req.Header = make(http.Header)
 	var (
 		err  error
 		Data []byte
@@ -79,7 +80,8 @@ func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
 		}
 		req.PostForm = postform
 		for k, v := range json["headers"].(map[string]interface{}) {
-			req.Header.Set(k, v.(string))
+			value := v.(string)
+			req.Header.Set(k, value)
 		}
 		Data, err = util.GetOriginalReqBody(&req)
 		util.CopyRequest(&req, dstRequest, Data)
