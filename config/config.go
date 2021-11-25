@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
+	"github.com/panjf2000/ants/v2"
 	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v2"
 )
@@ -166,39 +168,9 @@ type TaskConfig struct {
 	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // Xss的payload数据结构
 }
 
-type Conf struct {
-	Crawler   Crawler                `yaml:"crawler"`
-	SqlInject SqlInject              `yaml:"sqlinject"`
-	Url       string                 `yaml:"url"`
-	Xss       Xss                    `yaml:"xss"`
-	ReqMode   string                 `yaml:"reqmode"`
-	Headers   map[string]interface{} `yaml:"headers"`
-}
-
 type SqlInject struct {
 	Attacktype     string   `yaml:"attacktype"`
 	Attackpayloads []string `yaml:"attackpayloads"`
-}
-
-type Xss struct {
-	Xsspayload []string `yaml:"xsspayload"`
-}
-
-type Crawler struct {
-	Url       []string `yaml:"url"`
-	Brokenurl []string `yaml:"brokenurl"`
-}
-
-func (conf *Conf) GetConf() *Conf {
-	yamlFile, err := ioutil.ReadFile("conf.yaml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	err = yaml.Unmarshal(yamlFile, conf)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return conf
 }
 
 func ReadResultConf(file string, data *map[string][]interface{}) error {
@@ -233,13 +205,33 @@ func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
 	return err
 }
 
-type CrawCallback func(k string, v []interface{}) error
+type Plugin struct {
+	PluginWG    sync.WaitGroup //插件群组
+	Concurrency int            //并发数
+	Callback    PluginCallback //扫描插件函数
+	Pool        *ants.Pool     // 协程池
+	Poolfunc    *ants.PoolWithFunc
+}
 
-func HandleResult(data map[string][]interface{}, callback CrawCallback) interface{} {
+func (p *Plugin) Init() {
+	p.Poolfunc, _ = ants.NewPoolWithFunc(10, func(i interface{}) { //新建一个带有同类方法的pool对象
+		// p.Callback()
+		// wg.Done()
+	})
+}
+
+type PluginCallback func(k string, v []interface{}) error
+
+func (p *Plugin) HandleResult(data map[string][]interface{}) interface{} {
+	defer p.PluginWG.Done()
+	defer p.Pool.Release()
+	var err error
 	c := funk.Map(data, func(k string, v []interface{}) error {
-		err := callback(k, v)
-		if err != nil {
-			println(err.Error())
+		for i := 0; i < p.Concurrency; i++ {
+			err := p.Callback(k, v)
+			if err != nil {
+				println(err.Error())
+			}
 		}
 		return err
 	})

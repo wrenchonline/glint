@@ -10,7 +10,10 @@
             "request": "launch",
             "mode": "auto",
             "console": "integratedTerminal", // 新的vscode版本换“internalConsole”
-            "program": "${workspaceRoot}"
+            "program": "${workspaceRoot}",
+            "args": [
+                "http://www.rongji.com",
+            ]
         }
     ]
 }

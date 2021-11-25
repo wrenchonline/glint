@@ -78,7 +78,7 @@ func TestXSS(t *testing.T) {
 		}
 		return nil
 	})
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 2)
 }
 
 func TestURL(t *testing.T) {
