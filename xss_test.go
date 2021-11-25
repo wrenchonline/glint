@@ -3,17 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"glint/ast"
+	log "glint/log"
+	xss "glint/xss"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
-	"wenscan/ast"
-	log "wenscan/log"
-	xss "wenscan/xss"
 
-	brohttp "wenscan/brohttp"
+	brohttp "glint/brohttp"
 
 	"github.com/k0kubun/go-ansi"
 	. "github.com/logrusorgru/aurora"

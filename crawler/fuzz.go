@@ -2,13 +2,13 @@ package crawler
 
 import (
 	"fmt"
+	"glint/fastreq"
+	"glint/log"
+	model2 "glint/model"
+	"glint/util"
 	"regexp"
 	"strings"
 	"sync"
-	"wenscan/fastreq"
-	"wenscan/log"
-	model2 "wenscan/model"
-	"wenscan/util"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/logrusorgru/aurora"

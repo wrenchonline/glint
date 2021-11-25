@@ -6,9 +6,9 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"fmt"
+	log "glint/log"
 	"io"
 	"os"
-	log "wenscan/log"
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"

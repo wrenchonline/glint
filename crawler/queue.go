@@ -1,7 +1,7 @@
 package crawler
 
 import (
-	"wenscan/log"
+	"glint/log"
 )
 
 func (tab *Tab) Watch() {

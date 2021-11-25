@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"glint/ast"
+	brohttp "glint/brohttp"
+	log "glint/log"
 	"net/url"
 	"testing"
-	"wenscan/ast"
-	brohttp "wenscan/brohttp"
-	log "wenscan/log"
 
 	"github.com/logrusorgru/aurora"
 )

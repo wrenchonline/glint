@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	log "wenscan/log"
+	log "glint/log"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"

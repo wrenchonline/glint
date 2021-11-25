@@ -1,9 +1,9 @@
 package main
 
 import (
+	"glint/config"
+	"glint/csrf"
 	"testing"
-	"wenscan/config"
-	"wenscan/csrf"
 )
 
 func Test_Name(t *testing.T) {

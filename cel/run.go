@@ -2,10 +2,10 @@ package cel
 
 import (
 	"errors"
+	log "glint/log"
+	"glint/util"
 	"net/http"
 	"net/url"
-	log "wenscan/log"
-	"wenscan/util"
 )
 
 type ScanItem struct {

@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"wenscan/log"
-	model2 "wenscan/model"
-	"wenscan/util"
+	"glint/log"
+	model2 "glint/model"
+	"glint/util"
 
 	color "github.com/logrusorgru/aurora"
 
-	//log "wenscan/log"
+	//log "glint/log"
 
 	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/cdp"

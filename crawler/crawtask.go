@@ -2,10 +2,10 @@ package crawler
 
 import (
 	"encoding/json"
+	"glint/config"
+	"glint/log"
+	"glint/model"
 	"sync"
-	"wenscan/config"
-	"wenscan/log"
-	"wenscan/model"
 
 	"github.com/panjf2000/ants/v2"
 )

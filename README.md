@@ -1,5 +1,5 @@
-# webscan
-webscan 是一款golang开发的web漏洞主动(被动)扫描器，如有一下功能:
+# glint
+glint 是一款golang开发的web漏洞主动(被动)扫描器，如有一下功能:
 
 1.xss AST语义检测 
 

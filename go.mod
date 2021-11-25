@@ -1,4 +1,4 @@
-module wenscan
+module glint
 
 go 1.16
 

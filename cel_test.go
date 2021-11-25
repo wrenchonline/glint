@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	cel "glint/cel"
+	"glint/util"
 	"net/http"
 	"testing"
-	cel "wenscan/cel"
-	"wenscan/util"
 
 	color "github.com/logrusorgru/aurora"
 )

@@ -3,11 +3,11 @@ package fastreq
 import (
 	"crypto/tls"
 	"fmt"
+	"glint/util"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-	"wenscan/util"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"

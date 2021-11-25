@@ -1,14 +1,14 @@
 package crawler
 
 import (
+	"glint/log"
+	"glint/model"
+	"glint/util"
 	"go/types"
 	"regexp"
 	"sort"
 	"strings"
 	"sync"
-	"wenscan/log"
-	"wenscan/model"
-	"wenscan/util"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/thoas/go-funk"

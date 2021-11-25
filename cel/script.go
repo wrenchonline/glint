@@ -3,11 +3,11 @@ package cel
 import (
 	"errors"
 	"fmt"
+	"glint/util"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
-	"wenscan/util"
 
 	"gopkg.in/yaml.v2"
 )

@@ -2,12 +2,12 @@ package cel
 
 import (
 	"fmt"
+	log "glint/log"
+	"glint/proto"
+	"glint/util"
 	"net/http"
 	"strings"
 	"sync"
-	log "wenscan/log"
-	"wenscan/proto"
-	"wenscan/util"
 
 	"github.com/valyala/fasthttp"
 )

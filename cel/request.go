@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	log "glint/log"
+	"glint/proto"
+	"glint/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	log "wenscan/log"
-	"wenscan/proto"
-	"wenscan/util"
 
 	"github.com/valyala/fasthttp"
 )

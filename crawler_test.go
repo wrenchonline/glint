@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"glint/config"
+	"glint/crawler"
+	craw "glint/crawler"
+	log "glint/log"
+	"glint/model"
 	"net/url"
 	"os"
 	"testing"
-	"wenscan/config"
-	"wenscan/crawler"
-	craw "wenscan/crawler"
-	log "wenscan/log"
-	"wenscan/model"
 
 	"github.com/logrusorgru/aurora"
 )

@@ -3,12 +3,12 @@ package reverse
 import (
 	"bytes"
 	"fmt"
-	"wenscan/proto"
+	"glint/proto"
 
 	// "github.com/jweny/pocassist/pkg/conf"
+	"glint/util"
 	"net/url"
 	"time"
-	"wenscan/util"
 
 	// "github.com/jweny/pocassist/pkg/conf"
 	"github.com/valyala/fasthttp"

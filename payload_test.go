@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	payload "glint/payload"
 	"testing"
-	payload "wenscan/payload"
 )
 
 func Test_Payload(t *testing.T) {

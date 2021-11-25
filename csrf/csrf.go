@@ -3,9 +3,9 @@ package csrf
 import (
 	"errors"
 	"fmt"
+	"glint/fastreq"
+	"glint/util"
 	"strings"
-	"wenscan/fastreq"
-	"wenscan/util"
 
 	"github.com/logrusorgru/aurora"
 )

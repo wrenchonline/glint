@@ -1,8 +1,14 @@
 package main
 
 import (
-	"log"
+	"errors"
+	"fmt"
+	"glint/config"
+	"glint/crawler"
+	"glint/log"
+	"glint/model"
 	"os"
+	"os/signal"
 
 	"github.com/urfave/cli/v2"
 )
@@ -12,7 +18,7 @@ const (
 )
 
 var DefaultPlugins = cli.NewStringSlice("xss", "csrf")
-
+var signalChan chan os.Signal
 var ConfigpPath string
 var Plugins cli.StringSlice
 
@@ -50,12 +56,61 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err.Error())
 	}
 
 }
 
 func run(c *cli.Context) error {
+	// var req model.Request
+	targets := []*model.Request{}
+	signalChan = make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+
+	if c.Args().Len() == 0 {
+		log.Error("url must be set")
+		return errors.New("url must be set")
+	}
+
+	TaskConfig := config.TaskConfig{}
+	err := config.ReadTaskConf(ConfigpPath, &TaskConfig)
+	if err != nil {
+		log.Error("test ReadTaskConf() fail")
+	}
+
+	for _, _url := range c.Args().Slice() {
+		url, err := model.GetUrl(_url)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		Headers := make(map[string]interface{})
+		Headers["HOST"] = url.Host
+		targets = append(targets, &model.Request{
+			URL:           url,
+			Method:        "GET",
+			FasthttpProxy: TaskConfig.Proxy,
+			Headers:       Headers,
+		})
+	}
+
+	task, err := crawler.NewCrawlerTask(targets, TaskConfig)
+	go WaitInterputQuit(task)
+	log.Info("Start crawling.")
+	task.Run()
+	result := task.Result
+	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
+		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 
 	return nil
+}
+
+func WaitInterputQuit(t *crawler.CrawlerTask) {
+	select {
+	case <-signalChan:
+		fmt.Println("exit ...")
+		t.Pool.Tune(1)
+		t.Pool.Release()
+		t.Browser.Close()
+		os.Exit(-1)
+	}
 }

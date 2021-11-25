@@ -2,10 +2,10 @@ package cel
 
 import (
 	"fmt"
-	log "wenscan/log"
-	"wenscan/proto"
-	"wenscan/reverse"
-	"wenscan/util"
+	log "glint/log"
+	"glint/proto"
+	"glint/reverse"
+	"glint/util"
 
 	"github.com/google/cel-go/cel"
 	"gopkg.in/yaml.v2"

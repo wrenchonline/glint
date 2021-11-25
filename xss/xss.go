@@ -7,10 +7,10 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	ast "wenscan/ast"
-	brohttp "wenscan/brohttp"
-	log "wenscan/log"
-	"wenscan/payload"
+	ast "glint/ast"
+	brohttp "glint/brohttp"
+	log "glint/log"
+	"glint/payload"
 
 	aurora "github.com/logrusorgru/aurora"
 

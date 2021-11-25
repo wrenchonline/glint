@@ -1,8 +1,8 @@
 package crawler
 
 import (
+	"glint/model"
 	"strings"
-	"wenscan/model"
 
 	mapset "github.com/deckarep/golang-set"
 )

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	ast "wenscan/ast"
-	"wenscan/brohttp"
+	ast "glint/ast"
+	"glint/brohttp"
 )
 
 var Notes = []string{

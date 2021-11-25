@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"glint/proto"
 	"log"
-	"wenscan/proto"
 
 	// "github.com/jweny/pocassist/pkg/cel/proto"
 	// "github.com/jweny/pocassist/pkg/conf"

@@ -1,7 +1,7 @@
 package util
 
 import (
-	"wenscan/proto"
+	"glint/proto"
 )
 
 // 保存扫描结果

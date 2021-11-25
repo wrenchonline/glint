@@ -1,8 +1,8 @@
 package cel
 
 import (
+	log "glint/log"
 	"strconv"
-	log "wenscan/log"
 )
 
 type HandlerFunc func(ctx controllerContext)
