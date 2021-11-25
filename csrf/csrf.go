@@ -1,11 +1,13 @@
 package csrf
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"wenscan/fastreq"
+	"wenscan/util"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/valyala/fasthttp"
 )
 
 var anti_csrf = []string{
@@ -38,32 +40,48 @@ var anti_csrf = []string{
 	"verify",
 }
 
+var DefaultProxy string = "127.0.0.1:8080"
+
 func Origin(k string, v []interface{}) error {
 	ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	for _, url := range v {
-		Req := fasthttp.AcquireRequest()
-		err := fastreq.CopyConfReq(url, Req)
-		if err != nil {
-			return err
-		}
-		resp := &fasthttp.Response{}
-		client := &fasthttp.Client{}
-		if err := client.Do(Req, resp); err != nil {
-			fmt.Println("request fail:", err.Error())
-			return err
-		}
-		b1 := resp.Body()
-		Req2 := fasthttp.AcquireRequest()
-		Req.CopyTo(Req2)
-		Req2.Header.Set("Origin", ORIGIN_URL)
-		client2 := &fasthttp.Client{}
-		if err := client2.Do(Req, resp); err != nil {
-			fmt.Println("request fail:", err.Error())
-			return err
-		}
-		b2 := resp.Body()
-		if len(b1) == len(b2) {
-			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Based CSRFs..."))
+	for _, s := range v {
+		session := s.(map[string]interface{})
+		url := session["url"].(string)
+		method := session["method"].(string)
+		headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+		body := []byte(session["data"].(string))
+		if strings.ToUpper(method) == "POST" {
+			resp1, errs := fastreq.Post(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			b1 := resp1.Body()
+			if resp1.StatusCode() != 200 {
+				errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
+				return errors.New(errstr)
+			}
+			headers["Origin"] = ORIGIN_URL
+			resp2, errs := fastreq.Post(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			b2 := resp2.Body()
+			if len(b1) == len(b2) {
+				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs..."))
+			}
+			return errs
+		} else {
+			resp1, errs := fastreq.Get(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			b1 := resp1.Body()
+			if resp1.StatusCode() != 200 {
+				errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
+				return errors.New(errstr)
+			}
+			headers["Origin"] = ORIGIN_URL
+			resp2, errs := fastreq.Get(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			b2 := resp2.Body()
+			if len(b1) == len(b2) {
+				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs..."))
+			}
+			return errs
 		}
 	}
 	return nil
@@ -71,30 +89,44 @@ func Origin(k string, v []interface{}) error {
 
 func Referer(k string, v []interface{}) error {
 	REFERER_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	for _, url := range v {
-		Req := fasthttp.AcquireRequest()
-		err := fastreq.CopyConfReq(url, Req)
-		if err != nil {
-			return err
-		}
-		resp := &fasthttp.Response{}
-		client := &fasthttp.Client{}
-		if err := client.Do(Req, resp); err != nil {
-			fmt.Println("request fail:", err.Error())
-			return err
-		}
-		b1 := resp.Body()
-		Req2 := fasthttp.AcquireRequest()
-		Req.CopyTo(Req2)
-		Req2.Header.Set("Referer", REFERER_URL)
-		client2 := &fasthttp.Client{}
-		if err := client2.Do(Req, resp); err != nil {
-			fmt.Println("request fail:", err.Error())
-			return err
-		}
-		b2 := resp.Body()
-		if len(b1) == len(b2) {
-			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))
+	for _, s := range v {
+		session := s.(map[string]interface{})
+		url := session["url"].(string)
+		method := session["method"].(string)
+		headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+		body := []byte(session["data"].(string))
+		if strings.ToUpper(method) == "POST" {
+			resp1, errs := fastreq.Post(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			b1 := resp1.Body()
+			if resp1.StatusCode() != 200 {
+				errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
+				return errors.New(errstr)
+			}
+			headers["Referer"] = REFERER_URL
+			resp2, errs := fastreq.Post(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			b2 := resp2.Body()
+			if len(b1) == len(b2) {
+				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))
+			}
+			return errs
+		} else {
+			resp1, errs := fastreq.Get(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			b1 := resp1.Body()
+			if resp1.StatusCode() != 200 {
+				errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
+				return errors.New(errstr)
+			}
+			headers["Referer"] = REFERER_URL
+			resp2, errs := fastreq.Get(url, headers,
+				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			b2 := resp2.Body()
+			if len(b1) == len(b2) {
+				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))
+			}
+			return errs
 		}
 	}
 	return nil

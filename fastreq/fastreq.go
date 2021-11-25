@@ -52,8 +52,7 @@ func NewResponse(r *fasthttp.Response) *Response {
 	}
 }
 
-const DefaultUa = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)" +
-	" Chrome/76.0.3809.132 Safari/537.36 C845D9D38B3A68F4F74057DB542AD252 tx/2.0"
+const DefaultUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
 
 // 最大获取100K的响应，适用于绝大部分场景
 const defaultResponseLength = 10240
@@ -124,9 +123,12 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 	}
 	// 设置post数据
 	if verb == "POST" {
+		req.Header.SetMethod("POST")
 		req.SetBody(body)
+	} else {
+		req.Header.SetMethod("GET")
 	}
-
+	req.Header.SetContentLength(len(body))
 	// 覆盖Connection头
 	req.Header.Set("Connection", "close")
 	// 设置重试次数
@@ -184,6 +186,12 @@ func (sess *session) Request(verb string, url string, headers map[string]string,
 func Get(url string, headers map[string]string, options *ReqOptions) (*Response, error) {
 	sess := getSessionByOptions(options)
 	return sess.doRequest("GET", url, headers, nil)
+}
+
+// POST POST请求
+func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*Response, error) {
+	sess := getSessionByOptions(options)
+	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request 自定义请求类型
