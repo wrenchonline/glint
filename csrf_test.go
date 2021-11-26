@@ -5,7 +5,6 @@ import (
 	"glint/config"
 	"glint/csrf"
 	"glint/plugin"
-	"glint/util"
 	"sync"
 	"testing"
 )
@@ -27,6 +26,5 @@ func Test_CSRF(t *testing.T) {
 		plugin.Run(data, &PluginWg)
 	}()
 	PluginWg.Wait()
-	util.OutputVulnerable(plugin.ScanResult)
 	fmt.Println("exit...")
 }

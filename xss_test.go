@@ -6,7 +6,6 @@ import (
 	"glint/config"
 	log "glint/log"
 	"glint/plugin"
-	"glint/util"
 	"glint/xss"
 	"regexp"
 	"strings"
@@ -44,9 +43,7 @@ func TestXSS(t *testing.T) {
 		plugin.Run(data, &PluginWg)
 	}()
 	PluginWg.Wait()
-	util.OutputVulnerable(plugin.ScanResult)
 	fmt.Println("exit...")
-
 }
 
 func TestURL(t *testing.T) {
