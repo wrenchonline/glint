@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"glint/fastreq"
+	"glint/plugin"
 	"glint/util"
 	"strings"
 
@@ -42,9 +43,10 @@ var anti_csrf = []string{
 
 var DefaultProxy string = "127.0.0.1:8080"
 
-func Origin(k string, v []interface{}) error {
+func Origin(args interface{}) error {
+	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	for _, s := range v {
+	for _, s := range group.GroupUrls {
 		session := s.(map[string]interface{})
 		url := session["url"].(string)
 		method := session["method"].(string)
@@ -87,9 +89,10 @@ func Origin(k string, v []interface{}) error {
 	return nil
 }
 
-func Referer(k string, v []interface{}) error {
+func Referer(args interface{}) error {
+	group := args.(plugin.GroupData)
 	REFERER_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	for _, s := range v {
+	for _, s := range group.GroupUrls {
 		session := s.(map[string]interface{})
 		url := session["url"].(string)
 		method := session["method"].(string)
@@ -109,6 +112,7 @@ func Referer(k string, v []interface{}) error {
 			b2 := resp2.Body()
 			if len(b1) == len(b2) {
 				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))
+
 			}
 			return errs
 		} else {

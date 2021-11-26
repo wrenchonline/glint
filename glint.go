@@ -64,7 +64,7 @@ func main() {
 
 func run(c *cli.Context) error {
 	// var req model.Request
-	Plugins := Plugins.Get().([]string)
+	// Plugins := Plugins.Get().([]string)
 	targets := []*model.Request{}
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
@@ -107,9 +107,9 @@ func run(c *cli.Context) error {
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 
-	for _, Plugin := range Plugins {
+	// for _, Plugin := range Plugins {
 
-	}
+	// }
 
 	return nil
 }

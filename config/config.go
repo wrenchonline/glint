@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"sync"
 	"time"
 
-	"github.com/panjf2000/ants/v2"
-	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v2"
 )
 
@@ -203,37 +200,4 @@ func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
 		fmt.Println(err)
 	}
 	return err
-}
-
-type Plugin struct {
-	PluginWG    sync.WaitGroup //插件群组
-	Concurrency int            //并发数
-	Callback    PluginCallback //扫描插件函数
-	Pool        *ants.Pool     // 协程池
-	Poolfunc    *ants.PoolWithFunc
-}
-
-func (p *Plugin) Init() {
-	p.Poolfunc, _ = ants.NewPoolWithFunc(10, func(i interface{}) { //新建一个带有同类方法的pool对象
-		// p.Callback()
-		// wg.Done()
-	})
-}
-
-type PluginCallback func(k string, v []interface{}) error
-
-func (p *Plugin) HandleResult(data map[string][]interface{}) interface{} {
-	defer p.PluginWG.Done()
-	defer p.Pool.Release()
-	var err error
-	c := funk.Map(data, func(k string, v []interface{}) error {
-		for i := 0; i < p.Concurrency; i++ {
-			err := p.Callback(k, v)
-			if err != nil {
-				println(err.Error())
-			}
-		}
-		return err
-	})
-	return c
 }

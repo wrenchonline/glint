@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	ast "glint/ast"
-	cf "glint/config"
 	log "glint/log"
 	"html"
 	"net/url"
@@ -46,10 +45,10 @@ func (spider *Spider) Close() {
 }
 
 func (spider *Spider) Init() error {
-	co := cf.Conf{}
-	//读取配置文件
-	conf := co.GetConf()
-	spider.ReqMode = conf.ReqMode
+	// co := cf.Conf{}
+	// //读取配置文件
+	// conf := co.GetConf()
+	// spider.ReqMode = "GET"
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
@@ -234,6 +233,7 @@ func (g *BuildPayload) GetPayloadValue() (string, error) {
 
 //PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
 func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string) error {
+	spider.ReqMode = reqmod
 	if reqmod == "GET" {
 		params, err := spider.GetRequrlparam()
 		if err != nil {
