@@ -1,8 +1,13 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
+	"glint/ast"
+	"glint/log"
 	"glint/proto"
+
+	"os"
 
 	"github.com/logrusorgru/aurora"
 )
@@ -84,5 +89,22 @@ func OutputVulnerable(ScanResults []*ScanResult) {
 		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("ReqMsg:"), aurora.Magenta(s.ReqMsg)))
 		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("VulnerableLevel:"), aurora.Red(s.VulnerableLevel)))
 		fmt.Println(aurora.Yellow("***********************************"))
+	}
+}
+
+func SaveCrawOutPut(ResultList map[string][]ast.JsonUrl, FilePath string) {
+	var data []byte
+	data, err := json.Marshal(ResultList)
+	if err != nil {
+		log.Fatal("%s", err.Error())
+	}
+	fp, err := os.OpenFile(FilePath, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		log.Fatal("%s", err.Error())
+	}
+	defer fp.Close()
+	_, err = fp.Write(data)
+	if err != nil {
+		log.Fatal("%s", err.Error())
 	}
 }

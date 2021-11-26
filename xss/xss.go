@@ -61,16 +61,15 @@ type Generator struct {
 	IsNeedFlag bool
 	mode       Checktype
 	Tag        string
-	words      []string
 	extension  []PayloadMode
 	flag       string
 }
 
 func (g *Generator) Next() bool {
-	if g.i == len(g.words) {
+	if g.i == len(g.extension) {
 		return false
 	}
-	g.value = g.words[g.i]
+	g.value = g.extension[g.i].payload
 	g.mode = g.extension[g.i].Mode
 	g.Tag = g.extension[g.i].CheckTag
 	g.IsNeedFlag = g.extension[g.i].IsNeedFlag
@@ -151,21 +150,6 @@ func Test_CheckHtmlNodeAttributesKey() {
 	}
 }
 
-//给payload做扩展属性
-func (g *Generator) mapmode(Mode Checktype, CheckTag string, IsNeedFlag bool) {
-	mode := funk.Map(g.words, func(payload string) PayloadMode {
-		var mode PayloadMode
-		mode.Mode = Mode
-		mode.IsNeedFlag = IsNeedFlag
-		mode.payload = payload
-		mode.CheckTag = CheckTag
-		return mode
-	})
-	if v, ok := mode.([]PayloadMode); ok {
-		g.extension = append(g.extension, v...)
-	}
-}
-
 type Callback func(msg string) string
 
 func (g *Generator) CopyPayLoadtoXSS(payloaddata payload.PayloadData, Tagmode string, callback Callback) {
@@ -178,8 +162,12 @@ func (g *Generator) CopyPayLoadtoXSS(payloaddata payload.PayloadData, Tagmode st
 			PayLoad = callback(PayLoad)
 		}
 		CheckTag := s["CheckTag"].(string)
-		g.words = append(g.words, PayLoad)
-		g.mapmode(Checktype(mytype), CheckTag, true)
+		var mode PayloadMode
+		mode.Mode = Checktype(mytype)
+		mode.IsNeedFlag = true
+		mode.payload = PayLoad
+		mode.CheckTag = CheckTag
+		g.extension = append(g.extension, mode)
 	}
 }
 
@@ -229,8 +217,12 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 						return err
 					}
 					log.Info("Attributes generator payload:%s", payload)
-					g.words = append(g.words, payload)
-					g.mapmode(CheckConsoleLog, "", false)
+					var mode PayloadMode
+					mode.Mode = Checktype(CheckConsoleLog)
+					mode.IsNeedFlag = true
+					mode.payload = payload
+					mode.CheckTag = ""
+					g.extension = append(g.extension, mode)
 				}
 				g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
 					Rstr := `'">` + payload
@@ -245,8 +237,12 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 		if err != nil {
 			return err
 		}
-		g.words = append(g.words, payload)
-		g.mapmode(CheckConsoleLog, "", false)
+		var mode PayloadMode
+		mode.Mode = Checktype(CheckConsoleLog)
+		mode.IsNeedFlag = true
+		mode.payload = payload
+		mode.CheckTag = ""
+		g.extension = append(g.extension, mode)
 	}
 	return nil
 }

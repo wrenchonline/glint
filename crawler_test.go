@@ -2,16 +2,19 @@ package main
 
 import (
 	"fmt"
+	"glint/ast"
 	"glint/config"
 	"glint/crawler"
 	craw "glint/crawler"
 	log "glint/log"
 	"glint/model"
+	"glint/util"
 	"net/url"
 	"os"
 	"testing"
 
 	"github.com/logrusorgru/aurora"
+	"github.com/thoas/go-funk"
 )
 
 func Test_Crawler(t *testing.T) {
@@ -21,9 +24,9 @@ func Test_Crawler(t *testing.T) {
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("http://www.rongji.com")
+	murl, _ := url.Parse("http://www.jykc.com")
 	Headers := make(map[string]interface{})
-	Headers["HOST"] = "www.rongji.com"
+	Headers["HOST"] = "http://www.jykc.com"
 	targets := []*model.Request{
 		&model.Request{
 			URL:           &model.URL{URL: *murl},
@@ -48,7 +51,19 @@ func Test_Crawler(t *testing.T) {
 	for _, rest := range result.ReqList {
 		fmt.Println(aurora.Red(rest))
 	}
-
+	ReqList := make(map[string][]ast.JsonUrl)
+	funk.Map(result.ReqList, func(r *model.Request) bool {
+		// element := make(map[string]interface{})
+		element := ast.JsonUrl{
+			Url:     r.URL.String(),
+			MetHod:  r.Method,
+			Headers: r.Headers,
+			Data:    r.PostData,
+			Source:  r.Source}
+		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+		return false
+	})
+	util.SaveCrawOutPut(ReqList, "result.json")
 }
 
 func Test_filter(t *testing.T) {

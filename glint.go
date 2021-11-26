@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"glint/ast"
 	"glint/brohttp"
 	"glint/config"
 	"glint/crawler"
@@ -10,6 +11,7 @@ import (
 	"glint/log"
 	"glint/model"
 	"glint/plugin"
+	"glint/util"
 	"glint/xss"
 	"os"
 	"os/signal"
@@ -117,13 +119,14 @@ func run(c *cli.Context) error {
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 
 	ReqList := make(map[string][]interface{})
+	List := make(map[string][]ast.JsonUrl)
 	funk.Map(result.ReqList, func(r *model.Request) bool {
-		// element := ast.JsonUrl{
-		// 	Url:     r.URL.String(),
-		// 	MetHod:  r.Method,
-		// 	Headers: r.Headers,
-		// 	Data:    r.PostData,
-		// 	Source:  r.Source}
+		element0 := ast.JsonUrl{
+			Url:     r.URL.String(),
+			MetHod:  r.Method,
+			Headers: r.Headers,
+			Data:    r.PostData,
+			Source:  r.Source}
 		element := make(map[string]interface{})
 		element["url"] = r.URL.String()
 		element["method"] = r.Method
@@ -131,8 +134,11 @@ func run(c *cli.Context) error {
 		element["data"] = r.PostData
 		element["source"] = r.Source
 		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+		List[r.GroupsId] = append(List[r.GroupsId], element0)
 		return false
 	})
+
+	util.SaveCrawOutPut(List, "result.json")
 
 	task.PluginBrowser = &Spider
 	//爬完虫加载插件检测漏洞

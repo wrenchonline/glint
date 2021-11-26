@@ -16,6 +16,11 @@ xss:
         CheckTag: "img",
         CheckType: "Value",
       },
+      {
+        PayLoad: "<details onclick='flag'>", 
+        CheckTag: "details",
+        CheckType: "Value",
+      },
     ]
   attibute:
     [
