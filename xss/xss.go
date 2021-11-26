@@ -339,7 +339,7 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 	payloadinfo := make(map[string]stf)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Empty to xss payload ")
 	}
 	for _, v := range ReponseInfo {
 		vlen := len(v)
@@ -401,8 +401,7 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 		}
 		htmls = []string{}
 	}
-
-	return nil, err
+	return nil, errors.New("No VULNERABLE Found")
 }
 
 func CheckXss(args interface{}) (*util.ScanResult, error) {

@@ -74,6 +74,9 @@ func VulnerableTcpOrUdpResult(target string, output string, payload []string, re
 
 func OutputVulnerable(ScanResults []*ScanResult) {
 	for _, s := range ScanResults {
+		if s == nil {
+			break
+		}
 		fmt.Println(aurora.Yellow("***********************************"))
 		fmt.Println(aurora.Sprintf("%s %v", aurora.Yellow("Vulnerable:"), aurora.Red(s.Vulnerable)))
 		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("target:"), aurora.Green(s.Target)))
