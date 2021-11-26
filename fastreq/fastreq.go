@@ -88,7 +88,7 @@ func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
 	return err
 }
 
-func (sess *session) doRequest(verb string, url string, headers map[string]string, body []byte) (*Response, error) {
+func (sess *session) doRequest(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	var err error
 	verb = strings.ToUpper(verb)
 	//bodyReader := bytes.NewReader(body)
@@ -158,44 +158,45 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 
 	if err != nil {
 		fmt.Println(aurora.Red(err))
-		return nil, errors.Wrap(err, "error occurred during request")
+		return nil, nil, errors.Wrap(err, "error occurred during request")
 	}
 	// 带Range头后一般webserver响应都是206 PARTIAL CONTENT，修正为200 OK
 	if resp.StatusCode() == 206 {
 		resp.SetStatusCode(200)
 	}
-	return NewResponse(resp), nil
+
+	return req, NewResponse(resp), nil
 }
 
 // Get Session的GET请求
-func (sess *session) Get(url string, headers map[string]string) (*Response, error) {
+func (sess *session) Get(url string, headers map[string]string) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // Post Session的POST请求
-func (sess *session) Post(url string, headers map[string]string, body []byte) (*Response, error) {
+func (sess *session) Post(url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request Session的自定义请求类型
-func (sess *session) Request(verb string, url string, headers map[string]string, body []byte) (*Response, error) {
+func (sess *session) Request(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest(verb, url, headers, body)
 }
 
 // Get GET请求
-func Get(url string, headers map[string]string, options *ReqOptions) (*Response, error) {
+func Get(url string, headers map[string]string, options *ReqOptions) (*fasthttp.Request, *Response, error) {
 	sess := getSessionByOptions(options)
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // POST POST请求
-func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*Response, error) {
+func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*fasthttp.Request, *Response, error) {
 	sess := getSessionByOptions(options)
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request 自定义请求类型
-func Request(verb string, url string, headers map[string]string, body []byte, options *ReqOptions) (*Response, error) {
+func Request(verb string, url string, headers map[string]string, body []byte, options *ReqOptions) (*fasthttp.Request, *Response, error) {
 	sess := getSessionByOptions(options)
 	return sess.doRequest(verb, url, headers, body)
 }

@@ -5,6 +5,7 @@ import (
 	"glint/config"
 	"glint/csrf"
 	"glint/plugin"
+	"glint/util"
 	"sync"
 	"testing"
 )
@@ -16,6 +17,7 @@ func Test_CSRF(t *testing.T) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, csrf.Origin, csrf.Referer)
 	plugin := plugin.Plugin{
+		PluginName:   "csrf",
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
 	}
@@ -25,5 +27,6 @@ func Test_CSRF(t *testing.T) {
 		plugin.Run(data, &PluginWg)
 	}()
 	PluginWg.Wait()
+	util.OutputVulnerable(plugin.ScanResult)
 	fmt.Println("exit...")
 }

@@ -1,16 +1,20 @@
 package util
 
 import (
+	"fmt"
 	"glint/proto"
+
+	"github.com/logrusorgru/aurora"
 )
 
 // 保存扫描结果
 type ScanResult struct {
-	Vulnerable bool     `json:"vulnerable"` // 是否存在漏洞
-	Target     string   `json:"target"`     // 漏洞url
-	Output     string   `json:"output"`     // 一些说明
-	ReqMsg     []string `json:"req_msg"`    // 请求列表
-	RespMsg    []string `json:"resp_msg"`   // 响应列表
+	Vulnerable      bool     `json:"vulnerable"`       // 是否存在漏洞
+	Target          string   `json:"target"`           // 漏洞url
+	Output          string   `json:"output"`           // 一些说明
+	ReqMsg          []string `json:"req_msg"`          // 请求列表
+	RespMsg         []string `json:"resp_msg"`         // 响应列表
+	VulnerableLevel string   `json:"vulnerable_level"` // 漏洞等级
 }
 
 // 没漏洞时返回的结果
@@ -57,12 +61,25 @@ func VulnerableHttpResult(target string, output string, respList []*proto.Respon
 }
 
 // 有漏洞时返回的结果(tcp/udp)
-func VulnerableTcpOrUdpResult(target string, output string, payload []string, resp []string) *ScanResult {
+func VulnerableTcpOrUdpResult(target string, output string, payload []string, resp []string, VulnerableLevel string) *ScanResult {
 	return &ScanResult{
-		Vulnerable: true,
-		Target:     target,
-		Output:     output,
-		ReqMsg:     payload,
-		RespMsg:    resp,
+		Vulnerable:      true,
+		Target:          target,
+		Output:          output,
+		ReqMsg:          payload,
+		RespMsg:         resp,
+		VulnerableLevel: VulnerableLevel,
+	}
+}
+
+func OutputVulnerable(ScanResults []*ScanResult) {
+	for _, s := range ScanResults {
+		fmt.Println(aurora.Yellow("***********************************"))
+		fmt.Println(aurora.Sprintf("%s %v", aurora.Yellow("Vulnerable:"), aurora.Red(s.Vulnerable)))
+		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("target:"), aurora.Green(s.Target)))
+		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("Output:"), aurora.Cyan(s.Output)))
+		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("ReqMsg:"), aurora.Magenta(s.ReqMsg)))
+		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("VulnerableLevel:"), aurora.Red(s.VulnerableLevel)))
+		fmt.Println(aurora.Yellow("***********************************"))
 	}
 }

@@ -2,26 +2,22 @@ package xss
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"glint/ast"
+	"glint/brohttp"
+	"glint/log"
+	"glint/payload"
+	"glint/plugin"
+	"glint/util"
 	"math/rand"
-	"net/url"
 	"strings"
 	"time"
-	ast "glint/ast"
-	brohttp "glint/brohttp"
-	log "glint/log"
-	"glint/payload"
 
-	aurora "github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora"
 
 	"github.com/thoas/go-funk"
 )
-
-type Xss struct {
-	RawString string
-	Url       *url.URL
-	Query     *url.Values
-}
 
 type stf struct {
 	mode Checktype
@@ -337,7 +333,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	return VulOK
 }
 
-func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) bool {
+func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) (*util.ScanResult, error) {
 	g := new(Generator)
 
 	payloadinfo := make(map[string]stf)
@@ -393,13 +389,64 @@ func CheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohtt
 					break
 				}
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
+					Result := util.VulnerableTcpOrUdpResult(spider.Url.String(),
+						"VULNERABLE to Cross-site scripting ...",
+						[]string{string(payload)},
+						[]string{string("")},
+						"high")
 					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-					return true
+					return Result, err
 				}
 			}
 		}
 		htmls = []string{}
 	}
 
-	return false
+	return nil, err
+}
+
+func CheckXss(args interface{}) (*util.ScanResult, error) {
+	groups := args.(plugin.GroupData)
+	Spider := groups.Spider
+	var Result *util.ScanResult
+	var err error
+	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
+		flag := funk.RandomString(8)
+		bflag := false
+		resources := make([]map[int]interface{}, len(groups.GroupUrls))
+		for _, Urlinfo := range groups.GroupUrls {
+			Spider.CopyRequest(Urlinfo)
+			println(Spider.Url.String())
+			b, Occ := Spider.CheckRandOnHtmlS(flag)
+			if b {
+				bflag = true
+			}
+			resources = append(resources, Occ)
+		}
+		if !bflag {
+			return nil, errors.New("not found")
+		}
+		Result, err = DoCheckXss(resources, flag, Spider)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		flag := funk.RandomString(8)
+		bflag := false
+		resources := make([]map[int]interface{}, len(groups.GroupUrls))
+		for _, Urlinfo := range groups.GroupUrls {
+			Spider.CopyRequest(Urlinfo)
+			b, Occ := Spider.CheckRandOnHtmlS(flag)
+			if b {
+				bflag = true
+			}
+			resources = append(resources, Occ)
+		}
+		if !bflag {
+			return nil, errors.New("not found")
+		}
+		Result, err = DoCheckXss(resources, flag, Spider)
+		return nil, err
+	}
+	return Result, nil
 }

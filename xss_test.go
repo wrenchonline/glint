@@ -1,15 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"glint/ast"
+	"glint/config"
 	log "glint/log"
-	xss "glint/xss"
-	"io/ioutil"
-	"os"
+	"glint/plugin"
+	"glint/util"
+	"glint/xss"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -26,59 +27,26 @@ func TestXSS(t *testing.T) {
 	Spider := brohttp.Spider{}
 	Spider.Init()
 	defer Spider.Close()
-
-	jsonFile, err := os.Open("result.json")
-	if err != nil {
-		fmt.Println(err)
+	data := make(map[string][]interface{})
+	var PluginWg sync.WaitGroup
+	config.ReadResultConf("result.json", &data)
+	myfunc := []plugin.PluginCallback{}
+	myfunc = append(myfunc, xss.CheckXss)
+	plugin := plugin.Plugin{
+		PluginName:   "xss",
+		MaxPoolCount: 1,
+		Callbacks:    myfunc,
+		Spider:       &Spider,
 	}
-	// 要记得关闭
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	FileJsonUrls := make(map[string]interface{})
-	err = json.Unmarshal([]byte(byteValue), &FileJsonUrls)
-	if err != nil {
-		fmt.Println(err)
-	}
+	plugin.Init()
+	PluginWg.Add(1)
+	go func() {
+		plugin.Run(data, &PluginWg)
+	}()
+	PluginWg.Wait()
+	util.OutputVulnerable(plugin.ScanResult)
+	fmt.Println("exit...")
 
-	funk.Map(FileJsonUrls, func(groupsid string, json interface{}) interface{} {
-		jsoninfo := json.([]interface{})
-		if funk.Contains(groupsid, "Button") {
-			flag := funk.RandomString(8)
-			bflag := false
-			resources := make([]map[int]interface{}, len(jsoninfo))
-			for _, Urlinfo := range jsoninfo {
-				Spider.CopyRequest(Urlinfo)
-				println(Spider.Url.String())
-				b, Occ := Spider.CheckRandOnHtmlS(flag)
-				if b {
-					bflag = true
-				}
-				resources = append(resources, Occ)
-			}
-			if !bflag {
-				return nil
-			}
-			xss.CheckXss(resources, flag, &Spider)
-		} else {
-			flag := funk.RandomString(8)
-			bflag := false
-			resources := make([]map[int]interface{}, len(jsoninfo))
-			for _, Urlinfo := range jsoninfo {
-				Spider.CopyRequest(Urlinfo)
-				b, Occ := Spider.CheckRandOnHtmlS(flag)
-				if b {
-					bflag = true
-				}
-				resources = append(resources, Occ)
-			}
-			if !bflag {
-				return nil
-			}
-			xss.CheckXss(resources, flag, &Spider)
-		}
-		return nil
-	})
-	time.Sleep(time.Second * 2)
 }
 
 func TestURL(t *testing.T) {
