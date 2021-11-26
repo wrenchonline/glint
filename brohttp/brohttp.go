@@ -52,7 +52,7 @@ func (spider *Spider) Init() error {
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
@@ -78,7 +78,7 @@ func (spider *Spider) Init() error {
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
-			fmt.Printf("* console.%s call:\n", ev.Type)
+			log.Debug("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
 				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
 				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
@@ -98,7 +98,9 @@ func (spider *Spider) Init() error {
 				req.Headers = []*fetch.HeaderEntry{}
 				//设置文件头
 				for key, value := range spider.Headers {
-					req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+					if value != nil {
+						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+					}
 				}
 				if spider.ReqMode == "POST" {
 					req.Method = "POST"
@@ -114,11 +116,11 @@ func (spider *Spider) Init() error {
 			request := ev
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
-				fmt.Printf("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
+				log.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventResponseReceived:
 		case *page.EventJavascriptDialogOpening:
-			fmt.Printf("* EventJavascriptDialogOpening.%s call:\n", ev.Type)
+			log.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
 			fmt.Println(Red(ev.Message))
 			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
 			Responses = append(Responses, Response)

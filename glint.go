@@ -3,14 +3,20 @@ package main
 import (
 	"errors"
 	"fmt"
+	"glint/brohttp"
 	"glint/config"
 	"glint/crawler"
+	"glint/csrf"
 	"glint/log"
 	"glint/model"
+	"glint/plugin"
+	"glint/xss"
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 
+	"github.com/thoas/go-funk"
 	"github.com/urfave/cli/v2"
 )
 
@@ -64,11 +70,14 @@ func main() {
 
 func run(c *cli.Context) error {
 	// var req model.Request
-	// Plugins := Plugins.Get().([]string)
+	log.DebugEnable(false)
+	Plugins := Plugins.Value()
 	targets := []*model.Request{}
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
-
+	Spider := brohttp.Spider{}
+	var PluginWg sync.WaitGroup
+	Spider.Init()
 	if c.Args().Len() == 0 {
 		log.Error("url must be set")
 		return errors.New("url must be set")
@@ -107,9 +116,59 @@ func run(c *cli.Context) error {
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 
-	// for _, Plugin := range Plugins {
+	ReqList := make(map[string][]interface{})
+	funk.Map(result.ReqList, func(r *model.Request) bool {
+		// element := ast.JsonUrl{
+		// 	Url:     r.URL.String(),
+		// 	MetHod:  r.Method,
+		// 	Headers: r.Headers,
+		// 	Data:    r.PostData,
+		// 	Source:  r.Source}
+		element := make(map[string]interface{})
+		element["url"] = r.URL.String()
+		element["method"] = r.Method
+		element["headers"] = r.Headers
+		element["data"] = r.PostData
+		element["source"] = r.Source
+		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+		return false
+	})
 
-	// }
+	task.PluginBrowser = &Spider
+	//爬完虫加载插件检测漏洞
+	for _, PluginName := range Plugins {
+		switch strings.ToLower(PluginName) {
+		case "csrf":
+			myfunc := []plugin.PluginCallback{}
+			myfunc = append(myfunc, csrf.Origin, csrf.Referer)
+			plugin := plugin.Plugin{
+				PluginName:   PluginName,
+				MaxPoolCount: 20,
+				Callbacks:    myfunc,
+			}
+			plugin.Init()
+			PluginWg.Add(1)
+			go func() {
+				plugin.Run(ReqList, &PluginWg)
+			}()
+		case "xss":
+			// Spider.Init()
+			myfunc := []plugin.PluginCallback{}
+			myfunc = append(myfunc, xss.CheckXss)
+			plugin := plugin.Plugin{
+				PluginName:   "xss",
+				MaxPoolCount: 1,
+				Callbacks:    myfunc,
+				Spider:       &Spider,
+			}
+			plugin.Init()
+			PluginWg.Add(1)
+			go func() {
+				plugin.Run(ReqList, &PluginWg)
+			}()
+		}
+	}
+	PluginWg.Wait()
 
 	return nil
 }
@@ -120,6 +179,7 @@ func WaitInterputQuit(t *crawler.CrawlerTask) {
 		fmt.Println("exit ...")
 		t.Pool.Tune(1)
 		t.Pool.Release()
+		t.PluginBrowser.Close()
 		t.Browser.Close()
 		os.Exit(-1)
 	}

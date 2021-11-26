@@ -68,7 +68,9 @@ func StrMd5(str string) string {
 func ConvertHeaders(h map[string]interface{}) map[string]string {
 	a := map[string]string{}
 	for key, value := range h {
-		a[key] = value.(string)
+		if value != nil {
+			a[key] = value.(string)
+		}
 	}
 	return a
 }

@@ -443,10 +443,12 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			resources = append(resources, Occ)
 		}
 		if !bflag {
-			return nil, errors.New("not found")
+			return Result, errors.New("not found")
 		}
 		Result, err = DoCheckXss(resources, flag, Spider)
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 	return Result, nil
 }

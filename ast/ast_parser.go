@@ -181,6 +181,8 @@ func (parser *Parser) HttpParser(body string) bool {
 						parser.tokenizer.Set(Tree.PopMax())
 					}
 
+				} else {
+					break
 				}
 			}
 
@@ -213,6 +215,8 @@ func (parser *Parser) HttpParser(body string) bool {
 					if Tree.Len() != 0 {
 						parser.tokenizer.Set(Tree.PopMax())
 					}
+				} else {
+					break
 				}
 			}
 

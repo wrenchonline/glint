@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"encoding/json"
+	"glint/brohttp"
 	"glint/config"
 	"glint/log"
 	"glint/model"
@@ -19,7 +20,8 @@ type Result struct {
 }
 
 type CrawlerTask struct {
-	Browser       *Spider            //
+	Browser       *Spider            //爬虫浏览器
+	PluginBrowser *brohttp.Spider    //插件浏览器
 	RootDomain    string             // 当前爬取根域名 用于子域名收集
 	Targets       []*model.Request   // 输入目标
 	Result        *Result            // 最终结果

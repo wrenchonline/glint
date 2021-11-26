@@ -32,10 +32,10 @@ func (p *Plugin) Init() {
 		data := args.(GroupData)
 		for _, f := range p.Callbacks {
 			p.mu.Lock()
-			scanresult, err := f(data)
-			if err != nil {
-				log.Error(err.Error())
-			}
+			scanresult, _ := f(data)
+			// if err != nil {
+			// 	log.Error(err.Error())
+			// }
 			p.ScanResult = append(p.ScanResult, scanresult)
 			p.mu.Unlock()
 		}
@@ -60,6 +60,6 @@ func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup) er
 	}
 	p.threadwg.Wait()
 	log.Info("Plugin %s is Finish!", p.PluginName)
-
+	util.OutputVulnerable(p.ScanResult)
 	return err
 }
