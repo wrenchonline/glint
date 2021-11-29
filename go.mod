@@ -15,6 +15,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.9.0
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
 	github.com/k3a/html2text v1.0.8
@@ -38,4 +39,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	mvdan.cc/gofumpt v0.2.0 // indirect
+	nhooyr.io/websocket v1.8.7-0.20210109135017-65dfbdd4c110 // indirect
 )
