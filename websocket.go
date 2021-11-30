@@ -2,75 +2,104 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"io"
+	"errors"
+	"glint/log"
 	"net/http"
 	"time"
 
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 )
 
-type echoServer struct {
-	// logf controls where logs are sent.
-	logf func(f string, v ...interface{})
+type TaskServer struct {
+	// subscriberMessageBuffer controls the max number
+	// of messages that can be queued for a subscriber
+	// before it is kicked.
+	//
+	// Defaults to 16.
+	subscriberMessageBuffer int
+
+	// publishLimiter controls the rate limit applied to the publish endpoint.
+	//
+	// Defaults to one publish every 100ms with a burst of 8.
+	publishLimiter *rate.Limiter
+
+	// serveMux routes the various endpoints to the appropriate handler.
+	serveMux http.ServeMux
 }
 
-func (s echoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		Subprotocols: []string{"echo"},
-	})
+// NewTaskServer
+func NewTaskServer() *TaskServer {
+	ts := &TaskServer{
+		subscriberMessageBuffer: 16,
+		// subscribers:             make(map[*subscriber]struct{}),
+		publishLimiter: rate.NewLimiter(rate.Every(time.Millisecond*100), 8),
+	}
+	ts.serveMux.Handle("/", http.FileServer(http.Dir(".")))
+	ts.serveMux.HandleFunc("/task", ts.TaskHandler)
+
+	return ts
+}
+
+func (ts *TaskServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ts.serveMux.ServeHTTP(w, r)
+}
+
+// TaskHandler 任务处理
+func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		s.logf("%v", err)
+		log.Error(err.Error())
 		return
 	}
-	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+	defer c.Close(websocket.StatusInternalError, "")
 
-	if c.Subprotocol() != "echo" {
-		c.Close(websocket.StatusPolicyViolation, "client must speak the echo subprotocol")
-		return
-	}
-
-	l := rate.NewLimiter(rate.Every(time.Millisecond*100), 10)
-	for {
-		err = echo(r.Context(), c, l)
-		if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
-			return
-		}
-		if err != nil {
-			s.logf("failed to echo with %v: %v", r.RemoteAddr, err)
-			return
-		}
-	}
-}
-
-// echo reads from the WebSocket connection and then writes
-// the received message back to it.
-// The entire function has 10s to complete.
-func echo(ctx context.Context, c *websocket.Conn, l *rate.Limiter) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 
-	err := l.Wait(ctx)
+	err = ts.Task(ctx, c)
+
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+
+	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+		websocket.CloseStatus(err) == websocket.StatusGoingAway {
+		return
+	}
+
 	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+}
+
+func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
+	ctx = c.CloseRead(ctx)
+	var v interface{}
+	err := wsjson.Read(ctx, c, &v)
+	if err != nil {
+		log.Error(err.Error())
 		return err
 	}
 
-	typ, r, err := c.Reader(ctx)
+	repmsgs, err := start(v)
 	if err != nil {
-		return err
+		return errors.Unwrap(err)
 	}
 
-	w, err := c.Writer(ctx, typ)
-	if err != nil {
-		return err
-	}
+	return writeTimeout(ctx, time.Second*5, c, repmsgs)
+}
 
-	_, err = io.Copy(w, r)
-	if err != nil {
-		return fmt.Errorf("failed to io.Copy: %w", err)
-	}
+func start(v interface{}) (interface{}, error) {
+	var response interface{}
+	return response, nil
+}
 
-	err = w.Close()
-	return err
+func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg interface{}) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return wsjson.Write(ctx, c, msg)
 }
