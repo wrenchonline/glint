@@ -95,6 +95,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 
 func start(v interface{}) (interface{}, error) {
 	var response interface{}
+	response = v
 	return response, nil
 }
 

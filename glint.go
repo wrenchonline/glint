@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"glint/ast"
@@ -13,10 +14,13 @@ import (
 	"glint/plugin"
 	"glint/util"
 	"glint/xss"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/thoas/go-funk"
 	"github.com/urfave/cli/v2"
@@ -24,12 +28,14 @@ import (
 
 const (
 	DefaultConfigPath string = "config.yaml"
+	DefaultSocket     string = ""
 )
 
 var DefaultPlugins = cli.NewStringSlice("xss", "csrf")
 var signalChan chan os.Signal
 var ConfigpPath string
 var Plugins cli.StringSlice
+var Socket string
 
 func main() {
 	author := cli.Author{
@@ -60,6 +66,15 @@ func main() {
 				Value:       DefaultPlugins,
 				Destination: &Plugins,
 			},
+
+			//设置socket地址
+			&cli.StringFlag{
+				Name: "socket",
+				// Aliases:     []string{"p"},
+				Usage:       "Websocket Communication Address. Example `--socket 127.0.0.1:8081`",
+				Value:       DefaultSocket,
+				Destination: &Socket,
+			},
 		},
 		Action: run,
 	}
@@ -73,24 +88,45 @@ func main() {
 func run(c *cli.Context) error {
 	// var req model.Request
 	log.DebugEnable(false)
-	Plugins := Plugins.Value()
-	targets := []*model.Request{}
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
-	Spider := brohttp.Spider{}
-	var PluginWg sync.WaitGroup
-	Spider.Init()
 	if c.Args().Len() == 0 {
 		log.Error("url must be set")
 		return errors.New("url must be set")
 	}
 
+	if Socket != "" {
+		ServerHandler(c)
+	} else {
+		CmdHandler(c)
+	}
+	return nil
+}
+
+func WaitInterputQuit(t *crawler.CrawlerTask) {
+	select {
+	case <-signalChan:
+		fmt.Println("exit ...")
+		t.Pool.Tune(1)
+		t.Pool.Release()
+		t.PluginBrowser.Close()
+		t.Browser.Close()
+		os.Exit(-1)
+	}
+}
+
+func CmdHandler(c *cli.Context) {
+	Spider := brohttp.Spider{}
+	Spider.Init()
+	Plugins := Plugins.Value()
+	targets := []*model.Request{}
+	var PluginWg sync.WaitGroup
+	log.Info("Enter command mode...")
 	TaskConfig := config.TaskConfig{}
 	err := config.ReadTaskConf(ConfigpPath, &TaskConfig)
 	if err != nil {
 		log.Error("test ReadTaskConf() fail")
 	}
-
 	for _, _url := range c.Args().Slice() {
 		if !strings.HasPrefix(_url, "http") {
 			log.Error(`Parameter Error,Please "http(s)://" start with Url `)
@@ -175,18 +211,37 @@ func run(c *cli.Context) error {
 		}
 	}
 	PluginWg.Wait()
-
-	return nil
 }
 
-func WaitInterputQuit(t *crawler.CrawlerTask) {
-	select {
-	case <-signalChan:
-		fmt.Println("exit ...")
-		t.Pool.Tune(1)
-		t.Pool.Release()
-		t.PluginBrowser.Close()
-		t.Browser.Close()
-		os.Exit(-1)
+func ServerHandler(c *cli.Context) error {
+	l, err := net.Listen("tcp", Socket)
+	if err != nil {
+		return err
 	}
+	log.Info("listening on http://%v", l.Addr())
+	cs := NewTaskServer()
+	s := &http.Server{
+		Handler:      cs,
+		ReadTimeout:  time.Second * 10,
+		WriteTimeout: time.Second * 10,
+	}
+
+	errc := make(chan error, 1)
+	go func() {
+		errc <- s.Serve(l)
+	}()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+
+	select {
+	case err := <-errc:
+		log.Error("failed to serve: %v", err)
+	case sig := <-sigs:
+		log.Error("terminating: %v", sig)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	return s.Shutdown(ctx)
 }
