@@ -332,7 +332,6 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) (*util.ScanResult, error) {
 	g := new(Generator)
 
-	payloadinfo := make(map[string]stf)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
 		return nil, errors.New("Empty to xss payload ")
@@ -365,6 +364,7 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 			break
 		}
 		info := stf{mode: Evalmode, Tag: tag}
+		payloadinfo := make(map[string]stf)
 		payloadinfo[payload] = info
 		//这里的map不是顺序执行
 		for _, v := range ReponseInfo {

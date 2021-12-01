@@ -19,11 +19,12 @@ func TestCheckPayloadNormal(t *testing.T) {
 	defer Spider.Close()
 	Spider.ReqMode = "GET"
 	// Spider.PostData = []byte("txtName=ecrrgaowle&mtxMessage=Crawl&user_token=873c33f5ece8c8308071890f478ded0b")
-	Spider.Url, err = url.Parse("http://35.227.24.107/88b7706664/index.php")
+	Spider.Url, err = url.Parse("https://challenge-1121.intigriti.io/challenge/index.php?s=111")
+
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	playload := "67pSvN6I"
+	playload := "<ScRiPt>e6X1fe54</sCrIpT>"
 	htmls, _ := Spider.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		ast.SearchInputInResponse(playload, v)

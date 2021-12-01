@@ -6,7 +6,6 @@ import (
 	"fmt"
 	ast "glint/ast"
 	log "glint/log"
-	"html"
 	"net/url"
 	"strings"
 
@@ -158,7 +157,7 @@ func (spider *Spider) Sendreq() (string, error) {
 	if err != nil {
 		log.Error("Sendreq error:", err)
 	}
-	res = html.UnescapeString(res)
+	// res = html.UnescapeString(res)
 	return res, err
 }
 

@@ -1,15 +1,15 @@
 {
     "Normal": [
         {
-            "url": "http://www.jykc.com/error.asp?msg=%B6%D4%B2%BB%C6%F0%A3%AC%B4%CB%D3%C3%BB%A7%B2%BB%B4%E6%D4%DA%A3%AC%C7%EB%D6%D8%D0%C2%CA%E4%C8%EB%A3%A1",
+            "url": "https://challenge-1121.intigriti.io/challenge/index.php?s=dsad",
             "method": "GET",
             "headers": {
+                "Sec-Ch-Ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Google Chrome\";v=\"96\"",
+                "Sec-Ch-Ua-Platform": "\"Windows\"",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Cookie": "safedog-flow-item=; ASPSESSIONIDQSABDSSR=BFKLHLIAMEAEMMBLBHCIBDJO",
-                "Origin": "http://www.jykc.com",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
+                "upgrade-insecure-requests": "1",
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Dnt": "1",
                 "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
             },
             "data": "",

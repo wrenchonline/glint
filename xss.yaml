@@ -21,6 +21,11 @@ xss:
         CheckTag: "details",
         CheckType: "Value",
       },
+      {
+        PayLoad: "</title><h1>flag</h1>", 
+        CheckTag: "h1",
+        CheckType: "Value",
+      },
     ]
   attibute:
     [
