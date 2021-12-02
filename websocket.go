@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"glint/log"
 	"net/http"
@@ -48,7 +49,9 @@ func (ts *TaskServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // TaskHandler 任务处理
 func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, nil)
+	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		InsecureSkipVerify: true,
+	})
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -77,15 +80,20 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
-	ctx = c.CloseRead(ctx)
+	// ctx = c.CloseRead(ctx)
 	var v interface{}
+	var jsonobj interface{}
 	err := wsjson.Read(ctx, c, &v)
 	if err != nil {
-		log.Error(err.Error())
 		return err
 	}
 
-	repmsgs, err := start(v)
+	err = json.Unmarshal([]byte(v.(string)), &jsonobj)
+	if err != nil {
+		return err
+	}
+
+	repmsgs, err := start(jsonobj)
 	if err != nil {
 		return errors.Unwrap(err)
 	}

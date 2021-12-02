@@ -90,14 +90,14 @@ func run(c *cli.Context) error {
 	log.DebugEnable(false)
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
-	if c.Args().Len() == 0 {
-		log.Error("url must be set")
-		return errors.New("url must be set")
-	}
 
 	if Socket != "" {
 		ServerHandler(c)
 	} else {
+		if c.Args().Len() == 0 {
+			log.Error("url must be set")
+			return errors.New("url must be set")
+		}
 		CmdHandler(c)
 	}
 	return nil
