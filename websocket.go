@@ -74,7 +74,6 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err.Error())
 		return
 	}
-
 }
 
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
@@ -100,6 +99,9 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 
 func start(v interface{}) (interface{}, error) {
 	var response interface{}
+	json := v.(map[string]interface{})
+	log.Debug("%v", json)
+	//获取数据库json
 	response = v
 	return response, nil
 }
