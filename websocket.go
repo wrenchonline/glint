@@ -60,18 +60,16 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-
 	err = ts.Task(ctx, c)
-
 	if errors.Is(err, context.Canceled) {
+		log.Error(err.Error())
 		return
 	}
-
 	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 		websocket.CloseStatus(err) == websocket.StatusGoingAway {
+		log.Error(err.Error())
 		return
 	}
-
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -83,22 +81,21 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
 	var v interface{}
 	var jsonobj interface{}
-	err := wsjson.Read(ctx, c, &v)
-	if err != nil {
-		return err
+	for {
+		err := wsjson.Read(ctx, c, &v)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal([]byte(v.(string)), &jsonobj)
+		if err != nil {
+			return err
+		}
+		repmsgs, err := start(jsonobj)
+		if err != nil {
+			return errors.Unwrap(err)
+		}
+		writeTimeout(ctx, time.Second*5, c, repmsgs)
 	}
-
-	err = json.Unmarshal([]byte(v.(string)), &jsonobj)
-	if err != nil {
-		return err
-	}
-
-	repmsgs, err := start(jsonobj)
-	if err != nil {
-		return errors.Unwrap(err)
-	}
-
-	return writeTimeout(ctx, time.Second*5, c, repmsgs)
 }
 
 func start(v interface{}) (interface{}, error) {
