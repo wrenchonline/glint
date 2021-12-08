@@ -220,6 +220,7 @@ func ServerHandler(c *cli.Context) error {
 	}
 	log.Info("listening on http://%v", l.Addr())
 	cs := NewTaskServer()
+
 	s := &http.Server{
 		Handler:      cs,
 		ReadTimeout:  time.Second * 10,

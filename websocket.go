@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"glint/dbmanager"
 	"glint/log"
 	"net/http"
 	"time"
@@ -28,6 +29,9 @@ type TaskServer struct {
 
 	// serveMux routes the various endpoints to the appropriate handler.
 	serveMux http.ServeMux
+
+	// DM
+	Dm *dbmanager.DbManager
 }
 
 // NewTaskServer
@@ -89,7 +93,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 		if err != nil {
 			return err
 		}
-		repmsgs, err := start(jsonobj)
+		repmsgs, err := ts.start(jsonobj)
 		if err != nil {
 			return errors.Unwrap(err)
 		}
@@ -97,12 +101,16 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	}
 }
 
-func start(v interface{}) (interface{}, error) {
+func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	var response interface{}
 	json := v.(map[string]interface{})
 	log.Debug("%v", json)
-	//获取数据库json
-	response = v
+	taskid := json["taskid"].(int)
+	Db, err := ts.Dm.GetTaskConfig(taskid)
+	if err != nil {
+		log.Error(err.Error())
+	}
+
 	return response, nil
 }
 
