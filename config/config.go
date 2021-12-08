@@ -162,8 +162,17 @@ type TaskConfig struct {
 	Proxy                   string                 `yaml:"Proxy"`                   // 请求代理
 	CustomFormValues        map[string]string      `yaml:"CustomFormValues"`        // 自定义表单填充参数
 	CustomFormKeywordValues map[string]string      `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
-	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // Xss的payload数据结构
+	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // 自定义xss的payload数据
 }
+
+//数据库配置203
+const (
+	UserName = "root"
+	Password = "root"
+	Ip       = "127.0.0.1"
+	Port     = "3306"
+	DbName   = "webscan"
+)
 
 type SqlInject struct {
 	Attacktype     string   `yaml:"attacktype"`
