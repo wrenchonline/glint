@@ -7,6 +7,7 @@ import (
 	"glint/dbmanager"
 	"glint/log"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -103,12 +104,26 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 
 func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	var response interface{}
+	var task Task
+
 	json := v.(map[string]interface{})
 	log.Debug("%v", json)
+
 	taskid := json["taskid"].(int)
-	_, err := ts.Dm.GetTaskConfig(taskid)
+
+	DBTaskConfig, err := ts.Dm.GetTaskConfig(taskid)
 	if err != nil {
 		log.Error(err.Error())
+	}
+	TaskConfig, err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	task.Init()
+	task.TaskConfig = TaskConfig
+	urls := strings.Split(DBTaskConfig.Urls.String, "|")
+	for _, url := range urls {
+		task.UrlPackage(url)
 	}
 
 	return response, nil

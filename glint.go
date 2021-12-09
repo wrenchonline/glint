@@ -37,6 +37,13 @@ var ConfigpPath string
 var Plugins cli.StringSlice
 var Socket string
 
+type Task struct {
+	XssSpider  *brohttp.Spider
+	Targets    []*model.Request
+	TaskConfig config.TaskConfig
+	PluginWg   sync.WaitGroup
+}
+
 func main() {
 	author := cli.Author{
 		Name:  "wrench",
@@ -98,7 +105,9 @@ func run(c *cli.Context) error {
 			log.Error("url must be set")
 			return errors.New("url must be set")
 		}
-		CmdHandler(c)
+		t := Task{}
+		t.Init()
+		CmdHandler(c, &t)
 	}
 	return nil
 }
@@ -115,45 +124,18 @@ func WaitInterputQuit(t *crawler.CrawlerTask) {
 	}
 }
 
-func CmdHandler(c *cli.Context) {
-	Spider := brohttp.Spider{}
-	Spider.Init()
+func (t *Task) dostartTasks() {
 	Plugins := Plugins.Value()
-	targets := []*model.Request{}
-	var PluginWg sync.WaitGroup
-	log.Info("Enter command mode...")
-	TaskConfig := config.TaskConfig{}
-	err := config.ReadTaskConf(ConfigpPath, &TaskConfig)
+	task, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
 	if err != nil {
-		log.Error("test ReadTaskConf() fail")
+		log.Error(err.Error())
 	}
-	for _, _url := range c.Args().Slice() {
-		if !strings.HasPrefix(_url, "http") {
-			log.Error(`Parameter Error,Please "http(s)://" start with Url `)
-			os.Exit(-1)
-		}
-		url, err := model.GetUrl(_url)
-		if err != nil {
-			log.Error(err.Error())
-		}
-		Headers := make(map[string]interface{})
-		Headers["HOST"] = url.Path
-		targets = append(targets, &model.Request{
-			URL:           url,
-			Method:        "GET",
-			FasthttpProxy: TaskConfig.Proxy,
-			Headers:       Headers,
-		})
-	}
-
-	task, err := crawler.NewCrawlerTask(targets, TaskConfig)
 	go WaitInterputQuit(task)
 	log.Info("Start crawling.")
 	task.Run()
 	result := task.Result
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
-
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
 	funk.Map(result.ReqList, func(r *model.Request) bool {
@@ -173,10 +155,8 @@ func CmdHandler(c *cli.Context) {
 		List[r.GroupsId] = append(List[r.GroupsId], element0)
 		return false
 	})
-
 	util.SaveCrawOutPut(List, "result.json")
-
-	task.PluginBrowser = &Spider
+	task.PluginBrowser = t.XssSpider
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range Plugins {
 		switch strings.ToLower(PluginName) {
@@ -189,9 +169,9 @@ func CmdHandler(c *cli.Context) {
 				Callbacks:    myfunc,
 			}
 			plugin.Init()
-			PluginWg.Add(1)
+			t.PluginWg.Add(1)
 			go func() {
-				plugin.Run(ReqList, &PluginWg)
+				plugin.Run(ReqList, &t.PluginWg)
 			}()
 		case "xss":
 			// Spider.Init()
@@ -201,16 +181,51 @@ func CmdHandler(c *cli.Context) {
 				PluginName:   "xss",
 				MaxPoolCount: 1,
 				Callbacks:    myfunc,
-				Spider:       &Spider,
+				Spider:       t.XssSpider,
 			}
 			plugin.Init()
-			PluginWg.Add(1)
+			t.PluginWg.Add(1)
 			go func() {
-				plugin.Run(ReqList, &PluginWg)
+				plugin.Run(ReqList, &t.PluginWg)
 			}()
 		}
 	}
-	PluginWg.Wait()
+	t.PluginWg.Wait()
+}
+
+func (t *Task) Init() {
+	t.XssSpider.Init()
+}
+
+func (t *Task) UrlPackage(_url string) {
+	if !strings.HasPrefix(_url, "http") {
+		log.Error(`Parameter Error,Please "http(s)://" start with Url `)
+		os.Exit(-1)
+	}
+	url, err := model.GetUrl(_url)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	Headers := make(map[string]interface{})
+	Headers["HOST"] = url.Path
+	t.Targets = append(t.Targets, &model.Request{
+		URL:           url,
+		Method:        "GET",
+		FasthttpProxy: t.TaskConfig.Proxy,
+		Headers:       Headers,
+	})
+}
+
+func CmdHandler(c *cli.Context, t *Task) {
+	log.Info("Enter command mode...")
+	err := config.ReadTaskConf(ConfigpPath, &t.TaskConfig)
+	if err != nil {
+		log.Error("test ReadTaskConf() fail")
+	}
+	for _, _url := range c.Args().Slice() {
+		t.UrlPackage(_url)
+	}
+	t.dostartTasks()
 }
 
 func ServerHandler(c *cli.Context) error {

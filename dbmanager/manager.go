@@ -18,6 +18,7 @@ type DbManager struct {
 
 type DbTaskConfig struct {
 	TaskId                      sql.NullInt64  `db:"TaskId"`
+	Urls                        sql.NullString `db:"Urls"`
 	FilterMode                  sql.NullString `db:"FilterMode"`
 	ExtraHeadersUuid            sql.NullString `db:"ExtraHeadersUuid"`
 	AllDomainReturn             sql.NullBool   `db:"AllDomainReturn"`
