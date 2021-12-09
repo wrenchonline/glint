@@ -1,4 +1,4 @@
-package xss
+package xsschecker
 
 import (
 	"bytes"

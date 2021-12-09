@@ -6,7 +6,7 @@ import (
 	"glint/config"
 	log "glint/log"
 	"glint/plugin"
-	"glint/xss"
+	"glint/xsschecker"
 	"regexp"
 	"strings"
 	"sync"
@@ -30,7 +30,7 @@ func TestXSS(t *testing.T) {
 	var PluginWg sync.WaitGroup
 	config.ReadResultConf("result.json", &data)
 	myfunc := []plugin.PluginCallback{}
-	myfunc = append(myfunc, xss.CheckXss)
+	myfunc = append(myfunc, xsschecker.CheckXss)
 	plugin := plugin.Plugin{
 		PluginName:   "xss",
 		MaxPoolCount: 1,

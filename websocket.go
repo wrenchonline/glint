@@ -106,7 +106,7 @@ func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	json := v.(map[string]interface{})
 	log.Debug("%v", json)
 	taskid := json["taskid"].(int)
-	Db, err := ts.Dm.GetTaskConfig(taskid)
+	_, err := ts.Dm.GetTaskConfig(taskid)
 	if err != nil {
 		log.Error(err.Error())
 	}

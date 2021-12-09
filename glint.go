@@ -13,7 +13,7 @@ import (
 	"glint/model"
 	"glint/plugin"
 	"glint/util"
-	"glint/xss"
+	"glint/xsschecker"
 	"net"
 	"net/http"
 	"os"
@@ -196,7 +196,7 @@ func CmdHandler(c *cli.Context) {
 		case "xss":
 			// Spider.Init()
 			myfunc := []plugin.PluginCallback{}
-			myfunc = append(myfunc, xss.CheckXss)
+			myfunc = append(myfunc, xsschecker.CheckXss)
 			plugin := plugin.Plugin{
 				PluginName:   "xss",
 				MaxPoolCount: 1,

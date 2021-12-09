@@ -160,8 +160,8 @@ type TaskConfig struct {
 	EncodeURLWithCharset    bool                   `yaml:"EncodeURLWithCharset"`    // 使用检测到的字符集自动编码URL
 	IgnoreKeywords          []string               `yaml:"IgnoreKeywords"`          // 忽略的关键字，匹配上之后将不再扫描且不发送请求
 	Proxy                   string                 `yaml:"Proxy"`                   // 请求代理
-	CustomFormValues        map[string]string      `yaml:"CustomFormValues"`        // 自定义表单填充参数
-	CustomFormKeywordValues map[string]string      `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
+	CustomFormValues        map[string]interface{} `yaml:"CustomFormValues"`        // 自定义表单填充参数
+	CustomFormKeywordValues map[string]interface{} `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
 	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // 自定义xss的payload数据
 }
 

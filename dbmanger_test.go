@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"glint/dbmanager"
 	"testing"
 )
@@ -17,5 +16,5 @@ func Test_GetConfig(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(v)
+	Dm.ConvertDbTaskConfigToJson(v)
 }

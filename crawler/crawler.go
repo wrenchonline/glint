@@ -128,8 +128,8 @@ type TabConfig struct {
 	EncodeURLWithCharset    bool
 	IgnoreKeywords          []string //
 	Proxy                   string
-	CustomFormValues        map[string]string
-	CustomFormKeywordValues map[string]string
+	CustomFormValues        map[string]interface{}
+	CustomFormKeywordValues map[string]interface{}
 }
 
 /**
