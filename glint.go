@@ -43,6 +43,7 @@ type Task struct {
 	Targets    []*model.Request
 	TaskConfig config.TaskConfig
 	PluginWg   sync.WaitGroup
+	Plugins    []*plugin.Plugin
 }
 
 func main() {
@@ -127,14 +128,14 @@ func WaitInterputQuit(t *crawler.CrawlerTask) {
 
 func (t *Task) dostartTasks(installDb bool) {
 	StartPlugins := Plugins.Value()
-	task, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
+	Crawtask, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
 	if err != nil {
 		log.Error(err.Error())
 	}
-	go WaitInterputQuit(task)
+	go WaitInterputQuit(Crawtask)
 	log.Info("Start crawling.")
-	task.Run()
-	result := task.Result
+	Crawtask.Run()
+	result := Crawtask.Result
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 	ReqList := make(map[string][]interface{})
@@ -157,8 +158,8 @@ func (t *Task) dostartTasks(installDb bool) {
 		return false
 	})
 	util.SaveCrawOutPut(List, "result.json")
-	task.PluginBrowser = t.XssSpider
-	var plugins []*plugin.Plugin
+	Crawtask.PluginBrowser = t.XssSpider
+	// var plugins []*plugin.Plugin
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
@@ -171,10 +172,11 @@ func (t *Task) dostartTasks(installDb bool) {
 				Callbacks:    myfunc,
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
+				Timeout:      time.Second * 600,
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
-			plugins = append(plugins, &plugin)
+			t.Plugins = append(t.Plugins, &plugin)
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
@@ -189,17 +191,16 @@ func (t *Task) dostartTasks(installDb bool) {
 				Spider:       t.XssSpider,
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
+				Timeout:      time.Second * 600,
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
-			plugins = append(plugins, &plugin)
+			t.Plugins = append(t.Plugins, &plugin)
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
 		}
 	}
-	t.PluginWg.Wait()
-
 }
 
 func (t *Task) Init() {
@@ -235,6 +236,7 @@ func CmdHandler(c *cli.Context, t *Task) {
 		t.UrlPackage(_url)
 	}
 	t.dostartTasks(false)
+	t.PluginWg.Wait()
 }
 
 func ServerHandler(c *cli.Context) error {
@@ -246,9 +248,9 @@ func ServerHandler(c *cli.Context) error {
 	cs := NewTaskServer()
 
 	s := &http.Server{
-		Handler:      cs,
-		ReadTimeout:  time.Second * 10,
-		WriteTimeout: time.Second * 10,
+		Handler: cs,
+		// ReadTimeout:  time.Second * 10,
+		// WriteTimeout: time.Second * 10,
 	}
 
 	errc := make(chan error, 1)
