@@ -191,6 +191,7 @@ func (t *Task) dostartTasks() {
 		}
 	}
 	t.PluginWg.Wait()
+
 }
 
 func (t *Task) Init() {
