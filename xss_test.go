@@ -31,11 +31,13 @@ func TestXSS(t *testing.T) {
 	config.ReadResultConf("result.json", &data)
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	plugin := plugin.Plugin{
 		PluginName:   "xss",
 		MaxPoolCount: 1,
 		Callbacks:    myfunc,
 		Spider:       &Spider,
+		Timeout:      time.Second * 3,
 	}
 	plugin.Init()
 	PluginWg.Add(1)

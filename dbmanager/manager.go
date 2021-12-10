@@ -44,8 +44,8 @@ type DbTaskConfig struct {
 }
 
 type ExtraHeaders struct {
-	Key   string `db:"key"`
-	Value string `db:"value"`
+	Key   string `db:"Key"`
+	Value string `db:"Value"`
 }
 
 //Init 初始化mysql数据库
@@ -87,18 +87,48 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 	sql := `
 	SELECT
-	headers_uuid.key, 
-	headers_uuid.value
+	headers_uuid.Key, 
+	headers_uuid.Value
 	FROM
 		headers_uuid
 	WHERE
-	headers_uuid.uuid = ?`
+	headers_uuid.Uuid = ?`
 	values := []ExtraHeaders{}
 	err := Dm.Db.Select(&values, sql, uuid)
 	if err != nil {
 		log.Error(err.Error())
 	}
 	return values, err
+}
+
+func (Dm *DbManager) ReplaceVulnerable(
+	taskid int,
+	plugin_name string,
+	Vulnerable bool,
+	Target string,
+	Output string,
+	ReqMsg string,
+	RespMsg string,
+	VulnerableLevel string,
+) error {
+	sql := `
+	INSERT  
+	INTO 
+	scan_result (TaskId,Plugin_Name,Vulnerable,Target,Output,ReqMsg,RespMsg,VulnerableLevel) 
+	VALUES(:taskid,:name,:vul,:target,:output,:reqmsg,:respmsg,:vulnerability); 
+	`
+	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
+		"taskid":        taskid,
+		"name":          plugin_name,
+		"vul":           Vulnerable,
+		"target":        Target,
+		"output":        Output,
+		"reqmsg":        ReqMsg,
+		"respmsg":       RespMsg,
+		"vulnerability": VulnerableLevel,
+	})
+
+	return err
 }
 
 func (Dm *DbManager) ConvertToMap(value interface{}, converted map[string]interface{}) map[string]interface{} {

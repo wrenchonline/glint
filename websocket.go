@@ -94,11 +94,11 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 		if err != nil {
 			return err
 		}
-		ts.start(jsonobj)
-		// if err != nil {
-		// 	return errors.Unwrap(err)
-		// }
-		// writeTimeout(ctx, time.Second*5, c, repmsgs)
+		json := v.(map[string]interface{})
+		Status := json["status"].(string)
+		if strings.ToLower(Status) == "start" {
+			ts.start(jsonobj)
+		}
 	}
 }
 
@@ -109,9 +109,9 @@ func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	json := v.(map[string]interface{})
 	log.Debug("%v", json)
 
-	taskid := json["taskid"].(int)
+	task.TaskId = json["taskid"].(int)
 
-	DBTaskConfig, err := ts.Dm.GetTaskConfig(taskid)
+	DBTaskConfig, err := ts.Dm.GetTaskConfig(task.TaskId)
 	if err != nil {
 		log.Error(err.Error())
 	}
@@ -125,7 +125,8 @@ func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	for _, url := range urls {
 		task.UrlPackage(url)
 	}
-	task.dostartTasks()
+	task.dostartTasks(true)
+
 	return response, nil
 }
 

@@ -615,15 +615,6 @@ func (tab *Tab) fillForm() error {
 				}
 				Jump = true
 			}
-
-			// if funk.Contains("textarea", node.LocalName) {
-			// 	err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "testtextarea").Do(tCtx)
-			// 	if err != nil {
-			// 		fmt.Println(color.Sprintf("textarea SendKeys error: %s", err.Error()))
-			// 		return err
-			// 	}
-			// }
-
 			if !Jump && funk.Contains("input", node.LocalName) {
 				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "test1234").Do(tCtx)
 				if err != nil {

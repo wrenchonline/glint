@@ -18,3 +18,25 @@ func Test_GetConfig(t *testing.T) {
 	}
 	Dm.ConvertDbTaskConfigToJson(v)
 }
+
+func Test_InstallScanResult(t *testing.T) {
+	var err error
+	Dm := dbmanager.DbManager{}
+	err = Dm.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	err = Dm.ReplaceVulnerable(
+		1,
+		"xss",
+		true,
+		"http://rongji.com",
+		"desad",
+		"sdas",
+		"dasda",
+		"high",
+	)
+	if err != nil {
+		t.Error(err)
+	}
+}

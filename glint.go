@@ -38,6 +38,7 @@ var Plugins cli.StringSlice
 var Socket string
 
 type Task struct {
+	TaskId     int
 	XssSpider  *brohttp.Spider
 	Targets    []*model.Request
 	TaskConfig config.TaskConfig
@@ -54,7 +55,7 @@ func main() {
 		Name:      "glint",
 		Usage:     "A web vulnerability scanners",
 		UsageText: "glint [global options] url1 url2 url3 ... (must be same host)",
-		Version:   "v0.1.0",
+		Version:   "v0.1.1",
 		Authors:   []*cli.Author{&author},
 		Flags: []cli.Flag{
 			//设置配置文件路径
@@ -105,7 +106,7 @@ func run(c *cli.Context) error {
 			log.Error("url must be set")
 			return errors.New("url must be set")
 		}
-		t := Task{}
+		t := Task{TaskId: 65535}
 		t.Init()
 		CmdHandler(c, &t)
 	}
@@ -124,8 +125,8 @@ func WaitInterputQuit(t *crawler.CrawlerTask) {
 	}
 }
 
-func (t *Task) dostartTasks() {
-	Plugins := Plugins.Value()
+func (t *Task) dostartTasks(installDb bool) {
+	StartPlugins := Plugins.Value()
 	task, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
 	if err != nil {
 		log.Error(err.Error())
@@ -157,8 +158,9 @@ func (t *Task) dostartTasks() {
 	})
 	util.SaveCrawOutPut(List, "result.json")
 	task.PluginBrowser = t.XssSpider
+	var plugins []*plugin.Plugin
 	//爬完虫加载插件检测漏洞
-	for _, PluginName := range Plugins {
+	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
 			myfunc := []plugin.PluginCallback{}
@@ -167,9 +169,12 @@ func (t *Task) dostartTasks() {
 				PluginName:   PluginName,
 				MaxPoolCount: 20,
 				Callbacks:    myfunc,
+				InstallDB:    installDb,
+				Taskid:       t.TaskId,
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
+			plugins = append(plugins, &plugin)
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
@@ -182,9 +187,12 @@ func (t *Task) dostartTasks() {
 				MaxPoolCount: 1,
 				Callbacks:    myfunc,
 				Spider:       t.XssSpider,
+				InstallDB:    installDb,
+				Taskid:       t.TaskId,
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
+			plugins = append(plugins, &plugin)
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
@@ -201,7 +209,7 @@ func (t *Task) Init() {
 func (t *Task) UrlPackage(_url string) {
 	if !strings.HasPrefix(_url, "http") {
 		log.Error(`Parameter Error,Please "http(s)://" start with Url `)
-		os.Exit(-1)
+		// os.Exit(-1)
 	}
 	url, err := model.GetUrl(_url)
 	if err != nil {
@@ -226,7 +234,7 @@ func CmdHandler(c *cli.Context, t *Task) {
 	for _, _url := range c.Args().Slice() {
 		t.UrlPackage(_url)
 	}
-	t.dostartTasks()
+	t.dostartTasks(false)
 }
 
 func ServerHandler(c *cli.Context) error {

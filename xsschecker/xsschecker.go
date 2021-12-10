@@ -2,6 +2,7 @@ package xsschecker
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"glint/ast"
@@ -329,9 +330,9 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	return VulOK
 }
 
-func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider) (*util.ScanResult, error) {
+func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
-
+	t := time.NewTimer(time.Millisecond * 200)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
 		return nil, errors.New("Empty to xss payload ")
@@ -368,6 +369,14 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 		payloadinfo[payload] = info
 		//这里的map不是顺序执行
 		for _, v := range ReponseInfo {
+
+			select {
+			case <-ctx.Done():
+				t.Stop()
+				return nil, ctx.Err()
+			case <-t.C:
+			}
+
 			vlen := len(v)
 			for i := 0; i < vlen; i++ {
 				urlocc := v[i].(brohttp.UrlOCC)
@@ -378,6 +387,12 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 			}
 		}
 		for _, html := range htmls {
+			select {
+			case <-ctx.Done():
+				t.Stop()
+				return nil, ctx.Err()
+			case <-t.C:
+			}
 			// fmt.Println(aurora.Red(html))
 			for payload, checkfilter := range payloadinfo {
 				Node := ast.SearchInputInResponse(playload, html)
@@ -403,6 +418,8 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 func CheckXss(args interface{}) (*util.ScanResult, error) {
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
+	ctx := *groups.Pctx
+
 	var Result *util.ScanResult
 	var err error
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
@@ -421,7 +438,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("not found")
 		}
-		Result, err = DoCheckXss(resources, flag, Spider)
+		Result, err = DoCheckXss(resources, flag, Spider, ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -440,7 +457,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return Result, errors.New("not found")
 		}
-		Result, err = DoCheckXss(resources, flag, Spider)
+		Result, err = DoCheckXss(resources, flag, Spider, ctx)
 		if err != nil {
 			return nil, err
 		}
