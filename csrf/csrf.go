@@ -8,7 +8,6 @@ import (
 	"glint/plugin"
 	"glint/util"
 	"strings"
-	"time"
 
 	"github.com/logrusorgru/aurora"
 )
@@ -48,15 +47,15 @@ var DefaultProxy string = "127.0.0.1:8080"
 func Origin(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	t := time.NewTimer(time.Millisecond * 200)
+	// t := time.NewTimer(time.Millisecond * 200)
 	ctx := *group.Pctx
 
 	for _, s := range group.GroupUrls {
 		select {
 		case <-ctx.Done():
-			t.Stop()
+			// t.Stop()
 			return nil, ctx.Err()
-		case <-t.C:
+		default:
 		}
 		session := s.(map[string]interface{})
 		url := session["url"].(string)
@@ -119,14 +118,13 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
 	REFERER_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	ctx := *group.Pctx
-	t := time.NewTimer(time.Millisecond * 200)
 
 	for _, s := range group.GroupUrls {
 		select {
 		case <-ctx.Done():
-			t.Stop()
+
 			return nil, ctx.Err()
-		case <-t.C:
+		default:
 		}
 		session := s.(map[string]interface{})
 		url := session["url"].(string)

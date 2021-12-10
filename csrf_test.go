@@ -7,6 +7,7 @@ import (
 	"glint/plugin"
 	"sync"
 	"testing"
+	"time"
 )
 
 func Test_CSRF(t *testing.T) {
@@ -19,6 +20,7 @@ func Test_CSRF(t *testing.T) {
 		PluginName:   "csrf",
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
+		Timeout:      30 * time.Second,
 	}
 	plugin.Init()
 	PluginWg.Add(1)

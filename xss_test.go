@@ -37,7 +37,7 @@ func TestXSS(t *testing.T) {
 		MaxPoolCount: 1,
 		Callbacks:    myfunc,
 		Spider:       &Spider,
-		Timeout:      time.Second * 3,
+		Timeout:      time.Second * 300,
 	}
 	plugin.Init()
 	PluginWg.Add(1)

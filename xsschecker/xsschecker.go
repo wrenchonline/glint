@@ -332,7 +332,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 
 func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
-	t := time.NewTimer(time.Millisecond * 200)
+	// t := time.NewTimer(time.Millisecond * 200)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
 		return nil, errors.New("Empty to xss payload ")
@@ -372,9 +372,9 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 
 			select {
 			case <-ctx.Done():
-				t.Stop()
+				// t.Stop()
 				return nil, ctx.Err()
-			case <-t.C:
+			default:
 			}
 
 			vlen := len(v)
@@ -389,9 +389,9 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 		for _, html := range htmls {
 			select {
 			case <-ctx.Done():
-				t.Stop()
+				// t.Stop()
 				return nil, ctx.Err()
-			case <-t.C:
+			default:
 			}
 			// fmt.Println(aurora.Red(html))
 			for payload, checkfilter := range payloadinfo {
