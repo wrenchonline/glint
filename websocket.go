@@ -33,6 +33,9 @@ type TaskServer struct {
 
 	// DM
 	Dm *dbmanager.DbManager
+
+	//Tasks 进行的任务
+	Tasks []Task
 }
 
 // NewTaskServer
@@ -97,13 +100,20 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 		json := v.(map[string]interface{})
 		Status := json["status"].(string)
 		if strings.ToLower(Status) == "start" {
-			ts.start(jsonobj)
+			task, err := ts.start(jsonobj)
+			if err != nil {
+				log.Error(err.Error())
+			}
+			ts.Tasks = append(ts.Tasks, task)
+			// task.PluginWg.Wait()
+		} else if strings.ToLower(Status) == "close" {
+
 		}
 	}
 }
 
-func (ts *TaskServer) start(v interface{}) (interface{}, error) {
-	var response interface{}
+func (ts *TaskServer) start(v interface{}) (Task, error) {
+	// var response interface{}
 	var task Task
 
 	json := v.(map[string]interface{})
@@ -127,7 +137,7 @@ func (ts *TaskServer) start(v interface{}) (interface{}, error) {
 	}
 	task.dostartTasks(true)
 
-	return response, nil
+	return task, nil
 }
 
 func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg interface{}) error {
