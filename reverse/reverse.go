@@ -15,7 +15,6 @@ import (
 )
 
 // use ceye api
-
 func NewReverse() *proto.Reverse {
 	ceyeDomain := "fkuior.ceye.io" //修改过的，建议重新写
 	flag := util.RandLowLetterNumber(8)
