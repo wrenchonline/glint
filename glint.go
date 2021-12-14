@@ -44,6 +44,8 @@ type Task struct {
 	TaskConfig config.TaskConfig
 	PluginWg   sync.WaitGroup
 	Plugins    []*plugin.Plugin
+	Ctx        *context.Context
+	Cancel     *context.CancelFunc
 }
 
 func main() {
@@ -56,7 +58,7 @@ func main() {
 		Name:      "glint",
 		Usage:     "A web vulnerability scanners",
 		UsageText: "glint [global options] url1 url2 url3 ... (must be same host)",
-		Version:   "v0.1.1",
+		Version:   "v0.1.2",
 		Authors:   []*cli.Author{&author},
 		Flags: []cli.Flag{
 			//设置配置文件路径
@@ -132,7 +134,9 @@ func (t *Task) dostartTasks(installDb bool) {
 	if err != nil {
 		log.Error(err.Error())
 	}
+
 	go WaitInterputQuit(Crawtask)
+
 	log.Info("Start crawling.")
 	Crawtask.Run()
 	result := Crawtask.Result
@@ -159,7 +163,6 @@ func (t *Task) dostartTasks(installDb bool) {
 	})
 	util.SaveCrawOutPut(List, "result.json")
 	Crawtask.PluginBrowser = t.XssSpider
-	// var plugins []*plugin.Plugin
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
@@ -181,7 +184,6 @@ func (t *Task) dostartTasks(installDb bool) {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
 		case "xss":
-			// Spider.Init()
 			myfunc := []plugin.PluginCallback{}
 			myfunc = append(myfunc, xsschecker.CheckXss)
 			plugin := plugin.Plugin{

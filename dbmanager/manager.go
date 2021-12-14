@@ -48,10 +48,25 @@ type ExtraHeaders struct {
 	Value string `db:"Value"`
 }
 
+type PublishState struct {
+	Id          sql.NullString `db:"Id"`
+	Host        sql.NullString `db:"Host"`
+	Method      sql.NullString `db:"Method"`
+	Data        sql.NullString `db:"Data"`
+	UserAgent   sql.NullString `db:"User_Agent"`
+	ContentType sql.NullString `db:"Content_Type"`
+	CreatedTime time.Time      `db:"Created_Time"`
+}
+
 //Init 初始化mysql数据库
 func (Dm *DbManager) Init() error {
 	//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
-	path := strings.Join([]string{config.UserName, ":", config.Password, "@tcp(", config.Ip, ":", config.Port, ")/", config.DbName, "?charset=utf8"}, "")
+	path := strings.Join([]string{config.UserName,
+		":", config.Password,
+		"@tcp(", config.Ip,
+		":", config.Port,
+		")/", config.DbName,
+		"?charset=utf8&parseTime=true&loc=Local"}, "")
 	//打开数据库,前者是驱动名，所以要导入： _ "github.com/go-sql-driver/mysql"
 	DB, err := sqlx.Connect("mysql", path)
 	DB.SetMaxOpenConns(20)
@@ -156,6 +171,37 @@ func (Dm *DbManager) UuidToMap(uuid string, type_name string) map[string]interfa
 		}
 	}
 	return converted
+}
+
+func NewNullString(s string) sql.NullString {
+	if len(s) == 0 {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: s,
+		Valid:  true,
+	}
+}
+
+func (Dm *DbManager) InstallHttpsReqStatus(State *PublishState) error {
+
+	sql := `
+	INSERT
+	INTO
+	publish_msg (Id,Host,Method,Data,User_Agent,Content_Type,Created_Time) 
+	VALUES(:id,:host,:method,:data,:user_agent,:content_type,:created_time); 
+	`
+	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
+		"id":           State.Id,
+		"host":         State.Host,
+		"method":       State.Method,
+		"data":         State.Data,
+		"user_agent":   State.UserAgent,
+		"content_type": State.ContentType,
+		"created_time": State.CreatedTime,
+	})
+
+	return err
 }
 
 func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (config.TaskConfig, error) {
