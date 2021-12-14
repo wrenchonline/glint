@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"glint/dbmanager"
 	"glint/log"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/thoas/go-funk"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -47,7 +50,9 @@ func NewTaskServer() *TaskServer {
 	}
 	ts.serveMux.Handle("/", http.FileServer(http.Dir(".")))
 	ts.serveMux.HandleFunc("/task", ts.TaskHandler)
-
+	ts.serveMux.HandleFunc("/publish", ts.PublishHandler)
+	ts.Dm = &dbmanager.DbManager{}
+	ts.Dm.Init()
 	return ts
 }
 
@@ -105,7 +110,11 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 				log.Error(err.Error())
 			}
 			ts.Tasks = append(ts.Tasks, task)
-			// task.PluginWg.Wait()
+			go func() {
+				task.PluginWg.Wait()
+
+			}()
+			//
 		} else if strings.ToLower(Status) == "close" {
 
 		}
@@ -144,4 +153,38 @@ func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn,
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return wsjson.Write(ctx, c, msg)
+}
+
+//PublishHandler 这个专门记录反链记录
+func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
+	id := string(funk.RandomString(11, []rune("0123456789")))
+	Host := r.Host
+	Method := r.Method
+	body := http.MaxBytesReader(w, r.Body, 8192)
+	msg, err := ioutil.ReadAll(body)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+		return
+	}
+	Data := msg
+	User_Agent := r.Header.Get("User-Agent")
+	Content_Type := r.Header.Get("Content-Type")
+	Created_Time := time.Now().Local()
+
+	State := dbmanager.PublishState{
+		Id:          dbmanager.NewNullString(id),
+		Host:        dbmanager.NewNullString(Host),
+		Method:      dbmanager.NewNullString(Method),
+		Data:        dbmanager.NewNullString(base64.RawStdEncoding.EncodeToString(Data)),
+		UserAgent:   dbmanager.NewNullString(User_Agent),
+		ContentType: dbmanager.NewNullString(Content_Type),
+		CreatedTime: Created_Time,
+	}
+
+	err = ts.Dm.InstallHttpsReqStatus(&State)
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
