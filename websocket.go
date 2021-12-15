@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -39,6 +40,8 @@ type TaskServer struct {
 
 	//Tasks 进行的任务
 	Tasks []Task
+
+	lock sync.Mutex
 }
 
 // NewTaskServer
@@ -109,14 +112,17 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 			if err != nil {
 				log.Error(err.Error())
 			}
+			ts.lock.Lock()
 			ts.Tasks = append(ts.Tasks, task)
-			go func() {
-				task.PluginWg.Wait()
-
-			}()
-			//
+			ts.lock.Unlock()
 		} else if strings.ToLower(Status) == "close" {
-
+			if len(ts.Tasks) != 0 {
+				for _, task := range ts.Tasks {
+					(*task.Cancel)()
+					// task.PluginWg.Wait()
+				}
+				ts.Tasks = nil
+			}
 		}
 	}
 }

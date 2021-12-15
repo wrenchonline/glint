@@ -46,6 +46,7 @@ type Task struct {
 	Plugins    []*plugin.Plugin
 	Ctx        *context.Context
 	Cancel     *context.CancelFunc
+	lock       sync.Mutex
 }
 
 func main() {
@@ -116,15 +117,31 @@ func run(c *cli.Context) error {
 	return nil
 }
 
-func WaitInterputQuit(t *crawler.CrawlerTask) {
+func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 	select {
 	case <-signalChan:
-		fmt.Println("exit ...")
-		t.Pool.Tune(1)
-		t.Pool.Release()
-		t.PluginBrowser.Close()
-		t.Browser.Close()
+		fmt.Println("Interput exit ...")
+		c.Pool.Tune(1)
+		c.Pool.Release()
+		c.Browser.Close()
 		os.Exit(-1)
+	case <-(*t.Ctx).Done():
+		fmt.Println("Task exit ...")
+		if !c.Pool.IsClosed() {
+			c.Pool.Tune(1)
+			c.Pool.Release()
+			c.Browser.Close()
+		}
+		if len(t.Plugins) != 0 {
+			for _, plugin := range t.Plugins {
+				plugin.Pool.Tune(1)
+				// plugin.Pool.Release()
+				plugin.Cancel()
+				if plugin.Spider != nil {
+					plugin.Spider.Close()
+				}
+			}
+		}
 	}
 }
 
@@ -135,7 +152,7 @@ func (t *Task) dostartTasks(installDb bool) {
 		log.Error(err.Error())
 	}
 
-	go WaitInterputQuit(Crawtask)
+	go t.WaitInterputQuit(Crawtask)
 
 	log.Info("Start crawling.")
 	Crawtask.Run()
@@ -162,7 +179,7 @@ func (t *Task) dostartTasks(installDb bool) {
 		return false
 	})
 	util.SaveCrawOutPut(List, "result.json")
-	Crawtask.PluginBrowser = t.XssSpider
+	// Crawtask.PluginBrowser = t.XssSpider
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
@@ -179,7 +196,9 @@ func (t *Task) dostartTasks(installDb bool) {
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
+			t.lock.Lock()
 			t.Plugins = append(t.Plugins, &plugin)
+			t.lock.Unlock()
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
@@ -197,7 +216,9 @@ func (t *Task) dostartTasks(installDb bool) {
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
+			t.lock.Lock()
 			t.Plugins = append(t.Plugins, &plugin)
+			t.lock.Unlock()
 			go func() {
 				plugin.Run(ReqList, &t.PluginWg)
 			}()
@@ -207,6 +228,9 @@ func (t *Task) dostartTasks(installDb bool) {
 
 func (t *Task) Init() {
 	t.XssSpider.Init()
+	Ctx, Cancel := context.WithCancel(context.Background())
+	t.Ctx = &Ctx
+	t.Cancel = &Cancel
 }
 
 func (t *Task) UrlPackage(_url string) {
