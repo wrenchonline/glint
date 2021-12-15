@@ -9,6 +9,7 @@ import (
 	"glint/log"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,12 +38,20 @@ type TaskServer struct {
 
 	// DM
 	Dm *dbmanager.DbManager
-
-	//Tasks 进行的任务
-	Tasks []Task
-
-	lock sync.Mutex
 }
+
+//Tasks 进行的任务
+var Tasks []Task
+
+var Taskslock sync.Mutex
+
+type TaskStatus int
+
+const (
+	TaskERROR        TaskStatus = -1
+	TaskHasCompleted TaskStatus = 0
+	TaskHasStart     TaskStatus = 1
+)
 
 // NewTaskServer
 func NewTaskServer() *TaskServer {
@@ -72,24 +81,34 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err.Error())
 		return
 	}
-	defer c.Close(websocket.StatusInternalError, "")
+	go func() {
+		defer c.Close(websocket.StatusInternalError, "")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err = ts.Task(ctx, c)
+		if errors.Is(err, context.Canceled) {
+			log.Error(err.Error())
+			return
+		}
+		if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+			websocket.CloseStatus(err) == websocket.StatusGoingAway {
+			log.Error(err.Error())
+			return
+		}
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	}()
+}
 
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
-	defer cancel()
-	err = ts.Task(ctx, c)
-	if errors.Is(err, context.Canceled) {
-		log.Error(err.Error())
-		return
-	}
-	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
-		websocket.CloseStatus(err) == websocket.StatusGoingAway {
-		log.Error(err.Error())
-		return
-	}
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
+func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string) error {
+	reponse := make(map[string]interface{})
+	reponse["status"] = status
+	reponse["msg"] = message
+	log.Info("%v", reponse)
+	err := wsjson.Write(ctx, c, reponse)
+	return err
 }
 
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
@@ -99,60 +118,104 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
+			log.Error(err.Error())
 			return err
 		}
 		err = json.Unmarshal([]byte(v.(string)), &jsonobj)
 		if err != nil {
+			log.Error(err.Error())
 			return err
 		}
-		json := v.(map[string]interface{})
-		Status := json["status"].(string)
+		json := jsonobj.(map[string]interface{})
+		Status := json["action"].(string)
 		if strings.ToLower(Status) == "start" {
+			status, err := ts.GetTaskStatus(json)
+			if err != nil {
+				sendmsg(ctx, c, -1, err.Error())
+				continue
+			}
+			if status == TaskHasStart {
+				sendmsg(ctx, c, 1, "Task Has Started")
+				continue
+			}
+			//开始任务
 			task, err := ts.start(jsonobj)
 			if err != nil {
-				log.Error(err.Error())
+				sendmsg(ctx, c, -1, err.Error())
+				continue
 			}
-			ts.lock.Lock()
-			ts.Tasks = append(ts.Tasks, task)
-			ts.lock.Unlock()
+			Taskslock.Lock()
+			Tasks = append(Tasks, task)
+			Taskslock.Unlock()
+			sendmsg(ctx, c, 0, "Task is Starting")
+
 		} else if strings.ToLower(Status) == "close" {
-			if len(ts.Tasks) != 0 {
-				for _, task := range ts.Tasks {
+			if len(Tasks) != 0 {
+				for _, task := range Tasks {
 					(*task.Cancel)()
-					// task.PluginWg.Wait()
 				}
-				ts.Tasks = nil
+				Tasks = nil
 			}
 		}
 	}
 }
 
-func (ts *TaskServer) start(v interface{}) (Task, error) {
-	// var response interface{}
-	var task Task
+func (ts *TaskServer) GetTaskStatus(json map[string]interface{}) (TaskStatus, error) {
+	if len(Tasks) != 0 {
+		for _, task := range Tasks {
+			taskid, err := GetTaskId(json)
+			if err != nil {
+				return TaskERROR, err
+			}
+			if task.TaskId == taskid {
+				return TaskHasStart, nil
+			}
+		}
+	}
+	return TaskHasCompleted, nil
+}
 
+func GetTaskId(json map[string]interface{}) (int, error) {
+	var taskid int
+	if v, ok := json["taskid"].(string); ok {
+		id, _ := strconv.Atoi(v)
+		taskid = int(id)
+	} else if v, ok := json["taskid"].(float64); ok {
+		taskid = int(v)
+	} else {
+		return 0, errors.New("no parse for taskid type")
+	}
+	return taskid, nil
+}
+
+func (ts *TaskServer) start(v interface{}) (Task, error) {
+	var task Task
+	var Err error
 	json := v.(map[string]interface{})
 	log.Debug("%v", json)
-
-	task.TaskId = json["taskid"].(int)
-
-	DBTaskConfig, err := ts.Dm.GetTaskConfig(task.TaskId)
-	if err != nil {
-		log.Error(err.Error())
+	task.TaskId, Err = GetTaskId(json)
+	if Err != nil {
+		log.Error(Err.Error())
 	}
-	TaskConfig, err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
-	if err != nil {
-		log.Error(err.Error())
+	DBTaskConfig, Err := ts.Dm.GetTaskConfig(task.TaskId)
+	if Err != nil {
+		log.Error(Err.Error())
+	}
+	TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
+	if Err != nil {
+		log.Error(Err.Error())
 	}
 	task.Init()
 	task.TaskConfig = TaskConfig
 	urls := strings.Split(DBTaskConfig.Urls.String, "|")
 	for _, url := range urls {
-		task.UrlPackage(url)
+		Err = task.UrlPackage(url)
+		if Err != nil {
+			return task, Err
+		}
 	}
-	task.dostartTasks(true)
-
-	return task, nil
+	go task.dostartTasks(true)
+	return task, Err
 }
 
 func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg interface{}) error {

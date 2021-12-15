@@ -71,11 +71,12 @@ func (Dm *DbManager) Init() error {
 	DB, err := sqlx.Connect("mysql", path)
 	DB.SetMaxOpenConns(20)
 	DB.SetMaxIdleConns(10)
+	DB.SetConnMaxLifetime(59 * time.Second)
 	if err != nil {
-		log.Debug("open database fail")
+		log.Info("[DB] open database fail")
 		return err
 	}
-	log.Debug("connnect success")
+	log.Info("[DB] connnect success")
 	Dm.Db = DB
 	return nil
 }

@@ -436,7 +436,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			resources = append(resources, Occ)
 		}
 		if !bflag {
-			return nil, errors.New("not found")
+			return nil, errors.New("xss:: not found")
 		}
 		Result, err = DoCheckXss(resources, flag, Spider, ctx)
 		if err != nil {
@@ -455,7 +455,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			resources = append(resources, Occ)
 		}
 		if !bflag {
-			return Result, errors.New("not found")
+			return Result, errors.New("xss::not found")
 		}
 		Result, err = DoCheckXss(resources, flag, Spider, ctx)
 		if err != nil {

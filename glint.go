@@ -39,14 +39,14 @@ var Socket string
 
 type Task struct {
 	TaskId     int
-	XssSpider  *brohttp.Spider
+	XssSpider  brohttp.Spider
 	Targets    []*model.Request
 	TaskConfig config.TaskConfig
 	PluginWg   sync.WaitGroup
 	Plugins    []*plugin.Plugin
 	Ctx        *context.Context
 	Cancel     *context.CancelFunc
-	lock       sync.Mutex
+	lock       *sync.Mutex
 }
 
 func main() {
@@ -145,15 +145,15 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 	}
 }
 
-func (t *Task) dostartTasks(installDb bool) {
+func (t *Task) dostartTasks(installDb bool) error {
+	var err error
 	StartPlugins := Plugins.Value()
 	Crawtask, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
 	if err != nil {
 		log.Error(err.Error())
+		return err
 	}
-
 	go t.WaitInterputQuit(Crawtask)
-
 	log.Info("Start crawling.")
 	Crawtask.Run()
 	result := Crawtask.Result
@@ -209,7 +209,7 @@ func (t *Task) dostartTasks(installDb bool) {
 				PluginName:   "xss",
 				MaxPoolCount: 1,
 				Callbacks:    myfunc,
-				Spider:       t.XssSpider,
+				Spider:       &t.XssSpider,
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
 				Timeout:      time.Second * 600,
@@ -224,6 +224,18 @@ func (t *Task) dostartTasks(installDb bool) {
 			}()
 		}
 	}
+	Taskslock.Lock()
+	removetasks(t.TaskId)
+	Taskslock.Unlock()
+	return err
+}
+
+func removetasks(id int) {
+	for index, t := range Tasks {
+		if t.TaskId == id {
+			Tasks = append(Tasks[:index], Tasks[index+1:]...)
+		}
+	}
 }
 
 func (t *Task) Init() {
@@ -231,16 +243,20 @@ func (t *Task) Init() {
 	Ctx, Cancel := context.WithCancel(context.Background())
 	t.Ctx = &Ctx
 	t.Cancel = &Cancel
+	t.lock = &sync.Mutex{}
 }
 
-func (t *Task) UrlPackage(_url string) {
+func (t *Task) UrlPackage(_url string) error {
+	var err error
 	if !strings.HasPrefix(_url, "http") {
-		log.Error(`Parameter Error,Please "http(s)://" start with Url `)
-		// os.Exit(-1)
+		err = errors.New(`parameter error,please "http(s)://" start with Url `)
+		log.Error(err.Error())
+		return err
 	}
 	url, err := model.GetUrl(_url)
 	if err != nil {
 		log.Error(err.Error())
+		return err
 	}
 	Headers := make(map[string]interface{})
 	Headers["HOST"] = url.Path
@@ -250,6 +266,7 @@ func (t *Task) UrlPackage(_url string) {
 		FasthttpProxy: t.TaskConfig.Proxy,
 		Headers:       Headers,
 	})
+	return err
 }
 
 func CmdHandler(c *cli.Context, t *Task) {
@@ -275,8 +292,6 @@ func ServerHandler(c *cli.Context) error {
 
 	s := &http.Server{
 		Handler: cs,
-		// ReadTimeout:  time.Second * 10,
-		// WriteTimeout: time.Second * 10,
 	}
 
 	errc := make(chan error, 1)
