@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"context"
 	"encoding/json"
 	"glint/brohttp"
 	"glint/config"
@@ -20,17 +21,19 @@ type Result struct {
 }
 
 type CrawlerTask struct {
-	Browser       *Spider            //爬虫浏览器
-	PluginBrowser *brohttp.Spider    //插件浏览器
-	RootDomain    string             // 当前爬取根域名 用于子域名收集
-	Targets       []*model.Request   // 输入目标
-	Result        *Result            // 最终结果
-	Config        *config.TaskConfig // 配置信息
-	smartFilter   SmartFilter        // 过滤对象
-	Pool          *ants.Pool         // 协程池
-	taskWG        sync.WaitGroup     // 等待协程池所有任务结束
-	crawledCount  int                // 爬取过的数量
-	taskCountLock sync.Mutex         // 已爬取的任务总数锁
+	Browser       *Spider             // 爬虫浏览器
+	PluginBrowser *brohttp.Spider     // 插件浏览器
+	RootDomain    string              // 当前爬取根域名 用于子域名收集
+	Targets       []*model.Request    // 输入目标
+	Result        *Result             // 最终结果
+	Config        *config.TaskConfig  // 配置信息
+	smartFilter   SmartFilter         // 过滤对象
+	Pool          *ants.Pool          // 协程池
+	taskWG        sync.WaitGroup      // 等待协程池所有任务结束
+	crawledCount  int                 // 爬取过的数量
+	taskCountLock sync.Mutex          // 已爬取的任务总数锁
+	Ctx           *context.Context    // 处理上下文
+	Cancel        *context.CancelFunc // 取消上下文函数
 }
 
 type tabTask struct {
@@ -71,10 +74,10 @@ func (t *CrawlerTask) Run() {
 		if t.Config.PathByFuzz {
 			log.Warning("`--fuzz-path` is ignored, using `--fuzz-path-dict` instead")
 		}
-		reqsByFuzz := GetPathsByFuzzDict(*t.Targets[0], t.Config.FuzzDictPath)
+		reqsByFuzz := GetPathsByFuzzDict(*t.Targets[0], t.Config.FuzzDictPath, *t.Ctx)
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	} else if t.Config.PathByFuzz {
-		reqsByFuzz := GetPathsByFuzz(*t.Targets[0])
+		reqsByFuzz := GetPathsByFuzz(*t.Targets[0], *t.Ctx)
 		log.Info("get paths by fuzzing:%d", len(reqsByFuzz))
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	}
@@ -180,7 +183,8 @@ func (t *tabTask) Task() {
 /**
 新建爬虫任务
 */
-func NewCrawlerTask(targets []*model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
+func NewCrawlerTask(ctx *context.Context, targets []*model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
+	// ctx, cancel := context.WithCancel(context.Background())
 	crawlerTask := CrawlerTask{
 		Result: &Result{},
 		Config: &taskConf,
@@ -189,6 +193,7 @@ func NewCrawlerTask(targets []*model.Request, taskConf config.TaskConfig) (*Craw
 				HostLimit: targets[0].URL.Host,
 			},
 		},
+		Ctx: ctx,
 	}
 
 	if len(targets) == 1 {

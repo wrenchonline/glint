@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"glint/ast"
 	"glint/config"
@@ -20,6 +21,8 @@ import (
 func Test_Crawler(t *testing.T) {
 	log.DebugEnable(false)
 	TaskConfig := config.TaskConfig{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
@@ -35,7 +38,7 @@ func Test_Crawler(t *testing.T) {
 			Headers:       Headers,
 		},
 	}
-	task, err := crawler.NewCrawlerTask(targets, TaskConfig)
+	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
 	if err != nil {
 		t.Errorf("create crawler task failed.")
 		os.Exit(-1)

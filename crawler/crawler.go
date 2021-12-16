@@ -423,12 +423,15 @@ func InitSpider(
 func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab, error) {
 
 	var tab Tab
-	spider.lock.Lock()
+
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
 	tCtx, _ := context.WithTimeout(ctx, config.TabRunTimeout)
+
+	spider.lock.Lock()
 	spider.tabs = append(spider.tabs, &tCtx)
 	spider.tabCancels = append(spider.tabCancels, cancel)
 	spider.lock.Unlock()
+
 	tab.ExtraHeaders = map[string]interface{}{}
 	tab.Ctx = &tCtx
 	tab.Cancel = cancel
@@ -452,12 +455,12 @@ func (bro *Spider) Close() {
 	for _, ctx := range bro.tabs {
 		err := browser.Close().Do(*ctx)
 		if err != nil {
-			// fmt.Println(color.Red(err))
+			fmt.Println(color.Red(err))
 		}
 	}
 	err := browser.Close().Do(*bro.Ctx)
 	if err != nil {
-		// fmt.Println(color.Red(err))
+		fmt.Println(color.Red(err))
 	}
 	(*bro.Cancel)()
 }

@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"context"
 	"fmt"
 	"glint/fastreq"
 	"glint/log"
@@ -81,28 +82,30 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 /**
 使用常见路径列表进行fuzz
 */
-func GetPathsByFuzz(navReq model2.Request) []*model2.Request {
+func GetPathsByFuzz(navReq model2.Request, ctx context.Context) []*model2.Request {
 	log.Info("starting to get paths by fuzzing.")
 	pathList := strings.Split(pathStr, "/")
-	return doFuzz(navReq, pathList)
+	return doFuzz(navReq, pathList, ctx)
 }
 
 /**
 使用字典列表进行fuzz
 */
-func GetPathsByFuzzDict(navReq model2.Request, dictPath string) []*model2.Request {
+func GetPathsByFuzzDict(navReq model2.Request, dictPath string, ctx context.Context) []*model2.Request {
 	log.Info("starting to get dict path by fuzzing: %s", dictPath)
 	pathList := util.ReadFile(dictPath)
 	log.Debug("valid path count: %d", len(pathList))
-	return doFuzz(navReq, pathList)
+	return doFuzz(navReq, pathList, ctx)
 }
 
 type singleFuzz struct {
 	navReq model2.Request
 	path   string
+	Ctx    *context.Context
+	Cancel *context.CancelFunc
 }
 
-func doFuzz(navReq model2.Request, pathList []string) []*model2.Request {
+func doFuzz(navReq model2.Request, pathList []string, ctx context.Context) []*model2.Request {
 	validateUrl = mapset.NewSet()
 	var result []*model2.Request
 	pool, _ := ants.NewPool(20)
@@ -113,6 +116,7 @@ func doFuzz(navReq model2.Request, pathList []string) []*model2.Request {
 		task := singleFuzz{
 			navReq: navReq,
 			path:   path,
+			Ctx:    &ctx,
 		}
 		pathFuzzWG.Add(1)
 		go func() {
@@ -142,7 +146,11 @@ func doFuzz(navReq model2.Request, pathList []string) []*model2.Request {
  */
 func (s singleFuzz) doRequest() {
 	defer pathFuzzWG.Done()
-
+	select {
+	case <-(*s.Ctx).Done():
+		return
+	default:
+	}
 	url := fmt.Sprintf(`%s://%s/%s`, s.navReq.URL.Scheme, s.navReq.URL.Host, s.path)
 	_, resp, errs := fastreq.Get(url, util.ConvertHeaders(s.navReq.Headers),
 		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})

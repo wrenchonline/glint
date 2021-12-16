@@ -135,7 +135,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 				continue
 			}
 			if status == TaskHasStart {
-				sendmsg(ctx, c, 1, "Task Has Started")
+				sendmsg(ctx, c, 1, "The Task Has Started")
 				continue
 			}
 			//开始任务
@@ -147,7 +147,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 			Taskslock.Lock()
 			Tasks = append(Tasks, task)
 			Taskslock.Unlock()
-			sendmsg(ctx, c, 0, "Task is Starting")
+			sendmsg(ctx, c, 0, "The Task is Starting")
 
 		} else if strings.ToLower(Status) == "close" {
 			if len(Tasks) != 0 {
@@ -214,15 +214,16 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 			return task, Err
 		}
 	}
+
 	go task.dostartTasks(true)
 	return task, Err
 }
 
-func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg interface{}) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	return wsjson.Write(ctx, c, msg)
-}
+// func writeTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg interface{}) error {
+// 	ctx, cancel := context.WithTimeout(ctx, timeout)
+// 	defer cancel()
+// 	return wsjson.Write(ctx, c, msg)
+// }
 
 //PublishHandler 这个专门记录反链记录
 func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {

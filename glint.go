@@ -124,6 +124,7 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 		c.Pool.Tune(1)
 		c.Pool.Release()
 		c.Browser.Close()
+		c.PluginBrowser.Close()
 		os.Exit(-1)
 	case <-(*t.Ctx).Done():
 		fmt.Println("Task exit ...")
@@ -131,6 +132,7 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 			c.Pool.Tune(1)
 			c.Pool.Release()
 			c.Browser.Close()
+			c.PluginBrowser.Close()
 		}
 		if len(t.Plugins) != 0 {
 			for _, plugin := range t.Plugins {
@@ -146,21 +148,33 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 }
 
 func (t *Task) dostartTasks(installDb bool) error {
+
 	var err error
+	ReqList := make(map[string][]interface{})
+	List := make(map[string][]ast.JsonUrl)
+
 	StartPlugins := Plugins.Value()
-	Crawtask, err := crawler.NewCrawlerTask(t.Targets, t.TaskConfig)
+	Crawtask, err := crawler.NewCrawlerTask(t.Ctx, t.Targets, t.TaskConfig)
+	Crawtask.PluginBrowser = &t.XssSpider
+
 	if err != nil {
 		log.Error(err.Error())
 		return err
 	}
 	go t.WaitInterputQuit(Crawtask)
 	log.Info("Start crawling.")
+	//Crawtask.Run()是同步函数
 	Crawtask.Run()
 	result := Crawtask.Result
 	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
-	ReqList := make(map[string][]interface{})
-	List := make(map[string][]ast.JsonUrl)
+	//监听是否在爬虫的时候退出
+	select {
+	case <-(*Crawtask.Ctx).Done():
+		goto quit
+	default:
+	}
+
 	funk.Map(result.ReqList, func(r *model.Request) bool {
 		element0 := ast.JsonUrl{
 			Url:     r.URL.String(),
@@ -224,9 +238,12 @@ func (t *Task) dostartTasks(installDb bool) error {
 			}()
 		}
 	}
+
+quit:
 	Taskslock.Lock()
 	removetasks(t.TaskId)
 	Taskslock.Unlock()
+	log.Info("The End for task:%d", t.TaskId)
 	return err
 }
 
