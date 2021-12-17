@@ -424,7 +424,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	var err error
 
 	if _, ok := (*Spider.Ctx).Deadline(); ok {
-		fmt.Println(aurora.Red("上下文已死"))
+		fmt.Println(aurora.Red("xss spider is dead"))
 		goto quit
 	}
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {

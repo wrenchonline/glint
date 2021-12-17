@@ -21,6 +21,7 @@ import (
 func Test_Crawler(t *testing.T) {
 	log.DebugEnable(false)
 	TaskConfig := config.TaskConfig{}
+	TaskConfig.Proxy = "127.0.0.1:7777"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
