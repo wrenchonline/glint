@@ -24,7 +24,9 @@ import (
 func TestXSS(t *testing.T) {
 	log.DebugEnable(false)
 	Spider := brohttp.Spider{}
-	Spider.Init()
+	var taskconfig config.TaskConfig
+	taskconfig.Proxy = "127.0.0.1:7777"
+	Spider.Init(taskconfig)
 	defer Spider.Close()
 	data := make(map[string][]interface{})
 	var PluginWg sync.WaitGroup
@@ -35,11 +37,12 @@ func TestXSS(t *testing.T) {
 	plugin := plugin.Plugin{
 		PluginName:   "xss",
 		MaxPoolCount: 1,
-		Callbacks:    myfunc,
-		Spider:       &Spider,
-		Timeout:      time.Second * 300,
+		// Callbacks:    myfunc,
+		Spider:  &Spider,
+		Timeout: time.Second * 300,
 	}
 	plugin.Init()
+	plugin.Callbacks = myfunc
 	PluginWg.Add(1)
 	go func() {
 		plugin.Run(data, &PluginWg)
@@ -51,7 +54,11 @@ func TestXSS(t *testing.T) {
 func TestURL(t *testing.T) {
 	log.DebugEnable(false)
 	Spider := brohttp.Spider{}
-	Spider.Init()
+
+	var taskconfig config.TaskConfig
+	taskconfig.Proxy = "127.0.0.1:7777"
+	Spider.Init(taskconfig)
+
 	Headers := make(map[string]interface{})
 	Headers["Cookies"] = "welcome=1"
 	Headers["Referer"] = "http://35.227.24.107/5c40a9b9c3/index.php"
@@ -68,14 +75,11 @@ func TestURL(t *testing.T) {
 	time.Sleep(5 * time.Second)
 }
 func Test_JS(t *testing.T) {
-
 	io := ansi.NewAnsiStdout()
 	log.DebugEnable(true)
 	var sourceFound bool
 	var sinkFound bool
-	script := `
-	
-	`
+	script := ``
 	sources := `document\.(URL|documentURI|URLUnencoded|baseURI|cookie|referrer)|location\.(href|search|hash|pathname)|window\.name|history\.(pushState|replaceState)(local|session)Storage`
 	sinks := `eval|evaluate|execCommand|assign|navigate|getResponseHeaderopen|showModalDialog|Function|set(Timeout|Interval|Immediate)|execScript|crypto.generateCRMFRequest|ScriptElement\.(src|text|textContent|innerText)|.*?\.onEventName|document\.(write|writeln)|.*?\.innerHTML|Range\.createContextualFragment|(document|window)\.location`
 	newlines := strings.Split(script, "\n")

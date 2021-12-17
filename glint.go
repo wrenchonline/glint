@@ -138,7 +138,7 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 			for _, plugin := range t.Plugins {
 				plugin.Pool.Tune(1)
 				// plugin.Pool.Release()
-				plugin.Cancel()
+				(*plugin.Cancel)()
 				if plugin.Spider != nil {
 					plugin.Spider.Close()
 				}
@@ -162,6 +162,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 
 	StartPlugins := Plugins.Value()
 	Crawtask, err := crawler.NewCrawlerTask(t.Ctx, t.Targets, t.TaskConfig)
+	t.XssSpider.Init(t.TaskConfig)
 	Crawtask.PluginBrowser = &t.XssSpider
 
 	if err != nil {
@@ -233,7 +234,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				Spider:       &t.XssSpider,
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
-				Timeout:      time.Second * 600,
+				Timeout:      time.Second * 900,
 			}
 			plugin.Init()
 			t.PluginWg.Add(1)
@@ -245,7 +246,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			}()
 		}
 	}
-
+	t.PluginWg.Wait()
 quit:
 	Taskslock.Lock()
 	removetasks(t.TaskId)
@@ -263,7 +264,7 @@ func removetasks(id int) {
 }
 
 func (t *Task) Init() {
-	t.XssSpider.Init()
+	// t.XssSpider.Init()
 	Ctx, Cancel := context.WithCancel(context.Background())
 	t.Ctx = &Ctx
 	t.Cancel = &Cancel

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	ast "glint/ast"
+	"glint/config"
 	log "glint/log"
 	"net/url"
 	"strings"
@@ -43,11 +44,12 @@ func (spider *Spider) Close() {
 	defer chromedp.Cancel(*spider.Ctx)
 }
 
-func (spider *Spider) Init() error {
+func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	// co := cf.Conf{}
 	// //读取配置文件
 	// conf := co.GetConf()
 	// spider.ReqMode = "GET"
+
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
@@ -62,7 +64,7 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
+		chromedp.Flag("proxy-server", TaskConfig.Proxy),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
@@ -143,11 +145,6 @@ func (spider *Spider) Init() error {
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (spider *Spider) Sendreq() (string, error) {
-	// newTabCtx, _ := chromedp.NewContext(*spider.Ctx)
-	// c := chromedp.FromContext(newTabCtx)
-	// ctx := cdp.WithExecutor(newTabCtx, c.Target)
-	// timeoutCtx, _ := context.WithTimeout(ctx, 30*time.Second)
-	// defer cancel()
 	var res string
 	err := chromedp.Run(
 		*spider.Ctx,
@@ -155,7 +152,7 @@ func (spider *Spider) Sendreq() (string, error) {
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
-		log.Error("Sendreq error:", err)
+		log.Error(err.Error())
 	}
 	// res = html.UnescapeString(res)
 	return res, err

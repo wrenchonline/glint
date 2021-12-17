@@ -418,10 +418,15 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 func CheckXss(args interface{}) (*util.ScanResult, error) {
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
-	ctx := *groups.Pctx
 
+	ctx := groups.Pctx
 	var Result *util.ScanResult
 	var err error
+
+	if _, ok := (*Spider.Ctx).Deadline(); ok {
+		fmt.Println(aurora.Red("上下文已死"))
+		goto quit
+	}
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
 		flag := funk.RandomString(8)
 		bflag := false
@@ -438,7 +443,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
-		Result, err = DoCheckXss(resources, flag, Spider, ctx)
+		Result, err = DoCheckXss(resources, flag, Spider, *ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -457,10 +462,11 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return Result, errors.New("xss::not found")
 		}
-		Result, err = DoCheckXss(resources, flag, Spider, ctx)
+		Result, err = DoCheckXss(resources, flag, Spider, *ctx)
 		if err != nil {
 			return nil, err
 		}
 	}
+quit:
 	return Result, nil
 }

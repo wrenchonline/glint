@@ -22,8 +22,8 @@ type Plugin struct {
 	mu           sync.Mutex
 	Spider       *brohttp.Spider
 	InstallDB    bool //是否插入数据库
-	Ctx          context.Context
-	Cancel       context.CancelFunc
+	Ctx          *context.Context
+	Cancel       *context.CancelFunc
 	Timeout      time.Duration
 }
 
@@ -51,8 +51,8 @@ func (p *Plugin) Init() {
 		}
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), p.Timeout)
-	p.Ctx = ctx
-	p.Cancel = cancel
+	p.Ctx = &ctx
+	p.Cancel = &cancel
 }
 
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
@@ -64,7 +64,7 @@ func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup) er
 	for k, v := range data {
 		p.threadwg.Add(1)
 		go func() {
-			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: &p.Ctx, Pcancel: &p.Cancel}
+			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
 			err = p.Pool.Invoke(data)
 			if err != nil {
 				log.Error(err.Error())

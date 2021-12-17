@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"glint/ast"
 	brohttp "glint/brohttp"
+	"glint/config"
 	log "glint/log"
 	"net/url"
 	"testing"
@@ -15,7 +16,9 @@ func TestCheckPayloadNormal(t *testing.T) {
 	var err error
 	Spider := brohttp.Spider{}
 	log.DebugEnable(true)
-	Spider.Init()
+	var taskconfig config.TaskConfig
+	taskconfig.Proxy = "127.0.0.1:7777"
+	Spider.Init(taskconfig)
 	defer Spider.Close()
 	Spider.ReqMode = "GET"
 	// Spider.PostData = []byte("txtName=ecrrgaowle&mtxMessage=Crawl&user_token=873c33f5ece8c8308071890f478ded0b")
