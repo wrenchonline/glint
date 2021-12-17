@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"glint/dbmanager"
 	"glint/log"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
@@ -45,6 +47,8 @@ var Tasks []Task
 
 var Taskslock sync.Mutex
 
+var DoStartSignal chan bool
+
 type TaskStatus int
 
 const (
@@ -52,6 +56,15 @@ const (
 	TaskHasCompleted TaskStatus = 0
 	TaskHasStart     TaskStatus = 1
 )
+
+func quitmsg(ctx context.Context, c *websocket.Conn) {
+	<-DoStartSignal
+	fmt.Println(aurora.Magenta("Monitor the exit signal of the task"))
+	for _, task := range Tasks {
+		<-(*task.Ctx).Done()
+		sendmsg(ctx, c, 2, "The Task is End")
+	}
+}
 
 // NewTaskServer
 func NewTaskServer() *TaskServer {
@@ -113,6 +126,7 @@ func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string)
 
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
+	DoStartSignal = make(chan bool)
 	var v interface{}
 	var jsonobj interface{}
 	for {
@@ -148,7 +162,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 			Tasks = append(Tasks, task)
 			Taskslock.Unlock()
 			sendmsg(ctx, c, 0, "The Task is Starting")
-
+			go quitmsg(ctx, c)
 		} else if strings.ToLower(Status) == "close" {
 			if len(Tasks) != 0 {
 				for _, task := range Tasks {

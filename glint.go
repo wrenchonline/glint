@@ -148,10 +148,17 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 }
 
 func (t *Task) dostartTasks(installDb bool) error {
-
 	var err error
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
+	DoStartSignal <- true
+	//完成后通知上下文
+	defer func() {
+		//由外部socket关闭避免重复释放
+		if _, ok := (*t.Ctx).Deadline(); !ok {
+			(*t.Cancel)()
+		}
+	}()
 
 	StartPlugins := Plugins.Value()
 	Crawtask, err := crawler.NewCrawlerTask(t.Ctx, t.Targets, t.TaskConfig)
@@ -265,6 +272,7 @@ func (t *Task) Init() {
 
 func (t *Task) UrlPackage(_url string) error {
 	var err error
+	Headers := make(map[string]interface{})
 	if !strings.HasPrefix(_url, "http") {
 		err = errors.New(`parameter error,please "http(s)://" start with Url `)
 		log.Error(err.Error())
@@ -275,7 +283,6 @@ func (t *Task) UrlPackage(_url string) error {
 		log.Error(err.Error())
 		return err
 	}
-	Headers := make(map[string]interface{})
 	Headers["HOST"] = url.Path
 	t.Targets = append(t.Targets, &model.Request{
 		URL:           url,

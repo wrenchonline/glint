@@ -42,7 +42,9 @@ var anti_csrf = []string{
 	"verify",
 }
 
-var DefaultProxy string = "127.0.0.1:7777"
+// var DefaultProxy string = "127.0.0.1:7777"
+
+var DefaultProxy string = ""
 
 func Origin(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
