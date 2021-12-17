@@ -62,7 +62,7 @@ func (spider *Spider) Init() error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
+		// chromedp.Flag("proxy-server", "http://127.0.0.1:8080"),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
