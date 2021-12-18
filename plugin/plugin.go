@@ -30,9 +30,10 @@ type Plugin struct {
 type GroupData struct {
 	GroupType string
 	GroupUrls []interface{}
-	Spider    *brohttp.Spider
-	Pctx      *context.Context
-	Pcancel   *context.CancelFunc
+
+	Spider  *brohttp.Spider
+	Pctx    *context.Context
+	Pcancel *context.CancelFunc
 }
 
 func (p *Plugin) Init() {

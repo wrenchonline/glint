@@ -98,7 +98,7 @@ func SaveCrawOutPut(ResultList map[string][]ast.JsonUrl, FilePath string) {
 	if err != nil {
 		logger.Fatal("%s", err.Error())
 	}
-	fp, err := os.OpenFile(FilePath, os.O_RDWR|os.O_CREATE, 0755)
+	fp, err := os.OpenFile(FilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		logger.Fatal("%s", err.Error())
 	}
