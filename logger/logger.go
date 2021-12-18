@@ -70,7 +70,7 @@ func Debug(format string, args ...interface{}) {
 	defer mtx_log.Unlock()
 
 	if debug_output {
-		fmt.Fprint(stdout, format_msg(DEBUG, format, args...))
+		fmt.Fprint(stdout, format_msg(DEBUG, format+"\n", args...))
 		refreshReadline()
 	}
 }
@@ -79,7 +79,7 @@ func Info(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(INFO, format, args...))
+	fmt.Fprint(stdout, format_msg(INFO, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -87,7 +87,7 @@ func Important(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(IMPORTANT, format, args...))
+	fmt.Fprint(stdout, format_msg(IMPORTANT, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -95,7 +95,7 @@ func Warning(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(WARNING, format, args...))
+	fmt.Fprint(stdout, format_msg(WARNING, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -103,7 +103,7 @@ func Error(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(ERROR, format, args...))
+	fmt.Fprint(stdout, format_msg(ERROR, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -111,7 +111,7 @@ func Fatal(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(FATAL, format, args...))
+	fmt.Fprint(stdout, format_msg(FATAL, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -119,7 +119,7 @@ func Success(format string, args ...interface{}) {
 	mtx_log.Lock()
 	defer mtx_log.Unlock()
 
-	fmt.Fprint(stdout, format_msg(SUCCESS, format, args...))
+	fmt.Fprint(stdout, format_msg(SUCCESS, format+"\n", args...))
 	refreshReadline()
 }
 
@@ -139,7 +139,6 @@ func format_msg(lvl int, format string, args ...interface{}) string {
 
 	switch lvl {
 	case DEBUG:
-
 		msg = aurora.Sprintf(aurora.Cyan(format), args...)
 		time_clr = aurora.Sprintf(aurora.Cyan("\r[%02d:%02d:%02d]"), t.Hour(), t.Minute(), t.Second())
 		sign = aurora.Sprintf(aurora.Cyan("[%s]"), LogLabels[lvl])
