@@ -511,13 +511,15 @@ func (tab *Tab) CommitBySubmit() error {
 	ctx := tab.GetExecutor()
 
 	// 获取所有的form节点 直接执行submit
-	formNodes, formErr := tab.GetNodeIDs(`form`)
-	if formErr != nil || len(formNodes) == 0 {
-		fmt.Println(aurora.Red("clickSubmit: get [form] element err"))
-		if formErr != nil {
-			fmt.Println(aurora.Red(formErr))
-		}
-		return formErr
+	formNodes, err := tab.GetNodeIDs(`form`)
+	if err != nil {
+		logger.Error("CommitBySubmit %s", err.Error())
+		return err
+	}
+	if len(formNodes) == 0 {
+		err := "CommitBySubmit not found Nodes"
+		logger.Error(err)
+		return fmt.Errorf(err)
 	}
 	tCtx1, cancel1 := context.WithTimeout(ctx, time.Second*2)
 	defer cancel1()
@@ -567,21 +569,14 @@ func (tab *Tab) fillForm() error {
 	defer cancel()
 	//var res string
 	//获取 input节点
-	err := chromedp.Nodes("//input", &InputNodes).Do(tCtx)
+	err := chromedp.Nodes("//input", &InputNodes, chromedp.ByQueryAll).Do(tCtx)
 	if err != nil {
 		logger.Error("fillForm error: %v", err.Error())
 	}
 	if len(InputNodes) == 0 {
-		return errors.New("no find node")
+		err_msg := "fillForm::input find node"
+		return errors.New(err_msg)
 	}
-
-	// err = chromedp.Nodes("//textarea", &TextareaNodes).Do(tCtx)
-	// if err != nil {
-	// 	fmt.Println("fillForm error: ", err)
-	// }
-	// if len(TextareaNodes) == 0 {
-	// 	return errors.New("no find node")
-	// }
 
 	InputNodes = append(TextareaNodes, InputNodes...)
 
@@ -642,13 +637,17 @@ func (tab *Tab) CollectLink() error {
 func (tab *Tab) collectHrefLinks() {
 	defer tab.collectLinkWG.Done()
 	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
 	// 收集 src href data-url 属性值
-	attrNameList := []string{"src", "href", "data-url", "data-href"}
+	attrNameList := []string{"href", "src", "data-url", "data-href"}
 	for _, attrName := range attrNameList {
-		tCtx, cancel := context.WithTimeout(ctx, time.Second*1)
 		var attrs []map[string]string
-		_ = chromedp.AttributesAll(fmt.Sprintf(`[%s]`, attrName), &attrs, chromedp.ByQueryAll).Do(tCtx)
-		cancel()
+		err := chromedp.AttributesAll(fmt.Sprintf(`[%s]`, attrName), &attrs, chromedp.BySearch).Do(tCtx)
+		if err != nil {
+			logger.Error("collectHrefLinks %s", err.Error())
+			return
+		}
 		for _, attrMap := range attrs {
 			tab.AddResultUrl("GET", attrMap[attrName], "DOM")
 		}
@@ -764,21 +763,24 @@ func (tab *Tab) EvaluateWithNode(expression string, node *cdp.Node) error {
 /**
 click all button
 */
-func (tab *Tab) clickAllButton() {
+func (tab *Tab) clickAllButton() error {
 	defer tab.formSubmitWG.Done()
 
 	// 获取所有的form中的button节点
 	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
 	var ButtonNodes []*cdp.Node
-	bErr := chromedp.Nodes("//button", &ButtonNodes).Do(ctx)
-	if bErr != nil || len(ButtonNodes) == 0 {
-		fmt.Println(aurora.Red("clickAllButton: get button element err"))
-		if bErr != nil {
-			fmt.Println(aurora.Red(bErr))
-		}
-		return
+	err := chromedp.Nodes("//button", &ButtonNodes).Do(tCtx)
+	if err != nil {
+		logger.Error("clickAllButton %s", err.Error())
+		return err
 	}
-
+	if len(ButtonNodes) == 0 {
+		err := "clickAllButton not found Nodes"
+		logger.Error(err)
+		return fmt.Errorf(err)
+	}
 	for _, node := range ButtonNodes {
 		tab.Eventchanel.ButtonCheckUrl <- true
 		<-tab.Eventchanel.ButtonRep
@@ -790,4 +792,5 @@ func (tab *Tab) clickAllButton() {
 		time.Sleep(time.Millisecond * 500)
 	}
 	delete(tab.Eventchanel.EventInfo, "Button")
+	return nil
 }
