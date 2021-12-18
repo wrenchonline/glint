@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"glint/ast"
 	"glint/config"
-	log "glint/log"
+	"glint/logger"
 	"glint/plugin"
 	"glint/xsschecker"
 	"regexp"
@@ -22,7 +22,7 @@ import (
 )
 
 func TestXSS(t *testing.T) {
-	log.DebugEnable(false)
+	logger.DebugEnable(false)
 	Spider := brohttp.Spider{}
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "127.0.0.1:7777"
@@ -52,7 +52,7 @@ func TestXSS(t *testing.T) {
 }
 
 func TestURL(t *testing.T) {
-	log.DebugEnable(false)
+	logger.DebugEnable(false)
 	Spider := brohttp.Spider{}
 
 	var taskconfig config.TaskConfig
@@ -76,7 +76,7 @@ func TestURL(t *testing.T) {
 }
 func Test_JS(t *testing.T) {
 	io := ansi.NewAnsiStdout()
-	log.DebugEnable(true)
+	logger.DebugEnable(true)
 	var sourceFound bool
 	var sinkFound bool
 	script := ``

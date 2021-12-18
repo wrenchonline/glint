@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"glint/ast"
 	"glint/brohttp"
-	"glint/log"
+	"glint/logger"
 	"glint/payload"
 	"glint/plugin"
 	"glint/util"
@@ -147,7 +147,7 @@ func Test_CheckHtmlNodeAttributesKey() {
 	detail := ast.Node{Tagname: "attibute", Content: "key", Attributes: &[]ast.Attribute{{Key: "srcdoc", Val: "dsadsadadsa"}}}
 	test := ast.Occurence{Details: detail}
 	if ok, _ := CheckHtmlNodeAttributes(test, "key", "srcdoc", false); ok {
-		log.Debug("ok")
+		logger.Debug("ok")
 	}
 }
 
@@ -217,7 +217,7 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 					if err != nil {
 						return err
 					}
-					log.Info("Attributes generator payload:%s", payload)
+					logger.Info("Attributes generator payload:%s", payload)
 					var mode PayloadMode
 					mode.Mode = Checktype(CheckConsoleLog)
 					mode.IsNeedFlag = true

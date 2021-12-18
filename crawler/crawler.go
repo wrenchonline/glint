@@ -10,11 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"glint/log"
+	"glint/logger"
 	model2 "glint/model"
 	"glint/util"
-
-	color "github.com/logrusorgru/aurora"
 
 	//log "glint/log"
 
@@ -26,6 +24,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
 )
 
@@ -146,7 +145,7 @@ func (tab *Tab) GetExecutor() context.Context {
 */
 func (tab *Tab) HandleAuthRequired(req *fetch.EventAuthRequired) {
 	defer tab.WG.Done()
-	fmt.Println(color.Yellow("auth required found, auto auth."))
+	fmt.Println(aurora.Yellow("auth required found, auto auth."))
 
 	ctx := tab.GetExecutor()
 	authRes := fetch.AuthChallengeResponse{
@@ -169,17 +168,17 @@ func (tab *Tab) getBodyNodeId() bool {
 	defer cancel()
 	err := chromedp.WaitReady(`body`, chromedp.ByQuery).Do(tCtx)
 	if err != nil {
-		fmt.Println(color.Red("getBodyNodeId WaitReady failed, maybe DOM not ready?"))
-		fmt.Println(color.Red(err))
+		fmt.Println(aurora.Red("getBodyNodeId WaitReady failed, maybe DOM not ready?"))
+		fmt.Println(aurora.Red(err))
 		return false
 	}
 	// 获取 Frame document root
 	err = chromedp.NodeIDs(`body`, &docNodeIDs, chromedp.ByQuery).Do(tCtx)
 	if len(docNodeIDs) == 0 || err != nil {
 		// not root node yet?
-		fmt.Println(color.Red("getBodyNodeId failed, maybe DOM not ready?"))
+		fmt.Println(aurora.Red("getBodyNodeId failed, maybe DOM not ready?"))
 		if err != nil {
-			fmt.Println(color.Red(err))
+			fmt.Println(aurora.Red(err))
 		}
 		return false
 	}
@@ -192,18 +191,18 @@ func (tab *Tab) getBodyNodeId() bool {
 */
 func (tab *Tab) AfterDOMRun() {
 	defer tab.WG.Done()
-	fmt.Println(color.Green("afterDOMRun start"))
+	fmt.Println(aurora.Green("afterDOMRun start"))
 	// 获取当前body节点的nodeId 用于之后查找子节点
 	if !tab.getBodyNodeId() {
-		fmt.Println(color.Red("no body document NodeID, exit."))
+		fmt.Println(aurora.Red("no body document NodeID, exit."))
 		return
 	}
 	//填充表单
 	tab.domWG.Add(1)
-	fmt.Println(color.Magenta("The Function tab.fillForm() is call"))
+	fmt.Println(aurora.Magenta("The Function tab.fillForm() is call"))
 	go tab.fillForm()
 	tab.domWG.Wait()
-	fmt.Println(color.Green("afterDOMRun end"))
+	fmt.Println(aurora.Green("afterDOMRun end"))
 	tab.WG.Add(1)
 	go tab.AfterLoadedRun()
 }
@@ -214,16 +213,16 @@ func (tab *Tab) AfterDOMRun() {
 */
 func (tab *Tab) AfterLoadedRun() {
 	defer tab.WG.Done()
-	fmt.Println(color.Green("afterLoadedRun start"))
+	fmt.Println(aurora.Green("afterLoadedRun start"))
 	tab.formSubmitWG.Add(2)
 	// tab.loadedWG.Add(3)
 	// tab.removeLis.Add(1)
 
-	fmt.Println(color.Green("formSubmit start"))
+	fmt.Println(aurora.Green("formSubmit start"))
 	go tab.CommitBySubmit()
 	go tab.clickAllButton()
 	tab.formSubmitWG.Wait()
-	fmt.Println(color.Green("formSubmit end"))
+	fmt.Println(aurora.Green("formSubmit end"))
 
 	// if tab.config.EventTriggerMode == config.EventTriggerAsync {
 	// 	go tab.triggerJavascriptProtocol()
@@ -243,7 +242,7 @@ func (tab *Tab) AfterLoadedRun() {
 
 	// go tab.RemoveDOMListener()
 	// tab.removeLis.Wait()
-	fmt.Println(color.Green("afterLoadedRun end"))
+	fmt.Println(aurora.Green("afterLoadedRun end"))
 }
 
 //ListenTarget
@@ -252,7 +251,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 	chromedp.ListenTarget(*tab.Ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
-		// fmt.Println(color.Yellow(reflect.TypeOf(ev)))
+		// fmt.Println(aurora.Yellow(reflect.TypeOf(ev)))
 		switch ev := ev.(type) {
 		case *runtime.EventConsoleAPICalled:
 			for _, arg := range ev.Args {
@@ -272,7 +271,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
-					log.Debug("FailRequest:", ev.Request.URL)
+					logger.Debug("FailRequest:%s", ev.Request.URL)
 					c := chromedp.FromContext(ctx)
 					ctx = cdp.WithExecutor(ctx, c.Target)
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
@@ -314,23 +313,23 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					} else {
 						req.GroupsId = "Normal"
 					}
-					fmt.Println(color.Red(req.URL.String()))
+					fmt.Println(aurora.Red(req.URL.String()))
 					tab.AddResultRequest(req)
 				}
 				if err := chromedp.Run(ctx, a); err != nil {
-					log.Error("ListenTarget error %s", err.Error())
+					logger.Error("ListenTarget error %s", err.Error())
 				}
 			}(*tab.Ctx, ev)
 		case *page.EventJavascriptDialogOpening:
-			// log.Println("EventJavascriptDialogOpening url:", ev.URL)
+			// logger.Println("EventJavascriptDialogOpening url:", ev.URL)
 			tab.WG.Add(1)
 			go tab.dismissDialog()
 		case *page.EventNavigatedWithinDocument:
-			// log.Println("EventNavigatedWithinDocument url:", ev.URL)
+			// logger.Println("EventNavigatedWithinDocument url:", ev.URL)
 		case *page.EventFrameStoppedLoading:
 
 		case *page.EventWindowOpen:
-			// log.Println("EventWindowOpen url:", ev.URL)
+			// logger.Println("EventWindowOpen url:", ev.URL)
 			var req model2.Request
 			u, _ := url.Parse(ev.URL)
 			req.URL = &model2.URL{*u}
@@ -339,27 +338,27 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			if !FilterKey(req.URL.String(), ForbidenKey) {
 				if !funk.Contains(tab.NavigateReq.URL.String(), req.URL.String()) {
 					tab.AddResultRequest(req)
-					// log.Println("EventWindowOpen Add crawer url:", req)
+					// logger.Println("EventWindowOpen Add crawer url:", req)
 				} else {
-					//log.Println("The url is exist:", req)
+					//logger.Println("The url is exist:", req)
 				}
 			}
 		case *page.EventDocumentOpened:
-			// log.Println("EventDocumentOpened url:", ev.Frame.URL)
+			// logger.Println("EventDocumentOpened url:", ev.Frame.URL)
 		case *network.EventRequestWillBeSentExtraInfo:
 		case *network.EventResponseReceived:
 			if ev.Type == "XHR" {
 
 			}
 		case *network.EventRequestWillBeSent:
-			//fmt.Println(color.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", color.Red(ev.Request.URL), color.Red(ev.RequestID)))
+			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 
 			request := ev
 
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
-				log.Debug("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
+				logger.Debug("链接 %s: 重定向到: %s\n", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *page.EventDomContentEventFired:
 			if DOMContentLoadedRun {
@@ -376,7 +375,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 			tab.WG.Add(1)
 			go tab.AfterDOMRun()
 		case *page.EventFrameRequestedNavigation:
-			log.Debug("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
+			logger.Debug("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
 				ev.FrameID, ev.URL, ev.Disposition, ev.Reason)
 		}
 
@@ -412,7 +411,7 @@ func InitSpider(
 	//NewExecAllocator 是新建一个浏览器
 	ctx, Cancel := chromedp.NewExecAllocator(context.Background(), ExecAllocator...)
 	lctx, Cancel := chromedp.NewContext(ctx,
-		chromedp.WithLogf(log.Printf),
+		chromedp.WithLogf(logger.Printf),
 	)
 	chromedp.Run(lctx)
 	spider.Ctx = &lctx
@@ -448,19 +447,19 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 }
 
 func (bro *Spider) Close() {
-	fmt.Println(color.Green("closing browser."))
+	fmt.Println(aurora.Green("closing browser."))
 	for _, cancel := range bro.tabCancels {
 		cancel()
 	}
 	for _, ctx := range bro.tabs {
 		err := browser.Close().Do(*ctx)
 		if err != nil {
-			fmt.Println(color.Red(err))
+			fmt.Println(aurora.Red(err))
 		}
 	}
 	err := browser.Close().Do(*bro.Ctx)
 	if err != nil {
-		fmt.Println(color.Red(err))
+		fmt.Println(aurora.Red(err))
 	}
 	(*bro.Cancel)()
 }
@@ -471,7 +470,7 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	defer func() { tab.Eventchanel.exit <- 1 }()
 
 	go tab.Watch()
-	fmt.Println(color.Green(tab.NavigateReq.URL.String()))
+	fmt.Println(aurora.Green(tab.NavigateReq.URL.String()))
 	err := chromedp.Run(*tab.Ctx,
 		runtime.Enable(),
 		// 开启网络层API
@@ -497,11 +496,11 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	// }()
 
 	tab.WG.Wait()
-	fmt.Println(color.Green("collectLinks start"))
+	fmt.Println(aurora.Green("collectLinks start"))
 	tab.collectLinkWG.Add(3)
 	go tab.CollectLink()
 	tab.collectLinkWG.Wait()
-	fmt.Println(color.Green("collectLinks end"))
+	fmt.Println(aurora.Green("collectLinks end"))
 	return nil
 }
 
@@ -514,9 +513,9 @@ func (tab *Tab) CommitBySubmit() error {
 	// 获取所有的form节点 直接执行submit
 	formNodes, formErr := tab.GetNodeIDs(`form`)
 	if formErr != nil || len(formNodes) == 0 {
-		fmt.Println(color.Red("clickSubmit: get [form] element err"))
+		fmt.Println(aurora.Red("clickSubmit: get [form] element err"))
 		if formErr != nil {
-			fmt.Println(color.Red(formErr))
+			fmt.Println(aurora.Red(formErr))
 		}
 		return formErr
 	}
@@ -527,9 +526,9 @@ func (tab *Tab) CommitBySubmit() error {
 	// 获取所有的input标签
 	inputNodes, inputErr := tab.GetNodeIDs(`form input[type=submit]`)
 	if inputErr != nil || len(inputNodes) == 0 {
-		fmt.Println(color.Red("clickSubmit: get [form input] element err"))
+		fmt.Println(aurora.Red("clickSubmit: get [form input] element err"))
 		if inputErr != nil {
-			fmt.Println(color.Red(inputErr))
+			fmt.Println(aurora.Red(inputErr))
 		}
 		return inputErr
 	}
@@ -570,7 +569,7 @@ func (tab *Tab) fillForm() error {
 	//获取 input节点
 	err := chromedp.Nodes("//input", &InputNodes).Do(tCtx)
 	if err != nil {
-		fmt.Println("fillForm error: ", err)
+		logger.Error("fillForm error: %v", err.Error())
 	}
 	if len(InputNodes) == 0 {
 		return errors.New("no find node")
@@ -589,14 +588,14 @@ func (tab *Tab) fillForm() error {
 	//移除input的 style 属性
 	err = chromedp.Evaluate(removeAttribute, nil).Do(tCtx)
 	if err != nil {
-		log.Fatal("removeAttribute error: ", err)
+		logger.Fatal("removeAttribute error: ", err)
 	}
 
 	for _, node := range InputNodes {
 		var ok bool
 		chromedp.EvaluateAsDevTools(fmt.Sprintf(inViewportJS, node.FullXPath()), &ok).Do(tCtx)
 		if err != nil {
-			// fmt.Println(color.Sprintf("inViewportJS error: %s", color.Red(err.Error())))
+			// fmt.Println(aurora.Sprintf("inViewportJS error: %s", aurora.Red(err.Error())))
 		}
 		if !(node.AttributeValue("type") == "hidden" || node.AttributeValue("display") == "none") {
 			var Jump bool
@@ -604,7 +603,7 @@ func (tab *Tab) fillForm() error {
 			if funk.Contains([]string{"user", "用户名", "username"}, node.AttributeValue("name")) {
 				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "password").Do(tCtx)
 				if err != nil {
-					fmt.Println(color.Sprintf("SendKeys username error: %s", err.Error()))
+					fmt.Println(aurora.Sprintf("SendKeys username error: %s", err.Error()))
 					return err
 				}
 				Jump = true
@@ -613,7 +612,7 @@ func (tab *Tab) fillForm() error {
 			if funk.Contains([]string{"pwd", "密码", "pass", "password"}, node.AttributeValue("name")) {
 				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "password").Do(tCtx)
 				if err != nil {
-					fmt.Println(color.Sprintf("SendKeys password error: %s", err.Error()))
+					fmt.Println(aurora.Sprintf("SendKeys password error: %s", err.Error()))
 					return err
 				}
 				Jump = true
@@ -621,7 +620,7 @@ func (tab *Tab) fillForm() error {
 			if !Jump && funk.Contains("input", node.LocalName) {
 				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "test1234").Do(tCtx)
 				if err != nil {
-					fmt.Println(color.Sprintf("SendKeys %s %s", node.LocalName, err.Error()))
+					fmt.Println(aurora.Sprintf("SendKeys %s %s", node.LocalName, err.Error()))
 					return err
 				}
 			}
@@ -687,8 +686,8 @@ func (tab *Tab) collectCommentLinks() {
 	defer cancel()
 	commentErr := chromedp.Nodes(`//comment()`, &nodes, chromedp.BySearch).Do(tCtxComment)
 	if commentErr != nil {
-		fmt.Println(color.Red("get comment nodes err"))
-		fmt.Println(color.Red(commentErr))
+		fmt.Println(aurora.Red("get comment nodes err"))
+		fmt.Println(aurora.Red(commentErr))
 		return
 	}
 	urlRegex := regexp.MustCompile(`((https?|ftp|file):)?//[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]`)
@@ -773,9 +772,9 @@ func (tab *Tab) clickAllButton() {
 	var ButtonNodes []*cdp.Node
 	bErr := chromedp.Nodes("//button", &ButtonNodes).Do(ctx)
 	if bErr != nil || len(ButtonNodes) == 0 {
-		fmt.Println(color.Red("clickAllButton: get button element err"))
+		fmt.Println(aurora.Red("clickAllButton: get button element err"))
 		if bErr != nil {
-			fmt.Println(color.Red(bErr))
+			fmt.Println(aurora.Red(bErr))
 		}
 		return
 	}

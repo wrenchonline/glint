@@ -3,12 +3,11 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"glint/logger"
 	"io"
 	"reflect"
 	"regexp"
 	"strings"
-
-	log "glint/log"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
@@ -105,7 +104,7 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 	//['url', 'id', 'myfunc', 'strs', 'str', 'i', 'strSub','testName']
 	tokenizer.Ascend(nil, func(item interface{}) bool {
 		kvi := item.(*Node)
-		// log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
+		// logger.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
 		if kvi.Tagname == "input" {
 			for _, Attribute := range *kvi.Attributes {
 				if Attribute.Key == "name" {
@@ -113,7 +112,7 @@ func GetHtmlParams(tokenizer *btree.BTree) []interface{} {
 				}
 			}
 		} else if kvi.Tagname == "script" {
-			log.Debug("Content:", kvi.Content)
+			logger.Debug("Content:", kvi.Content)
 			// program, err := parser.ParseFile(nil, "", kvi.Content, 0)
 			// if err != nil {
 			// 	panic(err)
@@ -139,12 +138,12 @@ func (parser *Parser) HttpParser(body string) bool {
 		case html.ErrorToken:
 			goto processing
 		case html.TextToken:
-			log.Debug("html.TextToken:%s", string(z.Raw()))
+			logger.Debug("html.TextToken:%s", string(z.Raw()))
 			if field, ok := Tree.Max().(*Node); ok {
 				field.Content = string(z.Raw())
 			}
 		case html.StartTagToken:
-			log.Debug("html.StartTagToken:%s", string(z.Raw()))
+			logger.Debug("html.StartTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -160,14 +159,14 @@ func (parser *Parser) HttpParser(body string) bool {
 			}
 			cx := string(array)
 			// if cx == "br" {
-			// 	log.Debug(" html.StartTagToken 发现br标签,忽略")
+			// 	logger.Debug(" html.StartTagToken 发现br标签,忽略")
 			// } else {
 
 			// }
 			Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 		case html.EndTagToken:
 			name, _ := z.TagName()
-			log.Debug("html.EndTagToken:%s", string(z.Raw()))
+			logger.Debug("html.EndTagToken:%s", string(z.Raw()))
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
@@ -187,7 +186,7 @@ func (parser *Parser) HttpParser(body string) bool {
 			}
 
 		case html.SelfClosingTagToken:
-			log.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
+			logger.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -222,7 +221,7 @@ func (parser *Parser) HttpParser(body string) bool {
 
 		case html.CommentToken:
 			Attributes := make([]Attribute, 0)
-			log.Debug("html.CommentToken:%s", string(z.Raw()))
+			logger.Debug("html.CommentToken:%s", string(z.Raw()))
 			parser.tokenizer.Set(&Node{Idx: i, Tagname: "#comment", Content: string(z.Raw()), Attributes: &Attributes})
 		}
 
@@ -236,7 +235,7 @@ func (parser *Parser) GetTokenizer() []Node {
 	var tokens []Node
 	parser.tokenizer.Ascend(nil, func(item interface{}) bool {
 		kvi := item.(*Node)
-		//log.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
+		//logger.Debug("Tagname:", kvi.Tagname, "Content:", kvi.Content, "Attribute:", kvi.Attributes, "\n")
 		tokens = append(tokens, *kvi)
 		return true
 	})
@@ -249,14 +248,14 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	Occurences := []Occurence{}
 	Index := 0
 	if len(body) == 0 {
-		log.Error("SearchInputInResponse 获取body失败")
+		logger.Error("SearchInputInResponse 获取body失败")
 		return Occurences
 	}
 	parse.HttpParser(body)
 	tokens := parse.GetTokenizer()
 	// fmt.Println(aurora.Cyan(tokens))
 	if len(tokens) == 0 {
-		log.Error("SearchInputInResponse tokens 没有发现节点")
+		logger.Error("SearchInputInResponse tokens 没有发现节点")
 		return Occurences
 	}
 	for _, token := range tokens {
@@ -273,7 +272,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 		if input == tagname {
 			Occurences = append(Occurences, Occurence{Type: "intag", Position: Index, Details: token})
 		} else if funk.Contains(content, input) {
-			//log.Info("tagName: %s", tagname)
+			//logger.Info("tagName: %s", tagname)
 			if tagname == "comment" {
 				Occurences = append(Occurences, Occurence{Type: "comment", Position: Index, Details: token})
 			} else if tagname == "script" {
@@ -283,7 +282,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 			} else {
 				Occurences = append(Occurences, Occurence{Type: "html", Position: Index, Details: token})
 				for _, attibute := range *attibutes {
-					//log.Info("attibute.Val: %s", attibute.Val)
+					//logger.Info("attibute.Val: %s", attibute.Val)
 					if input == attibute.Key {
 						detail := Node{Tagname: tagname, Content: "key", Attributes: &[]Attribute{{Key: attibute.Key, Val: attibute.Val}}}
 						Occurences = append(
@@ -354,7 +353,7 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 		case js.IdentifierToken:
 			str := string(text)
 			if funk.Contains(str, input) {
-				log.Info("flag %s exists in a Identifier ", str)
+				logger.Info("flag %s exists in a Identifier ", str)
 			}
 		case js.StringToken:
 			str := string(text)
@@ -363,7 +362,7 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 				reg := "\\(function(.*?)Stmt\\({(.*?)" + str + "(.*?)}\\)\\)"
 				match, _ := regexp.MatchString(reg, ast.String())
 				if match {
-					log.Info("var %s flag exists in a closed function", str)
+					logger.Info("var %s flag exists in a closed function", str)
 
 					leftcloser := JsContexterLeft(input, ast.JS())
 					Rightcloser := JsContexterRight(input, ast.JS())
@@ -374,7 +373,7 @@ func AnalyseJSFuncByFlag(input string, script string) (string, error) {
 						newpayload.WriteString("\"\";" + leftcloser + " console.log('" + input + "'); " + Rightcloser + "//\\")
 					}
 				} else {
-					log.Info("var %s flag exists in Statement", str)
+					logger.Info("var %s flag exists in Statement", str)
 					//判断是否是单引号还是双引号的字符串变量
 					if funk.Contains(str, "'") {
 						newpayload.WriteString("'; console.log('" + input + "');//")

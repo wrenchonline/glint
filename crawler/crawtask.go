@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"glint/brohttp"
 	"glint/config"
-	"glint/log"
+	"glint/logger"
 	"glint/model"
 	"sync"
 
@@ -67,18 +67,18 @@ func (t *CrawlerTask) Run() {
 	defer t.Browser.Close() // 关闭浏览器
 	if t.Config.PathFromRobots {
 		reqsFromRobots := GetPathsFromRobots(*t.Targets[0])
-		log.Info("get paths from robots.txt: ", len(reqsFromRobots))
+		logger.Info("get paths from robots.txt: ", len(reqsFromRobots))
 		t.Targets = append(t.Targets, reqsFromRobots...)
 	}
 	if t.Config.FuzzDictPath != "" {
 		if t.Config.PathByFuzz {
-			log.Warning("`--fuzz-path` is ignored, using `--fuzz-path-dict` instead")
+			logger.Warning("`--fuzz-path` is ignored, using `--fuzz-path-dict` instead")
 		}
 		reqsByFuzz := GetPathsByFuzzDict(*t.Targets[0], t.Config.FuzzDictPath, *t.Ctx)
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	} else if t.Config.PathByFuzz {
 		reqsByFuzz := GetPathsByFuzz(*t.Targets[0], *t.Ctx)
-		log.Info("get paths by fuzzing:%d", len(reqsByFuzz))
+		logger.Info("get paths by fuzzing:%d", len(reqsByFuzz))
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	}
 	t.Result.AllReqList = t.Targets[:]
@@ -86,13 +86,13 @@ func (t *CrawlerTask) Run() {
 
 	for _, req := range t.Targets {
 		if t.smartFilter.DoFilter(req) {
-			log.Debug("filter req: %s", req.URL.RequestURI())
+			logger.Debug("filter req: %s", req.URL.RequestURI())
 			continue
 		}
 		initTasks = append(initTasks, req)
 		t.Result.ReqList = append(t.Result.ReqList, req)
 	}
-	log.Info("filter repeat, target count: %d", len(initTasks))
+	logger.Info("filter repeat, target count: %d", len(initTasks))
 
 	for _, req := range initTasks {
 		if !FilterKey(req.URL.String(), t.Config.IgnoreKeywords) {
@@ -128,7 +128,7 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 		err := t.Pool.Submit(task.Task)
 		if err != nil {
 			t.taskWG.Done()
-			log.Error("addTask2Pool ", err)
+			logger.Error("addTask2Pool ", err)
 		}
 	}()
 }
@@ -253,7 +253,7 @@ func NewCrawlerTask(ctx *context.Context, targets []*model.Request, taskConf con
 	if taskConf.ExtraHeadersString != "" {
 		err := json.Unmarshal([]byte(taskConf.ExtraHeadersString), &taskConf.ExtraHeaders)
 		if err != nil {
-			log.Error("custom headers can't be Unmarshal.")
+			logger.Error("custom headers can't be Unmarshal.")
 			return nil, err
 		}
 	}

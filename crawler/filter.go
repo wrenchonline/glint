@@ -1,7 +1,7 @@
 package crawler
 
 import (
-	"glint/log"
+	"glint/logger"
 	"glint/model"
 	"glint/util"
 	"go/types"
@@ -130,7 +130,7 @@ func (s *SmartFilter) Init() {
 func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	// 首先过滤掉静态资源、基础的去重、过滤其它的域名
 	if s.SimpleFilter.DoFilter(req) {
-		log.Debug("filter req by simplefilter: %s", req.URL.RequestURI())
+		logger.Debug("filter req by simplefilter: %s", req.URL.RequestURI())
 		return true
 	}
 
@@ -140,7 +140,7 @@ func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	} else if req.Method == "POST" || req.Method == "PUT" {
 		s.postMark(req)
 	} else {
-		log.Debug("dont support such method: %s", req.Method)
+		logger.Debug("dont support such method: %s", req.Method)
 	}
 
 	if req.Method == "GET" || req.Method == "DELETE" || req.Method == "HEAD" || req.Method == "OPTIONS" {
@@ -150,7 +150,7 @@ func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	// 对标记后的请求进行去重
 	uniqueId := req.Filter.UniqueId
 	if s.uniqueMarkedIds.Contains(uniqueId) {
-		log.Debug("filter req by uniqueMarkedIds 1: %s", req.URL.RequestURI())
+		logger.Debug("filter req by uniqueMarkedIds 1: %s", req.URL.RequestURI())
 		return true
 	}
 
@@ -177,7 +177,7 @@ func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	// 新的ID再次去重
 	newUniqueId := req.Filter.UniqueId
 	if s.uniqueMarkedIds.Contains(newUniqueId) {
-		log.Debug("filter req by uniqueMarkedIds 2: %s", req.URL.RequestURI())
+		logger.Debug("filter req by uniqueMarkedIds 2: %s", req.URL.RequestURI())
 		return true
 	}
 

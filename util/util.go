@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"fmt"
-	log "glint/log"
+	"glint/logger"
 	"io"
 	"os"
 
@@ -28,7 +28,7 @@ func Setup() {
 		DisablePathNormalizing:   true,
 	}
 	if DownProxy != "" {
-		log.Info("[fasthttp client use proxy ]", DownProxy)
+		logger.Info("[fasthttp client use proxy ]", DownProxy)
 		client.Dial = fasthttpproxy.FasthttpHTTPDialer(DownProxy)
 	}
 

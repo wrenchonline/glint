@@ -3,7 +3,7 @@ package dbmanager
 import (
 	"database/sql"
 	"glint/config"
-	"glint/log"
+	"glint/logger"
 	"reflect"
 	"strings"
 	"time"
@@ -73,10 +73,10 @@ func (Dm *DbManager) Init() error {
 	DB.SetMaxIdleConns(10)
 	DB.SetConnMaxLifetime(59 * time.Second)
 	if err != nil {
-		log.Info("[DB] open database fail")
+		logger.Info("[DB] open database fail")
 		return err
 	}
-	log.Info("[DB] connnect success")
+	logger.Info("[DB] connnect success")
 	Dm.Db = DB
 	return nil
 }
@@ -94,7 +94,7 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 	values := DbTaskConfig{}
 	err := Dm.Db.Get(&values, sql, taskid)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 	}
 	return values, err
 }
@@ -112,7 +112,7 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 	values := []ExtraHeaders{}
 	err := Dm.Db.Select(&values, sql, uuid)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 	}
 	return values, err
 }
@@ -165,7 +165,7 @@ func (Dm *DbManager) UuidToMap(uuid string, type_name string) map[string]interfa
 	case "Headers":
 		ExtraHeaders, err := Dm.GetExtraHeaders(uuid)
 		if err != nil {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 		}
 		for _, Header := range ExtraHeaders {
 			converted = Dm.ConvertToMap(Header, converted)

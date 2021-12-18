@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "glint/log"
+	"glint/logger"
 	"glint/proto"
 	"glint/util"
 	"io/ioutil"
@@ -122,7 +122,7 @@ func (rc *RequestController) InitNew() (err error) {
 	} else {
 		data, err := ioutil.ReadAll(rc.Original.Body)
 		if err != nil {
-			log.Error("rule/requests.go:InitNew gen request data error", err)
+			logger.Error("rule/requests.go:InitNew gen request data error", err)
 			return err
 		}
 		rc.New.Body = data
@@ -136,7 +136,7 @@ func (rc *RequestController) InitFast() (err error) {
 	fastReq := fasthttp.AcquireRequest()
 	err = util.CopyRequest(rc.Original, fastReq, rc.Data)
 	if err != nil {
-		log.Error("util/requests.go:InitFast Err", err)
+		logger.Error("util/requests.go:InitFast Err", err)
 		return err
 	}
 	rc.Fast = fastReq
@@ -146,7 +146,7 @@ func (rc *RequestController) InitFast() (err error) {
 func (rc *RequestController) InitData() (err error) {
 	rc.Data, err = util.GetOriginalReqBody(rc.Original)
 	if err != nil {
-		log.Error("util/requests.go:InitData Err", err)
+		logger.Error("util/requests.go:InitData Err", err)
 	}
 	return err
 }

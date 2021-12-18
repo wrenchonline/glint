@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"glint/fastreq"
-	"glint/log"
+	"glint/logger"
 	model2 "glint/model"
 	"glint/util"
 	"regexp"
@@ -43,7 +43,7 @@ var validateUrl mapset.Set
 从robots.txt文件中获取路径信息
 */
 func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
-	log.Info("starting to get paths from robots.txt.")
+	logger.Info("starting to get paths from robots.txt.")
 	var result []*model2.Request
 	var urlFindRegex = regexp.MustCompile(`(?:Disallow|Allow):.*?(/.+)`)
 	var urlRegex = regexp.MustCompile(`(/.+)`)
@@ -83,7 +83,7 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 使用常见路径列表进行fuzz
 */
 func GetPathsByFuzz(navReq model2.Request, ctx context.Context) []*model2.Request {
-	log.Info("starting to get paths by fuzzing.")
+	logger.Info("starting to get paths by fuzzing.")
 	pathList := strings.Split(pathStr, "/")
 	return doFuzz(navReq, pathList, ctx)
 }
@@ -92,9 +92,9 @@ func GetPathsByFuzz(navReq model2.Request, ctx context.Context) []*model2.Reques
 使用字典列表进行fuzz
 */
 func GetPathsByFuzzDict(navReq model2.Request, dictPath string, ctx context.Context) []*model2.Request {
-	log.Info("starting to get dict path by fuzzing: %s", dictPath)
+	logger.Info("starting to get dict path by fuzzing: %s", dictPath)
 	pathList := util.ReadFile(dictPath)
-	log.Debug("valid path count: %d", len(pathList))
+	logger.Debug("valid path count: %d", len(pathList))
 	return doFuzz(navReq, pathList, ctx)
 }
 
@@ -155,7 +155,7 @@ func (s singleFuzz) doRequest() {
 	_, resp, errs := fastreq.Get(url, util.ConvertHeaders(s.navReq.Headers),
 		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
 	if errs != nil {
-		// log.Info("doRequest err: %s", errs.Error())
+		// logger.Info("doRequest err: %s", errs.Error())
 		return
 	}
 	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {

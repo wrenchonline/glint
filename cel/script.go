@@ -3,9 +3,9 @@ package cel
 import (
 	"errors"
 	"fmt"
+	"glint/logger"
 	"glint/util"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
@@ -32,7 +32,7 @@ func GetScriptFunc(pocName string) ScriptScanFunc {
 
 func ScriptRegister(pocName string, handler ScriptScanFunc) {
 	if _, ok := scriptHandlers[pocName]; ok {
-		log.Panic("[script register vulId ]", pocName)
+		logger.Fatal("[script register vulId ]", pocName)
 	}
 	scriptHandlers[pocName] = handler
 }
@@ -61,7 +61,7 @@ func ParseJsonPoc(jsonByte []byte) (*Poc, error) {
 	err := yaml.Unmarshal(jsonByte, poc)
 	if poc.Name == "" {
 		errMsg := "poc解析失败，poc名称不可为空"
-		log.Fatal("cel/script.go:ParseJsonPoc Err", errMsg)
+		logger.Fatal("cel/script.go:ParseJsonPoc Err", errMsg)
 		return nil, errors.New(errMsg)
 	}
 	return poc, err
@@ -72,7 +72,7 @@ func ParseYamlPoc(yamlByte []byte) (*Poc, error) {
 	err := yaml.Unmarshal(yamlByte, poc)
 	if poc.Name == "" {
 		errMsg := "poc parse error"
-		log.Fatal("cel/script.go:ParseYamlPoc Err", errMsg)
+		logger.Fatal("cel/script.go:ParseYamlPoc Err", errMsg)
 		return nil, errors.New(errMsg)
 	}
 	return poc, err
@@ -82,12 +82,12 @@ func LoadPocContent(path string) ([]byte, error) {
 	if util.IsFileExist(path) {
 		file, err := os.Open(path)
 		if err != nil {
-			log.Fatal("cel/script.go:LoadPoc Err", err)
+			logger.Fatal("cel/script.go:LoadPoc Err", err)
 		}
 		defer file.Close()
 		content, err := ioutil.ReadAll(file)
 		if err != nil {
-			log.Fatal("cel/script.go:LoadPoc Err", err)
+			logger.Fatal("cel/script.go:LoadPoc Err", err)
 		}
 		return content, err
 	}

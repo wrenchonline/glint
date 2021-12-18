@@ -24,9 +24,9 @@ SubDomainReturn: true
 
 IncognitoContext: false
 
-NoHeadless: true
+NoHeadless: false
 
-PathByFuzz: true
+PathByFuzz: false
 
 Proxy: "127.0.0.1:7777"
 

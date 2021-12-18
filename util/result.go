@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"glint/ast"
-	"glint/log"
+	"glint/logger"
 	"glint/proto"
 
 	"os"
@@ -96,15 +96,15 @@ func SaveCrawOutPut(ResultList map[string][]ast.JsonUrl, FilePath string) {
 	var data []byte
 	data, err := json.Marshal(ResultList)
 	if err != nil {
-		log.Fatal("%s", err.Error())
+		logger.Fatal("%s", err.Error())
 	}
 	fp, err := os.OpenFile(FilePath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		log.Fatal("%s", err.Error())
+		logger.Fatal("%s", err.Error())
 	}
 	defer fp.Close()
 	_, err = fp.Write(data)
 	if err != nil {
-		log.Fatal("%s", err.Error())
+		logger.Fatal("%s", err.Error())
 	}
 }

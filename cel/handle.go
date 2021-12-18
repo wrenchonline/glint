@@ -1,7 +1,7 @@
 package cel
 
 import (
-	log "glint/log"
+	"glint/logger"
 	"strconv"
 )
 
@@ -15,7 +15,7 @@ func ExecExpressionHandle(ctx controllerContext) {
 
 	poc := ctx.GetPoc()
 	if poc == nil {
-		log.Error("[rule/handle.go:ExecExpressionHandle error] ", "poc is nil")
+		logger.Error("[rule/handle.go:ExecExpressionHandle error] ", "poc is nil")
 		return
 	}
 	if poc.Groups != nil {
@@ -24,7 +24,7 @@ func ExecExpressionHandle(ctx controllerContext) {
 		result, err = ctx.Rules(poc.Rules, ctx.IsDebug())
 	}
 	if err != nil {
-		log.Error("[rule/handle.go:ExecExpressionHandle error] ", err)
+		logger.Error("[rule/handle.go:ExecExpressionHandle error] ", err)
 		return
 	}
 	if result {
@@ -37,18 +37,18 @@ func ExecScriptHandle(ctx controllerContext) {
 	pocName := ctx.GetPocName()
 	scanFunc := GetScriptFunc(pocName)
 	if scanFunc == nil {
-		log.Error("[rule/handle.go:ExecScriptHandle error] ", "scan func is nil")
+		logger.Error("[rule/handle.go:ExecScriptHandle error] ", "scan func is nil")
 		ctx.Abort()
 		return
 	}
-	log.Info("[rule/handle.go:ExecScriptHandle script start]" + pocName)
+	logger.Info("[rule/handle.go:ExecScriptHandle script start]" + pocName)
 
 	var isHTTPS bool
 	// 处理端口
 	defaultPort := 80
 	originalReq := ctx.GetOriginalReq()
 	if originalReq == nil {
-		log.Error("[rule/handle.go:ExecScriptHandle error] ", "original request is nil")
+		logger.Error("[rule/handle.go:ExecScriptHandle error] ", "original request is nil")
 		ctx.Abort()
 		return
 	}
@@ -74,7 +74,7 @@ func ExecScriptHandle(ctx controllerContext) {
 	}
 	result, err := scanFunc(args)
 	if err != nil {
-		log.Error("[rule/handle.go:ExecScriptHandle error] ", err)
+		logger.Error("[rule/handle.go:ExecScriptHandle error] ", err)
 		ctx.Abort()
 		return
 	}

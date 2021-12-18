@@ -2,7 +2,7 @@ package cel
 
 import (
 	"fmt"
-	log "glint/log"
+	"glint/logger"
 	"glint/proto"
 	"glint/util"
 	"net/http"
@@ -166,7 +166,7 @@ func (controller *PocController) SingleRule(rule *Rule, debug bool) (bool, error
 	// 如果当前rule验证失败，立即释放
 	out, err := controller.CEL.Evaluate(rule.Expression)
 	if err != nil {
-		log.Error("[rule/controller.go:SingleRule cel evaluate error]", err)
+		logger.Error("[rule/controller.go:SingleRule cel evaluate error]", err)
 		return false, err
 	}
 	if debug {
@@ -188,7 +188,7 @@ func (controller *PocController) Rules(rules []Rule, debug bool) (bool, error) {
 	for _, rule := range rules {
 		singleRuleResult, err := controller.SingleRule(&rule, debug)
 		if err != nil {
-			log.Error("[rule/controller.go:Rules run error]", err)
+			logger.Error("[rule/controller.go:Rules run error]", err)
 			return false, err
 		}
 		if !singleRuleResult {

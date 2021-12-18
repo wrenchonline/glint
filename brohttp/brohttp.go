@@ -6,7 +6,7 @@ import (
 	"fmt"
 	ast "glint/ast"
 	"glint/config"
-	log "glint/log"
+	"glint/logger"
 	"net/url"
 	"strings"
 
@@ -69,7 +69,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
 	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
-	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(log.Info)
+	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	//监听Console.log事件
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
@@ -79,7 +79,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
-			log.Debug("* console.%s call:\n", ev.Type)
+			logger.Debug("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
 				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
 				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
@@ -108,7 +108,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
 				}
 				if err := req.Do(ctx); err != nil {
-					log.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
+					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
 			}()
 		case *network.EventRequestWillBeSent:
@@ -117,11 +117,11 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 			request := ev
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
-				log.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
+				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventResponseReceived:
 		case *page.EventJavascriptDialogOpening:
-			log.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
+			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
 			fmt.Println(Red(ev.Message))
 			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
 			Responses = append(Responses, Response)
@@ -152,7 +152,7 @@ func (spider *Spider) Sendreq() (string, error) {
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 	}
 	// res = html.UnescapeString(res)
 	return res, err
@@ -303,7 +303,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		spider.PayloadHandle(newpayload1, "POST", "")
 		html, err := spider.Sendreq()
 		if err != nil {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 		}
 		htmls = append(htmls, html)
 		return htmls, nil

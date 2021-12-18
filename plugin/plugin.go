@@ -3,7 +3,7 @@ package plugin
 import (
 	"context"
 	"glint/brohttp"
-	"glint/log"
+	"glint/logger"
 	"glint/util"
 	"sync"
 	"time"
@@ -43,7 +43,7 @@ func (p *Plugin) Init() {
 			p.mu.Lock()
 			scanresult, err := f(data)
 			if err != nil {
-				log.Error(err.Error())
+				logger.Error(err.Error())
 			} else {
 				p.ScanResult = append(p.ScanResult, scanresult)
 			}
@@ -67,12 +67,12 @@ func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup) er
 			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
 			err = p.Pool.Invoke(data)
 			if err != nil {
-				log.Error(err.Error())
+				logger.Error(err.Error())
 			}
 		}()
 	}
 	p.threadwg.Wait()
-	log.Info("Plugin %s is Finish!", p.PluginName)
+	logger.Info("Plugin %s is Finish!", p.PluginName)
 	util.OutputVulnerable(p.ScanResult)
 	return err
 }

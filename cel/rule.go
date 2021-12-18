@@ -2,7 +2,7 @@ package cel
 
 import (
 	"fmt"
-	log "glint/log"
+	"glint/logger"
 	"glint/proto"
 	"glint/reverse"
 	"glint/util"
@@ -59,7 +59,7 @@ func (cc *CelController) Init(poc *Poc) (err error) {
 	}
 	env, err := InitCelEnv(&option)
 	if err != nil {
-		log.Error("[cel/cel.go:Init init cel env error]", err)
+		logger.Error("[cel/cel.go:Init init cel env error]", err)
 		return err
 	}
 	cc.Env = env
@@ -105,7 +105,7 @@ func (cc *CelController) InitSet(poc *Poc, newReq *proto.Request) (err error) {
 func (cc *CelController) Evaluate(char string) (bool, error) {
 	out, err := Evaluate(cc.Env, char, cc.ParamMap)
 	if err != nil {
-		log.Error("[cel/cel.go:Evaluate error]", err)
+		logger.Error("[cel/cel.go:Evaluate error]", err)
 		return false, err
 	}
 	if fmt.Sprintf("%v", out) == "false" {

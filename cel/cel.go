@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	log "glint/log"
+	"glint/logger"
 	"glint/proto"
 	reverse2 "glint/reverse"
 	"glint/util"
@@ -497,7 +497,7 @@ func (rule *Rule) Verify() error {
 	// 限制rule中的path必须以"/"开头
 	if strings.HasPrefix(rule.Path, "/") == false {
 		errorMsg := "POC rule path must startWith \"/\""
-		log.Error("rule/rule.go:Verify error]", errorMsg)
+		logger.Error("rule/rule.go:Verify error]", errorMsg)
 		return errors.New(errorMsg)
 	}
 	return nil

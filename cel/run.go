@@ -2,7 +2,7 @@ package cel
 
 import (
 	"errors"
-	log "glint/log"
+	"glint/logger"
 	"glint/util"
 	"net/http"
 	"net/url"
@@ -18,17 +18,17 @@ func (item *ScanItem) Verify() error {
 	errMsg := ""
 	// if item.Task == nil {
 	// 	errMsg = "task create fail"
-	// 	log.Error("[rule/parallel.go:Verify error]", errMsg)
+	// 	logger.Error("[rule/parallel.go:Verify error]", errMsg)
 	// 	return errors.New(errMsg)
 	// }
 	if item.OriginalReq == nil {
 		errMsg = "not original request"
-		log.Error("[rule/parallel.go:Verify error]", errMsg)
+		logger.Error("[rule/parallel.go:Verify error]", errMsg)
 		return errors.New(errMsg)
 	}
 	if item.Plugin == nil {
 		errMsg = "not plugin"
-		log.Error("[rule/parallel.go:Verify error]", errMsg)
+		logger.Error("[rule/parallel.go:Verify error]", errMsg)
 		return errors.New(errMsg)
 	}
 	return nil
@@ -52,17 +52,17 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 	scanItem := inter.(*ScanItem)
 	err = scanItem.Verify()
 	if err != nil {
-		log.Error("[rule/poc.go:RunPoc scan item verify error] ", err)
+		logger.Error("[rule/poc.go:RunPoc scan item verify error] ", err)
 		return nil, err
 	}
-	log.Info("[rule/poc.go:RunPoc current plugin]", scanItem.Plugin.JsonPoc.Name)
+	logger.Info("[rule/poc.go:RunPoc current plugin]", scanItem.Plugin.JsonPoc.Name)
 
 	var requestController RequestController
 	var celController CelController
 
 	err = requestController.Init(scanItem.OriginalReq)
 	if err != nil {
-		log.Error("[rule/poc.go:RunPoc request controller init error] ", err)
+		logger.Error("[rule/poc.go:RunPoc request controller init error] ", err)
 		return nil, err
 	}
 
@@ -70,14 +70,14 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 
 	err = celController.Init(scanItem.Plugin.JsonPoc)
 	if err != nil {
-		log.Error("[rule/poc.go:RunPoc cel controller init error] ", err)
+		logger.Error("[rule/poc.go:RunPoc cel controller init error] ", err)
 		return nil, err
 	}
 
 	err = celController.InitSet(scanItem.Plugin.JsonPoc, requestController.New)
 	if err != nil {
 		util.RequestPut(requestController.New)
-		log.Error("[rule/poc.go:RunPoc cel controller init set error] ", err)
+		logger.Error("[rule/poc.go:RunPoc cel controller init set error] ", err)
 		return nil, err
 	}
 	switch scanItem.Plugin.Affects {
@@ -86,7 +86,7 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 		{
 			err := requestController.InitOriginalQueryParams()
 			if err != nil {
-				log.Error("[rule/poc.go:RunPoc init original request params error] ", err)
+				logger.Error("[rule/poc.go:RunPoc init original request params error] ", err)
 				return nil, err
 			}
 			controller := InitPocController(&requestController, scanItem.Plugin, &celController, handles)
@@ -95,16 +95,16 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 
 			originalParamFields, err := url.ParseQuery(requestController.OriginalQueryParams)
 			if err != nil {
-				log.Error("[rule/poc.go:RunPoc params query parse error] ", err)
+				logger.Error("[rule/poc.go:RunPoc params query parse error] ", err)
 				return nil, err
 			}
 
 			for field := range originalParamFields {
 				for _, payload := range paramPayloadList {
-					log.Info("[rule/poc.go:RunPoc param payload]", payload)
+					logger.Info("[rule/poc.go:RunPoc param payload]", payload)
 					err = requestController.FixQueryParams(field, payload, controller.Plugin.Affects)
 					if err != nil {
-						log.Error("[rule/poc.go:RunPoc fix request params error] ", err)
+						logger.Error("[rule/poc.go:RunPoc fix request params error] ", err)
 						continue
 					}
 					controller.Next()

@@ -7,7 +7,7 @@ import (
 	"glint/config"
 	"glint/crawler"
 	craw "glint/crawler"
-	log "glint/log"
+	"glint/logger"
 	"glint/model"
 	"glint/util"
 	"net/url"
@@ -19,7 +19,7 @@ import (
 )
 
 func Test_Crawler(t *testing.T) {
-	log.DebugEnable(false)
+	logger.DebugEnable(true)
 	TaskConfig := config.TaskConfig{}
 	TaskConfig.Proxy = "127.0.0.1:7777"
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,11 +45,14 @@ func Test_Crawler(t *testing.T) {
 		os.Exit(-1)
 	}
 	if len(targets) != 0 {
-		log.Info(fmt.Sprintf("Init crawler task, host: %s, max tab count: %d, max crawl count: %d.",
-			targets[0].URL.Host, TaskConfig.MaxTabsCount, TaskConfig.MaxCrawlCount))
-		log.Info("filter mode: %s", TaskConfig.FilterMode)
+		logger.Info("sdads")
+		msg := fmt.Sprintf("Init crawler task, host: %s, max tab count: %d, max crawl count: %d.",
+			targets[0].URL.Host, TaskConfig.MaxTabsCount, TaskConfig.MaxCrawlCount)
+		logger.Info(msg)
+
+		logger.Info("filter mode: %s", TaskConfig.FilterMode)
 	}
-	log.Info("Start crawling.")
+	logger.Info("Start crawling.")
 	task.Run()
 	result := task.Result
 	for _, rest := range result.ReqList {

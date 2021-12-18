@@ -1,0 +1,117 @@
+{"":[{"url":"http://www.jykc.com","method":"GET","headers":{"HOST":"http://www.jykc.com"},"data":"","source":"Target"}],"Normal":[{"url":"http://www.jykc.com/","method":"GET","headers":{"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9","HOST":"http://www.jykc.com","Referer":null,"Upgrade-Insecure-Requests":"1","User-Agent":"Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"},"data":"","source":"Document"}]}source":"PathFuzz"},{"url":"http://www.jykc.com/export","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/cdn","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/jobconsume","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/news","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/template","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/person","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/pl","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/tcpdf","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/admin","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/tests","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/mis","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/notice","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/cake","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/file","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/client","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/classes","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/cluster","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/action","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/jobs","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/nw","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/excel","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/caches","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/city","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/tasks","method":"GET","headers":{},"data":"","source":"PathFuzz"},{"url":"http://www.jykc.com/caching","method":"GET","headers":{},"data":"","source":"PathFuzz"}],"Normal":[{"url":"http://www.jykc.com/","method":"GET","headers":{"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9","HOST":"http://www.jykc.com","Referer":null,"Upgrade-Insecure-Requests":"1","User-Agent":"Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"},"data":"","source":"Document"},{"url":"http://www.jykc.com/admin/","method":"GET","headers":{"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9","Referer":null,"Upgrade-Insecure-Requests":"1","User-Agent":"Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"},"data":"","source":"Document"}]}rce": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/url",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/pcheck",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/nw",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/feature",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/main",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/site",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/soap",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/conf",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/duty",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/token",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/db",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/tcpdf",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/tmp",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        },
+        {
+            "url": "http://www.jykc.com/v2",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "PathFuzz"
+        }
+    ],
+    "Normal": [
+        {
+            "url": "http://www.jykc.com/",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "HOST": "http://www.jykc.com",
+                "Referer": null,
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document"
+        }
+    ]
+}

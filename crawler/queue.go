@@ -1,8 +1,6 @@
 package crawler
 
-import (
-	"glint/log"
-)
+import "glint/logger"
 
 func (tab *Tab) Watch() {
 	var (
@@ -39,7 +37,7 @@ func (tab *Tab) Watch() {
 
 	end:
 		if bq {
-			log.Debug("Watch Thread Exit")
+			logger.Debug("Watch Thread Exit")
 			break
 		}
 	}

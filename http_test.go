@@ -5,7 +5,7 @@ import (
 	"glint/ast"
 	brohttp "glint/brohttp"
 	"glint/config"
-	log "glint/log"
+	"glint/logger"
 	"net/url"
 	"testing"
 
@@ -15,7 +15,7 @@ import (
 func TestCheckPayloadNormal(t *testing.T) {
 	var err error
 	Spider := brohttp.Spider{}
-	log.DebugEnable(true)
+	logger.DebugEnable(true)
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "127.0.0.1:7777"
 	Spider.Init(taskconfig)

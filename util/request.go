@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"glint/logger"
 	"glint/proto"
-	"log"
 
 	// "github.com/jweny/pocassist/pkg/cel/proto"
 	// "github.com/jweny/pocassist/pkg/conf"
@@ -192,7 +192,7 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	resp.Status = int32(originalResp.StatusCode())
 	u, err := url.Parse(req.URI().String())
 	if err != nil {
-		log.Fatal("util/requests.go:ParseFasthttpResponse url parse error", req.URI().String(), err)
+		logger.Fatal("util/requests.go:ParseFasthttpResponse url parse error", req.URI().String(), err)
 		return nil, err
 	}
 	resp.Url = ParseUrl(u)
@@ -250,14 +250,14 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 		err = fasthttpClient.DoTimeout(req, resp, time.Duration(timeout)*time.Second)
 	}
 	if err != nil {
-		log.Fatal("util/requests.go:DoFasthttpRequest fasthttp client doRequest error", string(req.RequestURI()), err)
+		logger.Fatal("util/requests.go:DoFasthttpRequest fasthttp client doRequest error", string(req.RequestURI()), err)
 		return nil, err
 	}
 
 	// 处理响应 body: gzip deflate 解包
 	fixBody, err := UnzipResponseBody(resp)
 	if err != nil {
-		log.Fatal("util/requests.go:DoFasthttpRequest fasthttp client dealResponseBody error", string(req.RequestURI()), err)
+		logger.Fatal("util/requests.go:DoFasthttpRequest fasthttp client dealResponseBody error", string(req.RequestURI()), err)
 		return nil, err
 	}
 	resp.SetBody(fixBody)
@@ -428,13 +428,13 @@ func GenOriginalReq(target string) (*http.Request, error) {
 	verify, fixTarget := VerifyInputTarget(target)
 	if !verify {
 		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s can not connect", target)
-		log.Fatal(errMsg)
+		logger.Fatal(errMsg.Error())
 		return nil, errMsg
 	}
 	originalReq, err := http.NewRequest("GET", fixTarget, nil)
 	if err != nil {
 		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s original request gen error %v", target, err)
-		log.Fatal(errMsg)
+		logger.Fatal(errMsg.Error())
 		return nil, errMsg
 	}
 	originalReq.Header.Set("Host", originalReq.Host)

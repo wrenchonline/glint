@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"glint/dbmanager"
-	"glint/log"
+	"glint/logger"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -91,7 +91,7 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 		return
 	}
 	go func() {
@@ -100,16 +100,16 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 		err = ts.Task(ctx, c)
 		if errors.Is(err, context.Canceled) {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
 		if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 			websocket.CloseStatus(err) == websocket.StatusGoingAway {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
 		if err != nil {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
 	}()
@@ -119,7 +119,7 @@ func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string)
 	reponse := make(map[string]interface{})
 	reponse["status"] = status
 	reponse["msg"] = message
-	log.Info("%v", reponse)
+	logger.Info("%v", reponse)
 	err := wsjson.Write(ctx, c, reponse)
 	return err
 }
@@ -132,12 +132,12 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 			return err
 		}
 		err = json.Unmarshal([]byte(v.(string)), &jsonobj)
 		if err != nil {
-			log.Error(err.Error())
+			logger.Error(err.Error())
 			return err
 		}
 		json := jsonobj.(map[string]interface{})
@@ -206,18 +206,18 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	var task Task
 	var Err error
 	json := v.(map[string]interface{})
-	log.Debug("%v", json)
+	logger.Debug("%v", json)
 	task.TaskId, Err = GetTaskId(json)
 	if Err != nil {
-		log.Error(Err.Error())
+		logger.Error(Err.Error())
 	}
 	DBTaskConfig, Err := ts.Dm.GetTaskConfig(task.TaskId)
 	if Err != nil {
-		log.Error(Err.Error())
+		logger.Error(Err.Error())
 	}
 	TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
 	if Err != nil {
-		log.Error(Err.Error())
+		logger.Error(Err.Error())
 	}
 	task.Init()
 	task.TaskConfig = TaskConfig
@@ -267,7 +267,7 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = ts.Dm.InstallHttpsReqStatus(&State)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 	}
 
 	w.WriteHeader(http.StatusOK)

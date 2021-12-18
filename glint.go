@@ -9,7 +9,7 @@ import (
 	"glint/config"
 	"glint/crawler"
 	"glint/csrf"
-	"glint/log"
+	"glint/logger"
 	"glint/model"
 	"glint/plugin"
 	"glint/util"
@@ -92,14 +92,14 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 	}
 
 }
 
 func run(c *cli.Context) error {
 	// var req model.Request
-	log.DebugEnable(false)
+	logger.DebugEnable(false)
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 
@@ -107,7 +107,7 @@ func run(c *cli.Context) error {
 		ServerHandler(c)
 	} else {
 		if c.Args().Len() == 0 {
-			log.Error("url must be set")
+			logger.Error("url must be set")
 			return errors.New("url must be set")
 		}
 		t := Task{TaskId: 65535}
@@ -166,15 +166,15 @@ func (t *Task) dostartTasks(installDb bool) error {
 	Crawtask.PluginBrowser = &t.XssSpider
 
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 		return err
 	}
 	go t.WaitInterputQuit(Crawtask)
-	log.Info("Start crawling.")
+	logger.Info("Start crawling.")
 	//Crawtask.Run()是同步函数
 	Crawtask.Run()
 	result := Crawtask.Result
-	log.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
+	logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
 	//监听是否在爬虫的时候退出
 	select {
@@ -251,7 +251,7 @@ quit:
 	Taskslock.Lock()
 	removetasks(t.TaskId)
 	Taskslock.Unlock()
-	log.Info("The End for task:%d", t.TaskId)
+	logger.Info("The End for task:%d", t.TaskId)
 	return err
 }
 
@@ -276,12 +276,12 @@ func (t *Task) UrlPackage(_url string) error {
 	Headers := make(map[string]interface{})
 	if !strings.HasPrefix(_url, "http") {
 		err = errors.New(`parameter error,please "http(s)://" start with Url `)
-		log.Error(err.Error())
+		logger.Error(err.Error())
 		return err
 	}
 	url, err := model.GetUrl(_url)
 	if err != nil {
-		log.Error(err.Error())
+		logger.Error(err.Error())
 		return err
 	}
 	Headers["HOST"] = url.Path
@@ -295,10 +295,10 @@ func (t *Task) UrlPackage(_url string) error {
 }
 
 func CmdHandler(c *cli.Context, t *Task) {
-	log.Info("Enter command mode...")
+	logger.Info("Enter command mode...")
 	err := config.ReadTaskConf(ConfigpPath, &t.TaskConfig)
 	if err != nil {
-		log.Error("test ReadTaskConf() fail")
+		logger.Error("test ReadTaskConf() fail")
 	}
 	for _, _url := range c.Args().Slice() {
 		t.UrlPackage(_url)
@@ -312,7 +312,7 @@ func ServerHandler(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Info("listening on http://%v", l.Addr())
+	logger.Info("listening on http://%v", l.Addr())
 	cs := NewTaskServer()
 
 	s := &http.Server{
@@ -328,9 +328,9 @@ func ServerHandler(c *cli.Context) error {
 
 	select {
 	case err := <-errc:
-		log.Error("failed to serve: %v", err)
+		logger.Error("failed to serve: %v", err)
 	case sig := <-sigs:
-		log.Error("terminating: %v", sig)
+		logger.Error("terminating: %v", sig)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

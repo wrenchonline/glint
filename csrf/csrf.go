@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"glint/fastreq"
-	"glint/log"
+	"glint/logger"
 	"glint/plugin"
 	"glint/util"
 	"strings"
@@ -102,7 +102,7 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 			}
 			b2 := resp2.Body()
 			if len(b1) == len(b2) {
-				log.Debug("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs...")
+				logger.Debug("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs...")
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs...",
 					[]string{string(req2.String())},
@@ -146,7 +146,7 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
 			b2 := resp2.Body()
 			if len(b1) == len(b2) {
-				log.Debug("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")
+				logger.Debug("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...",
 					[]string{string(req2.String())},
