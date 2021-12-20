@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"glint/ast"
@@ -270,7 +271,13 @@ quit:
 func (t *Task) SavePluginResult() {
 	for _, plugin := range t.Plugins {
 		funk.Map(plugin.ScanResult, func(s *util.ScanResult) bool {
-			err := t.Dm.SaveScanResult(t.TaskId, plugin.PluginName, s.Vulnerable, s.Target, s.Output, s.ReqMsg[0], s.RespMsg[1], s.VulnerableLevel)
+			err := t.Dm.SaveScanResult(t.TaskId, plugin.PluginName,
+				s.Vulnerable,
+				s.Target,
+				s.Output,
+				base64.StdEncoding.EncodeToString([]byte(s.ReqMsg[0])),
+				base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
+				s.VulnerableLevel)
 			if err != nil {
 				logger.Error(err.Error())
 				return false

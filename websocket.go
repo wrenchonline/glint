@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"glint/dbmanager"
 	"glint/logger"
 	"io/ioutil"
@@ -15,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
@@ -59,7 +57,7 @@ const (
 
 func quitmsg(ctx context.Context, c *websocket.Conn) {
 	<-DoStartSignal
-	fmt.Println(aurora.Magenta("Monitor the exit signal of the task"))
+	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
 		<-(*task.Ctx).Done()
 		sendmsg(ctx, c, 2, "The Task is End")
@@ -207,7 +205,10 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	var Err error
 	json := v.(map[string]interface{})
 	logger.Debug("%v", json)
+
 	task.TaskId, Err = GetTaskId(json)
+	task.Dm = ts.Dm
+
 	if Err != nil {
 		logger.Error(Err.Error())
 	}
@@ -228,7 +229,6 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 			return task, Err
 		}
 	}
-
 	go task.dostartTasks(true)
 	return task, Err
 }

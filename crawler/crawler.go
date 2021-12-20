@@ -432,10 +432,15 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	spider.lock.Unlock()
 
 	tab.ExtraHeaders = map[string]interface{}{}
+	// host := navigateReq.URL.Host
 	tab.Ctx = &tCtx
 	tab.Cancel = cancel
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
+	if tab.ExtraHeaders["HOST"] == "/" {
+		delete(tab.ExtraHeaders, "HOST")
+	}
+
 	tab.Eventchanel.EventInfo = make(map[string]bool)
 	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
 	tab.Eventchanel.SubmitCheckUrl = make(chan bool)

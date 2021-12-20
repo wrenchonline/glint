@@ -150,7 +150,7 @@ func (Dm *DbManager) SaveScanResult(
 
 //DeleteScanResult 开始扫描时候删除脚本
 func (Dm *DbManager) DeleteScanResult(taskid int) error {
-	_, err := Dm.Db.Exec("delete from scan_result where task_id=?", taskid)
+	_, err := Dm.Db.Exec("delete from scan_result where TaskId=?", taskid)
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -234,7 +234,14 @@ func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (confi
 	TaskConfig.EventTriggerInterval = time.Duration(dbTaskConfig.EventTriggerInterval.Int64)
 	TaskConfig.BeforeExitDelay = time.Duration(dbTaskConfig.BeforeExitDelay.Int64)
 	TaskConfig.EncodeURLWithCharset = dbTaskConfig.EncodeURLWithCharset.Bool
-	TaskConfig.IgnoreKeywords = strings.Split(dbTaskConfig.IgnoreKeywords.String, "|")
+	TaskConfig.IgnoreKeywords = func() []string {
+		var ignored []string
+		if len(dbTaskConfig.IgnoreKeywords.String) == 0 {
+			return ignored
+		} else {
+			return strings.Split(dbTaskConfig.IgnoreKeywords.String, "|")
+		}
+	}()
 	TaskConfig.Proxy = dbTaskConfig.Proxy.String
 	TaskConfig.CustomFormValues = Dm.UuidToMap(dbTaskConfig.CustomFormValuesUuid.String, "CustomFormValues")
 	TaskConfig.CustomFormKeywordValues = Dm.UuidToMap(dbTaskConfig.CustomFormKeywordValuesUuid.String, "CustomFormKeywordValues")
