@@ -393,7 +393,7 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 				return nil, ctx.Err()
 			default:
 			}
-			// fmt.Println(aurora.Red(html))
+			// fmt.Println(aurora.html))
 			for payload, checkfilter := range payloadinfo {
 				Node := ast.SearchInputInResponse(playload, html)
 				if len(Node) == 0 {

@@ -67,6 +67,9 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 		if strings.ToUpper(method) == "POST" {
 			_, resp1, errs := fastreq.Post(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			if errs != nil {
+				return nil, errs
+			}
 			b1 := resp1.Body()
 			if resp1.StatusCode() != 200 {
 				errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
@@ -89,6 +92,9 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 		} else {
 			_, resp1, errs := fastreq.Get(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			if errs != nil {
+				return nil, errs
+			}
 			b1 := resp1.Body()
 			if resp1.StatusCode() != 200 {
 				errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
@@ -136,6 +142,9 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 		if strings.ToUpper(method) == "POST" {
 			_, resp1, errs := fastreq.Post(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+			if errs != nil {
+				return nil, errs
+			}
 			b1 := resp1.Body()
 			if resp1.StatusCode() != 200 {
 				errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
@@ -158,6 +167,9 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 		} else {
 			_, resp1, errs := fastreq.Get(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			if errs != nil {
+				return nil, errs
+			}
 			b1 := resp1.Body()
 			if resp1.StatusCode() != 200 {
 				errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())

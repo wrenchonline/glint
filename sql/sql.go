@@ -2,12 +2,12 @@ package sql
 
 import (
 	"fmt"
+	ast "glint/ast"
+	"glint/brohttp"
 	"math/rand"
 	"net/url"
 	"strings"
 	"time"
-	ast "glint/ast"
-	"glint/brohttp"
 )
 
 var Notes = []string{

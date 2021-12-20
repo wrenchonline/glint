@@ -16,7 +16,6 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
-	. "github.com/logrusorgru/aurora"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -122,7 +121,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		case *network.EventResponseReceived:
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
-			fmt.Println(Red(ev.Message))
+			// fmt.Println(Red(ev.Message))
 			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
 			Responses = append(Responses, Response)
 			go func() {

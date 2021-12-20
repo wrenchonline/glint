@@ -124,14 +124,14 @@ func run(c *cli.Context) error {
 func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 	select {
 	case <-signalChan:
-		fmt.Println("Interput exit ...")
+		logger.Warning("Interput exit ...")
 		c.Pool.Tune(1)
 		c.Pool.Release()
 		c.Browser.Close()
 		c.PluginBrowser.Close()
 		os.Exit(-1)
 	case <-(*t.Ctx).Done():
-		fmt.Println("Task exit ...")
+		logger.Warning("Task exit ...")
 		if !c.Pool.IsClosed() {
 			c.Pool.Tune(1)
 			c.Pool.Release()

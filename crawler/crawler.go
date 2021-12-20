@@ -191,7 +191,7 @@ func (tab *Tab) getBodyNodeId() bool {
 */
 func (tab *Tab) AfterDOMRun() {
 	defer tab.WG.Done()
-	fmt.Println(aurora.Green("afterDOMRun start"))
+	logger.Success("afterDOMRun start")
 	// 获取当前body节点的nodeId 用于之后查找子节点
 	if !tab.getBodyNodeId() {
 		fmt.Println(aurora.Red("no body document NodeID, exit."))
@@ -199,10 +199,9 @@ func (tab *Tab) AfterDOMRun() {
 	}
 	//填充表单
 	tab.domWG.Add(1)
-	fmt.Println(aurora.Magenta("The Function tab.fillForm() is call"))
 	go tab.fillForm()
 	tab.domWG.Wait()
-	fmt.Println(aurora.Green("afterDOMRun end"))
+	logger.Success("afterDOMRun end")
 	tab.WG.Add(1)
 	go tab.AfterLoadedRun()
 }
@@ -213,16 +212,16 @@ func (tab *Tab) AfterDOMRun() {
 */
 func (tab *Tab) AfterLoadedRun() {
 	defer tab.WG.Done()
-	fmt.Println(aurora.Green("afterLoadedRun start"))
+	logger.Success("afterLoadedRun start")
 	tab.formSubmitWG.Add(2)
 	// tab.loadedWG.Add(3)
 	// tab.removeLis.Add(1)
 
-	fmt.Println(aurora.Green("formSubmit start"))
+	logger.Success("formSubmit start")
 	go tab.CommitBySubmit()
 	go tab.clickAllButton()
 	tab.formSubmitWG.Wait()
-	fmt.Println(aurora.Green("formSubmit end"))
+	logger.Success("formSubmit end")
 
 	// if tab.config.EventTriggerMode == config.EventTriggerAsync {
 	// 	go tab.triggerJavascriptProtocol()
@@ -242,7 +241,7 @@ func (tab *Tab) AfterLoadedRun() {
 
 	// go tab.RemoveDOMListener()
 	// tab.removeLis.Wait()
-	fmt.Println(aurora.Green("afterLoadedRun end"))
+	logger.Success("afterLoadedRun end")
 }
 
 //ListenTarget
@@ -457,15 +456,15 @@ func (bro *Spider) Close() {
 		cancel()
 	}
 	for _, ctx := range bro.tabs {
-		err := browser.Close().Do(*ctx)
-		if err != nil {
-			fmt.Println(aurora.Red(err))
-		}
+		_ = browser.Close().Do(*ctx)
+		// if err != nil {
+		// 	logger.Warning(err.Error())
+		// }
 	}
-	err := browser.Close().Do(*bro.Ctx)
-	if err != nil {
-		fmt.Println(aurora.Red(err))
-	}
+	_ = browser.Close().Do(*bro.Ctx)
+	// if err != nil {
+	// 	logger.Warning(err.Error())
+	// }
 	(*bro.Cancel)()
 }
 
@@ -501,11 +500,11 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	// }()
 
 	tab.WG.Wait()
-	fmt.Println(aurora.Green("collectLinks start"))
+	logger.Success("collectLinks start")
 	tab.collectLinkWG.Add(3)
 	go tab.CollectLink()
 	tab.collectLinkWG.Wait()
-	fmt.Println(aurora.Green("collectLinks end"))
+	logger.Success("collectLinks end")
 	return nil
 }
 
@@ -518,12 +517,12 @@ func (tab *Tab) CommitBySubmit() error {
 	// 获取所有的form节点 直接执行submit
 	formNodes, err := tab.GetNodeIDs(`form`)
 	if err != nil {
-		logger.Error("CommitBySubmit %s", err.Error())
+		logger.Warning("CommitBySubmit %s", err.Error())
 		return err
 	}
 	if len(formNodes) == 0 {
 		err := "CommitBySubmit not found Nodes"
-		logger.Error(err)
+		logger.Warning(err)
 		return fmt.Errorf(err)
 	}
 	tCtx1, cancel1 := context.WithTimeout(ctx, time.Second*2)
@@ -576,7 +575,7 @@ func (tab *Tab) fillForm() error {
 	//获取 input节点
 	err := chromedp.Nodes("//input", &InputNodes, chromedp.ByQueryAll).Do(tCtx)
 	if err != nil {
-		logger.Error("fillForm error: %v", err.Error())
+		logger.Warning("fillForm error: %v", err.Error())
 	}
 	if len(InputNodes) == 0 {
 		err_msg := "fillForm::input find node"
@@ -650,7 +649,7 @@ func (tab *Tab) collectHrefLinks() {
 		var attrs []map[string]string
 		err := chromedp.AttributesAll(fmt.Sprintf(`[%s]`, attrName), &attrs, chromedp.BySearch).Do(tCtx)
 		if err != nil {
-			logger.Error("collectHrefLinks %s", err.Error())
+			logger.Warning("collectHrefLinks %s", err.Error())
 			return
 		}
 		for _, attrMap := range attrs {
@@ -690,8 +689,7 @@ func (tab *Tab) collectCommentLinks() {
 	defer cancel()
 	commentErr := chromedp.Nodes(`//comment()`, &nodes, chromedp.BySearch).Do(tCtxComment)
 	if commentErr != nil {
-		fmt.Println(aurora.Red("get comment nodes err"))
-		fmt.Println(aurora.Red(commentErr))
+		logger.Warning("get comment nodes err")
 		return
 	}
 	urlRegex := regexp.MustCompile(`((https?|ftp|file):)?//[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]`)
@@ -778,12 +776,12 @@ func (tab *Tab) clickAllButton() error {
 	var ButtonNodes []*cdp.Node
 	err := chromedp.Nodes("//button", &ButtonNodes).Do(tCtx)
 	if err != nil {
-		logger.Error("clickAllButton %s", err.Error())
+		logger.Warning("clickAllButton %s", err.Error())
 		return err
 	}
 	if len(ButtonNodes) == 0 {
 		err := "clickAllButton not found Nodes"
-		logger.Error(err)
+		logger.Warning(err)
 		return fmt.Errorf(err)
 	}
 	for _, node := range ButtonNodes {

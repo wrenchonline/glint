@@ -3,13 +3,13 @@ package fastreq
 import (
 	"crypto/tls"
 	"fmt"
+	"glint/logger"
 	"glint/util"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
@@ -157,7 +157,7 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 	}
 
 	if err != nil {
-		fmt.Println(aurora.Red(err))
+		logger.Error("fastreq %s", err.Error())
 		return nil, nil, errors.Wrap(err, "error occurred during request")
 	}
 	// 带Range头后一般webserver响应都是206 PARTIAL CONTENT，修正为200 OK
