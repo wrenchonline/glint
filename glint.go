@@ -9,6 +9,7 @@ import (
 	"glint/config"
 	"glint/crawler"
 	"glint/csrf"
+	"glint/dbmanager"
 	"glint/logger"
 	"glint/model"
 	"glint/plugin"
@@ -47,6 +48,8 @@ type Task struct {
 	Ctx        *context.Context
 	Cancel     *context.CancelFunc
 	lock       *sync.Mutex
+	Dm         *dbmanager.DbManager
+	InstallDb  bool
 }
 
 func main() {
@@ -152,6 +155,12 @@ func (t *Task) dostartTasks(installDb bool) error {
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
 	DoStartSignal <- true
+	if installDb {
+		err := t.Dm.DeleteScanResult(t.TaskId)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	}
 	//完成后通知上下文
 	defer func() {
 		//由外部socket关闭避免重复释放
@@ -250,11 +259,28 @@ func (t *Task) dostartTasks(installDb bool) error {
 quit:
 	Taskslock.Lock()
 	removetasks(t.TaskId)
+	if installDb {
+		t.SavePluginResult()
+	}
 	Taskslock.Unlock()
 	logger.Info("The End for task:%d", t.TaskId)
 	return err
 }
 
+func (t *Task) SavePluginResult() {
+	for _, plugin := range t.Plugins {
+		funk.Map(plugin.ScanResult, func(s *util.ScanResult) bool {
+			err := t.Dm.SaveScanResult(t.TaskId, plugin.PluginName, s.Vulnerable, s.Target, s.Output, s.ReqMsg[0], s.RespMsg[1], s.VulnerableLevel)
+			if err != nil {
+				logger.Error(err.Error())
+				return false
+			}
+			return true
+		})
+	}
+}
+
+//removetasks 移除总任务进度的任务ID
 func removetasks(id int) {
 	for index, t := range Tasks {
 		if t.TaskId == id {

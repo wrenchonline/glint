@@ -24,7 +24,7 @@ SubDomainReturn: true
 
 IncognitoContext: false
 
-NoHeadless: false
+NoHeadless: true
 
 PathByFuzz: false
 

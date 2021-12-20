@@ -28,7 +28,7 @@ func Test_InstallScanResult(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = Dm.ReplaceVulnerable(
+	err = Dm.SaveScanResult(
 		1,
 		"xss",
 		true,

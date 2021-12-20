@@ -117,7 +117,8 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 	return values, err
 }
 
-func (Dm *DbManager) ReplaceVulnerable(
+//保存漏扫结果
+func (Dm *DbManager) SaveScanResult(
 	taskid int,
 	plugin_name string,
 	Vulnerable bool,
@@ -144,6 +145,15 @@ func (Dm *DbManager) ReplaceVulnerable(
 		"vulnerability": VulnerableLevel,
 	})
 
+	return err
+}
+
+//DeleteScanResult 开始扫描时候删除脚本
+func (Dm *DbManager) DeleteScanResult(taskid int) error {
+	_, err := Dm.Db.Exec("delete from scan_result where task_id=?", taskid)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	return err
 }
 
