@@ -532,9 +532,8 @@ func (tab *Tab) CommitBySubmit() error {
 	// 获取所有的input标签
 	inputNodes, inputErr := tab.GetNodeIDs(`form input[type=submit]`)
 	if inputErr != nil || len(inputNodes) == 0 {
-		fmt.Println(aurora.Red("clickSubmit: get [form input] element err"))
 		if inputErr != nil {
-			fmt.Println(aurora.Red(inputErr))
+			logger.Warning("CommitBySubmit %s", err.Error())
 		}
 		return inputErr
 	}

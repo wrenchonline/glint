@@ -424,7 +424,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	var err error
 
 	if _, ok := (*Spider.Ctx).Deadline(); ok {
-		fmt.Println(aurora.Red("xss spider is dead"))
+		logger.Warning("xss spider is dead")
 		goto quit
 	}
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
@@ -433,7 +433,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		resources := make([]map[int]interface{}, len(groups.GroupUrls))
 		for _, Urlinfo := range groups.GroupUrls {
 			Spider.CopyRequest(Urlinfo)
-			println(Spider.Url.String())
+			// println(Spider.Url.String())
 			b, Occ := Spider.CheckRandOnHtmlS(flag)
 			if b {
 				bflag = true
