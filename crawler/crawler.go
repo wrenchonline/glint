@@ -481,7 +481,7 @@ func (tab *Tab) Crawler(extends interface{}) error {
 		network.Enable(),
 		// 开启请求拦截API
 		fetch.Enable(),
-		//设置标签头
+		// 设置标签头
 		chromedp.ActionFunc(func(c context.Context) error {
 			network.SetExtraHTTPHeaders(network.Headers(tab.ExtraHeaders)).Do(c)
 			return nil

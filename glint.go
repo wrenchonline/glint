@@ -51,6 +51,7 @@ type Task struct {
 	lock       *sync.Mutex
 	Dm         *dbmanager.DbManager
 	InstallDb  bool
+	Progress   uint32
 }
 
 func main() {
