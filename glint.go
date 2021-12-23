@@ -51,7 +51,7 @@ type Task struct {
 	lock       *sync.Mutex
 	Dm         *dbmanager.DbManager
 	InstallDb  bool
-	Progress   uint32
+	Progress   int
 }
 
 func main() {
@@ -233,7 +233,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			t.Plugins = append(t.Plugins, &plugin)
 			t.lock.Unlock()
 			go func() {
-				plugin.Run(ReqList, &t.PluginWg)
+				plugin.Run(ReqList, &t.PluginWg, &t.Progress)
 			}()
 		case "xss":
 			myfunc := []plugin.PluginCallback{}
@@ -253,7 +253,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			t.Plugins = append(t.Plugins, &plugin)
 			t.lock.Unlock()
 			go func() {
-				plugin.Run(ReqList, &t.PluginWg)
+				plugin.Run(ReqList, &t.PluginWg, &t.Progress)
 			}()
 		}
 	}

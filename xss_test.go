@@ -44,8 +44,9 @@ func TestXSS(t *testing.T) {
 	plugin.Init()
 	plugin.Callbacks = myfunc
 	PluginWg.Add(1)
+	progress := 0
 	go func() {
-		plugin.Run(data, &PluginWg)
+		plugin.Run(data, &PluginWg, &progress)
 	}()
 	PluginWg.Wait()
 	fmt.Println("exit...")

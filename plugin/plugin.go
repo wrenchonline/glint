@@ -27,6 +27,14 @@ type Plugin struct {
 	Timeout      time.Duration
 }
 
+type PluginOption struct {
+	PluginWg   *sync.WaitGroup
+	Progress   *int
+	IsSocket   bool
+	Data       map[string][]interface{}
+	SendStatus chan<- string
+}
+
 type GroupData struct {
 	GroupType string
 	GroupUrls []interface{}
@@ -57,7 +65,7 @@ func (p *Plugin) Init() {
 
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
 
-func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup) error {
+func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup, progress *int) error {
 	defer PluginWg.Done()
 	defer p.Pool.Release()
 	var err error

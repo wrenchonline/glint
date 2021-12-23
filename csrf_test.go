@@ -24,8 +24,9 @@ func Test_CSRF(t *testing.T) {
 	}
 	plugin.Init()
 	PluginWg.Add(1)
+	progress := 0
 	go func() {
-		plugin.Run(data, &PluginWg)
+		plugin.Run(data, &PluginWg, &progress)
 	}()
 	PluginWg.Wait()
 	fmt.Println("exit...")

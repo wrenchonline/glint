@@ -272,3 +272,12 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func Gutfet() {
+	for {
+		select {
+		case <-time.After(time.Second * 2):
+
+		}
+	}
+}
