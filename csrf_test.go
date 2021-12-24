@@ -16,17 +16,25 @@ func Test_CSRF(t *testing.T) {
 	config.ReadResultConf("result.json", &data)
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, csrf.Origin, csrf.Referer)
-	plugin := plugin.Plugin{
+	pluginInternal := plugin.Plugin{
 		PluginName:   "csrf",
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
 		Timeout:      30 * time.Second,
 	}
-	plugin.Init()
+	pluginInternal.Init()
 	PluginWg.Add(1)
-	progress := 0
+	Progress := 0
+	args := plugin.PluginOption{
+		PluginWg:   &PluginWg,
+		Progress:   &Progress,
+		IsSocket:   false,
+		Data:       data,
+		TaskId:     999,
+		Sendstatus: &PliuginsMsg,
+	}
 	go func() {
-		plugin.Run(data, &PluginWg, &progress)
+		pluginInternal.Run(args)
 	}()
 	PluginWg.Wait()
 	fmt.Println("exit...")

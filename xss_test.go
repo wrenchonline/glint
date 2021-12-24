@@ -34,19 +34,27 @@ func TestXSS(t *testing.T) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	plugin := plugin.Plugin{
+	pluginInternal := plugin.Plugin{
 		PluginName:   "xss",
 		MaxPoolCount: 1,
 		// Callbacks:    myfunc,
 		Spider:  &Spider,
 		Timeout: time.Second * 300,
 	}
-	plugin.Init()
-	plugin.Callbacks = myfunc
+	pluginInternal.Init()
+	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
-	progress := 0
+	Progress := 0
+	args := plugin.PluginOption{
+		PluginWg:   &PluginWg,
+		Progress:   &Progress,
+		IsSocket:   false,
+		Data:       data,
+		TaskId:     999,
+		Sendstatus: &PliuginsMsg,
+	}
 	go func() {
-		plugin.Run(data, &PluginWg, &progress)
+		pluginInternal.Run(args)
 	}()
 	PluginWg.Wait()
 	fmt.Println("exit...")

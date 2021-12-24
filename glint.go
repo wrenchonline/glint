@@ -219,7 +219,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 		case "csrf":
 			myfunc := []plugin.PluginCallback{}
 			myfunc = append(myfunc, csrf.Origin, csrf.Referer)
-			plugin := plugin.Plugin{
+			pluginInternal := plugin.Plugin{
 				PluginName:   PluginName,
 				MaxPoolCount: 20,
 				Callbacks:    myfunc,
@@ -227,18 +227,26 @@ func (t *Task) dostartTasks(installDb bool) error {
 				Taskid:       t.TaskId,
 				Timeout:      time.Second * 600,
 			}
-			plugin.Init()
+			pluginInternal.Init()
 			t.PluginWg.Add(1)
 			t.lock.Lock()
-			t.Plugins = append(t.Plugins, &plugin)
+			t.Plugins = append(t.Plugins, &pluginInternal)
 			t.lock.Unlock()
+			args := plugin.PluginOption{
+				PluginWg:   &t.PluginWg,
+				Progress:   &t.Progress,
+				IsSocket:   true,
+				Data:       ReqList,
+				TaskId:     t.TaskId,
+				Sendstatus: &PliuginsMsg,
+			}
 			go func() {
-				plugin.Run(ReqList, &t.PluginWg, &t.Progress)
+				pluginInternal.Run(args)
 			}()
 		case "xss":
 			myfunc := []plugin.PluginCallback{}
 			myfunc = append(myfunc, xsschecker.CheckXss)
-			plugin := plugin.Plugin{
+			pluginInternal := plugin.Plugin{
 				PluginName:   "xss",
 				MaxPoolCount: 1,
 				Callbacks:    myfunc,
@@ -247,13 +255,22 @@ func (t *Task) dostartTasks(installDb bool) error {
 				Taskid:       t.TaskId,
 				Timeout:      time.Second * 900,
 			}
-			plugin.Init()
+			pluginInternal.Init()
 			t.PluginWg.Add(1)
 			t.lock.Lock()
-			t.Plugins = append(t.Plugins, &plugin)
+			t.Plugins = append(t.Plugins, &pluginInternal)
 			t.lock.Unlock()
+
+			args := plugin.PluginOption{
+				PluginWg:   &t.PluginWg,
+				Progress:   &t.Progress,
+				IsSocket:   true,
+				Data:       ReqList,
+				TaskId:     t.TaskId,
+				Sendstatus: &PliuginsMsg,
+			}
 			go func() {
-				plugin.Run(ReqList, &t.PluginWg, &t.Progress)
+				pluginInternal.Run(args)
 			}()
 		}
 	}

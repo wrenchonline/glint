@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"glint/brohttp"
 	"glint/logger"
 	"glint/util"
@@ -12,12 +13,12 @@ import (
 )
 
 type Plugin struct {
-	Taskid       int              //任务id，只有插入数据库的时候使用
-	PluginName   string           //插件名
-	MaxPoolCount int              //协程池最大并发数
-	Callbacks    []PluginCallback //扫描插件函数
-	Pool         *ants.PoolWithFunc
-	threadwg     sync.WaitGroup //同步线程
+	Taskid       int                //任务id，只有插入数据库的时候使用
+	PluginName   string             //插件名
+	MaxPoolCount int                //协程池最大并发数
+	Callbacks    []PluginCallback   //扫描插件函数
+	Pool         *ants.PoolWithFunc //
+	threadwg     sync.WaitGroup     //同步线程
 	ScanResult   []*util.ScanResult
 	mu           sync.Mutex
 	Spider       *brohttp.Spider
@@ -32,7 +33,8 @@ type PluginOption struct {
 	Progress   *int
 	IsSocket   bool
 	Data       map[string][]interface{}
-	SendStatus chan<- string
+	Sendstatus *chan string
+	TaskId     int //该插件所属的taskid
 }
 
 type GroupData struct {
@@ -65,11 +67,11 @@ func (p *Plugin) Init() {
 
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
 
-func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup, progress *int) error {
-	defer PluginWg.Done()
+func (p *Plugin) Run(args PluginOption) error {
+	defer args.PluginWg.Done()
 	defer p.Pool.Release()
 	var err error
-	for k, v := range data {
+	for k, v := range args.Data {
 		p.threadwg.Add(1)
 		go func() {
 			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
@@ -81,6 +83,15 @@ func (p *Plugin) Run(data map[string][]interface{}, PluginWg *sync.WaitGroup, pr
 	}
 	p.threadwg.Wait()
 	logger.Info("Plugin %s is Finish!", p.PluginName)
+	if args.IsSocket {
+		Element := make(map[string]interface{})
+		jsonElement, err := json.Marshal(Element)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		msgstr := string(jsonElement)
+		(*args.Sendstatus) <- msgstr
+	}
 	util.OutputVulnerable(p.ScanResult)
 	return err
 }

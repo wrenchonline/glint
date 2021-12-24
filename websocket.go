@@ -47,6 +47,8 @@ var Taskslock sync.Mutex
 
 var DoStartSignal chan bool
 
+var PliuginsMsg chan string
+
 type TaskStatus int
 
 const (
@@ -125,6 +127,7 @@ func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string)
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
 	DoStartSignal = make(chan bool)
+	PliuginsMsg = make(chan string)
 	var v interface{}
 	var jsonobj interface{}
 	for {
@@ -273,7 +276,7 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func Gutfet() {
+func PluginmsgHandler(ctx context.Context, c *websocket.Conn) {
 	for {
 		select {
 		case <-time.After(time.Second * 2):
