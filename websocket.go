@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"glint/dbmanager"
 	"glint/logger"
 	"io/ioutil"
@@ -47,7 +48,7 @@ var Taskslock sync.Mutex
 
 var DoStartSignal chan bool
 
-var PliuginsMsg chan string
+var PliuginsMsg chan map[string]interface{}
 
 type TaskStatus int
 
@@ -127,7 +128,7 @@ func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string)
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
 	DoStartSignal = make(chan bool)
-	PliuginsMsg = make(chan string)
+	PliuginsMsg = make(chan map[string]interface{})
 	var v interface{}
 	var jsonobj interface{}
 	for {
@@ -276,11 +277,23 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func PluginmsgHandler(ctx context.Context, c *websocket.Conn) {
+func PluginMsgHandler(ctx context.Context, c *websocket.Conn) {
 	for {
 		select {
-		case <-time.After(time.Second * 2):
+		case msg := <-PliuginsMsg:
+			fmt.Printf("msg: %v\n", msg)
+			reponse := make(map[string]interface{})
+			reponse["status"] = 0
+			reponse["msg"] = msg
+			err := wsjson.Write(ctx, c, reponse)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+		case <-time.After(time.Second * 1):
 
+		case <-ctx.Done():
+			logger.Warning("PluginMsgHandler exit ...")
+			return
 		}
 	}
 }

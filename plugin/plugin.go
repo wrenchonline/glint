@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"encoding/json"
 	"glint/brohttp"
 	"glint/logger"
 	"glint/util"
@@ -30,10 +29,11 @@ type Plugin struct {
 
 type PluginOption struct {
 	PluginWg   *sync.WaitGroup
-	Progress   *int
+	Progress   *int //此任务进度
+	Totalprog  int  //此插件占有的总进度
 	IsSocket   bool
 	Data       map[string][]interface{}
-	Sendstatus *chan string
+	Sendstatus *chan map[string]interface{}
 	TaskId     int //该插件所属的taskid
 }
 
@@ -68,6 +68,7 @@ func (p *Plugin) Init() {
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
 
 func (p *Plugin) Run(args PluginOption) error {
+	var lock sync.RWMutex
 	defer args.PluginWg.Done()
 	defer p.Pool.Release()
 	var err error
@@ -85,12 +86,14 @@ func (p *Plugin) Run(args PluginOption) error {
 	logger.Info("Plugin %s is Finish!", p.PluginName)
 	if args.IsSocket {
 		Element := make(map[string]interface{})
-		jsonElement, err := json.Marshal(Element)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		msgstr := string(jsonElement)
-		(*args.Sendstatus) <- msgstr
+		Element["status"] = 0
+		logger.Info("Plugin RLocker")
+		lock.RLocker()
+		Progress := *args.Progress
+		lock.RUnlock()
+		logger.Info("Plugin RUnlock")
+		Element["progress"] = Progress + args.Totalprog
+		(*args.Sendstatus) <- Element
 	}
 	util.OutputVulnerable(p.ScanResult)
 	return err

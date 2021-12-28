@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"glint/logger"
 	"io"
@@ -92,4 +93,13 @@ func ReadFile(filePath string) []string {
 		}
 	}
 	return filePaths
+}
+
+func JsontoStr(Element interface{}) (string, error) {
+	jsonElement, err := json.Marshal(Element)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	msgstr := string(jsonElement)
+	return msgstr, err
 }

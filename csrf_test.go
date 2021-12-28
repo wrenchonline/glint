@@ -26,12 +26,12 @@ func Test_CSRF(t *testing.T) {
 	PluginWg.Add(1)
 	Progress := 0
 	args := plugin.PluginOption{
-		PluginWg:   &PluginWg,
-		Progress:   &Progress,
-		IsSocket:   false,
-		Data:       data,
-		TaskId:     999,
-		Sendstatus: &PliuginsMsg,
+		PluginWg: &PluginWg,
+		Progress: &Progress,
+		IsSocket: false,
+		Data:     data,
+		TaskId:   999,
+		// Sendstatus: &PliuginsMsg,
 	}
 	go func() {
 		pluginInternal.Run(args)
