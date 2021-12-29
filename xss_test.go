@@ -44,7 +44,7 @@ func TestXSS(t *testing.T) {
 	pluginInternal.Init()
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
-	Progress := 0
+	Progress := 0.0
 	args := plugin.PluginOption{
 		PluginWg:   &PluginWg,
 		Progress:   &Progress,

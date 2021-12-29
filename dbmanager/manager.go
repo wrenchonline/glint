@@ -69,6 +69,9 @@ func (Dm *DbManager) Init() error {
 		"?charset=utf8&parseTime=true&loc=Local"}, "")
 	//打开数据库,前者是驱动名，所以要导入： _ "github.com/go-sql-driver/mysql"
 	DB, err := sqlx.Connect("mysql", path)
+	if err != nil {
+		return err
+	}
 	DB.SetMaxOpenConns(20)
 	DB.SetMaxIdleConns(10)
 	DB.SetConnMaxLifetime(59 * time.Second)

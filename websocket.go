@@ -68,7 +68,7 @@ func quitmsg(ctx context.Context, c *websocket.Conn) {
 }
 
 // NewTaskServer
-func NewTaskServer() *TaskServer {
+func NewTaskServer() (*TaskServer, error) {
 	ts := &TaskServer{
 		subscriberMessageBuffer: 16,
 		// subscribers:             make(map[*subscriber]struct{}),
@@ -78,8 +78,11 @@ func NewTaskServer() *TaskServer {
 	ts.serveMux.HandleFunc("/task", ts.TaskHandler)
 	ts.serveMux.HandleFunc("/publish", ts.PublishHandler)
 	ts.Dm = &dbmanager.DbManager{}
-	ts.Dm.Init()
-	return ts
+	err := ts.Dm.Init()
+	if err != nil {
+		return nil, err
+	}
+	return ts, nil
 }
 
 func (ts *TaskServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -131,6 +134,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	PliuginsMsg = make(chan map[string]interface{})
 	var v interface{}
 	var jsonobj interface{}
+	go PluginMsgHandler(ctx, c)
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
@@ -289,8 +293,7 @@ func PluginMsgHandler(ctx context.Context, c *websocket.Conn) {
 			if err != nil {
 				logger.Error(err.Error())
 			}
-		case <-time.After(time.Second * 1):
-
+		// case <-time.After(time.Millisecond * 500):
 		case <-ctx.Done():
 			logger.Warning("PluginMsgHandler exit ...")
 			return

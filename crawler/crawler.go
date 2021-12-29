@@ -533,7 +533,7 @@ func (tab *Tab) CommitBySubmit() error {
 	inputNodes, inputErr := tab.GetNodeIDs(`form input[type=submit]`)
 	if inputErr != nil || len(inputNodes) == 0 {
 		if inputErr != nil {
-			logger.Warning("CommitBySubmit %s", err.Error())
+			logger.Warning("CommitBySubmit %s", inputErr.Error())
 		}
 		return inputErr
 	}

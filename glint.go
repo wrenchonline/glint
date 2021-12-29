@@ -51,7 +51,7 @@ type Task struct {
 	lock       *sync.Mutex
 	Dm         *dbmanager.DbManager
 	InstallDb  bool
-	Progress   int
+	Progress   float64
 }
 
 func main() {
@@ -172,9 +172,11 @@ func (t *Task) dostartTasks(installDb bool) error {
 	}()
 
 	StartPlugins := Plugins.Value()
+	percentage := 1 / float64(len(StartPlugins)+1)
 	Crawtask, err := crawler.NewCrawlerTask(t.Ctx, t.Targets, t.TaskConfig)
 	t.XssSpider.Init(t.TaskConfig)
 	Crawtask.PluginBrowser = &t.XssSpider
+	Element := make(map[string]interface{})
 
 	if err != nil {
 		logger.Error(err.Error())
@@ -194,6 +196,15 @@ func (t *Task) dostartTasks(installDb bool) error {
 	default:
 	}
 
+	t.lock.Lock()
+	t.Progress += percentage
+	t.lock.Unlock()
+
+	Element["status"] = 0
+	Element["progress"] = t.Progress
+
+	PliuginsMsg <- Element
+
 	funk.Map(result.ReqList, func(r *model.Request) bool {
 		element0 := ast.JsonUrl{
 			Url:     r.URL.String(),
@@ -212,7 +223,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 		return false
 	})
 	util.SaveCrawOutPut(List, "result.json")
-	// Crawtask.PluginBrowser = t.XssSpider
+	//Crawtask.PluginBrowser = t.XssSpider
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
@@ -226,6 +237,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
 				Timeout:      time.Second * 600,
+				Progperc:     percentage,
 			}
 			pluginInternal.Init()
 			t.PluginWg.Add(1)
@@ -239,6 +251,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				Data:       ReqList,
 				TaskId:     t.TaskId,
 				Sendstatus: &PliuginsMsg,
+				Totalprog:  percentage,
 			}
 			go func() {
 				pluginInternal.Run(args)
@@ -254,6 +267,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				InstallDB:    installDb,
 				Taskid:       t.TaskId,
 				Timeout:      time.Second * 900,
+				Progperc:     percentage,
 			}
 			pluginInternal.Init()
 			t.PluginWg.Add(1)
@@ -268,6 +282,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				Data:       ReqList,
 				TaskId:     t.TaskId,
 				Sendstatus: &PliuginsMsg,
+				Totalprog:  percentage,
 			}
 			go func() {
 				pluginInternal.Run(args)
@@ -364,8 +379,11 @@ func ServerHandler(c *cli.Context) error {
 		return err
 	}
 	logger.Info("listening on http://%v", l.Addr())
-	cs := NewTaskServer()
-
+	cs, err := NewTaskServer()
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
 	s := &http.Server{
 		Handler: cs,
 	}

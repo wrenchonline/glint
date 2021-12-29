@@ -20,6 +20,7 @@ type Plugin struct {
 	threadwg     sync.WaitGroup     //同步线程
 	ScanResult   []*util.ScanResult
 	mu           sync.Mutex
+	Progperc     float64 //总进度百分多少
 	Spider       *brohttp.Spider
 	InstallDB    bool //是否插入数据库
 	Ctx          *context.Context
@@ -29,8 +30,8 @@ type Plugin struct {
 
 type PluginOption struct {
 	PluginWg   *sync.WaitGroup
-	Progress   *int //此任务进度
-	Totalprog  int  //此插件占有的总进度
+	Progress   *float64 //此任务进度
+	Totalprog  float64  //此插件占有的总进度
 	IsSocket   bool
 	Data       map[string][]interface{}
 	Sendstatus *chan map[string]interface{}
@@ -68,7 +69,7 @@ func (p *Plugin) Init() {
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
 
 func (p *Plugin) Run(args PluginOption) error {
-	var lock sync.RWMutex
+	// var lock sync.RWMutex
 	defer args.PluginWg.Done()
 	defer p.Pool.Release()
 	var err error
@@ -88,11 +89,14 @@ func (p *Plugin) Run(args PluginOption) error {
 		Element := make(map[string]interface{})
 		Element["status"] = 0
 		logger.Info("Plugin RLocker")
-		lock.RLocker()
+
+		// lock.RLock()
 		Progress := *args.Progress
-		lock.RUnlock()
+		*args.Progress = Progress + args.Totalprog
+		// lock.RUnlock()
+
 		logger.Info("Plugin RUnlock")
-		Element["progress"] = Progress + args.Totalprog
+		Element["progress"] = *args.Progress
 		(*args.Sendstatus) <- Element
 	}
 	util.OutputVulnerable(p.ScanResult)

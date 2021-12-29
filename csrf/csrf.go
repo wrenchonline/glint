@@ -178,6 +178,9 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 			headers["Referer"] = REFERER_URL
 			req2, resp2, errs := fastreq.Get(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			if errs != nil {
+				return nil, errs
+			}
 			b2 := resp2.Body()
 			if len(b1) == len(b2) {
 				fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs..."))

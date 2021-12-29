@@ -24,7 +24,7 @@ func Test_CSRF(t *testing.T) {
 	}
 	pluginInternal.Init()
 	PluginWg.Add(1)
-	Progress := 0
+	Progress := 0.
 	args := plugin.PluginOption{
 		PluginWg: &PluginWg,
 		Progress: &Progress,
