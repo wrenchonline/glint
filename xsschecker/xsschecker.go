@@ -330,6 +330,11 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	return VulOK
 }
 
+type xssOcc struct {
+	Url   string
+	Htmls []string
+}
+
 func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
 	// t := time.NewTimer(time.Millisecond * 200)
@@ -342,6 +347,7 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 		for i := 0; i < vlen; i++ {
 			urlocc := v[i].(brohttp.UrlOCC)
 			nodes := urlocc.OCC
+
 			if len(nodes) != 0 {
 				funk.Map(nodes, func(n ast.Occurence) interface{} {
 					switch n.Type {
@@ -359,7 +365,8 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 	}
 
 	for {
-		var htmls []string
+		var Occs []xssOcc
+
 		payload, Evalmode, tag := g.GetPayloadValue()
 		if payload == "" {
 			break
@@ -380,37 +387,42 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 			vlen := len(v)
 			for i := 0; i < vlen; i++ {
 				urlocc := v[i].(brohttp.UrlOCC)
-				// urlocc.Request.Data = payload
+				logger.Debug("xss eval payload url: %s", urlocc.Request.Url)
 				spider.CopyRequest(urlocc.Request)
 				response, _ := spider.CheckPayloadLocation(payload)
-				htmls = append(htmls, response...)
+				occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
+				Occs = append(Occs, occ)
+			}
+
+		}
+		for _, occ := range Occs {
+			for _, html := range occ.Htmls {
+				select {
+				case <-ctx.Done():
+					// t.Stop()
+					return nil, ctx.Err()
+				default:
+				}
+				// fmt.Println(aurora.html))
+				for payload, checkfilter := range payloadinfo {
+					Node := ast.SearchInputInResponse(playload, html)
+					if len(Node) == 0 {
+						break
+					}
+					if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
+
+						Result := util.VulnerableTcpOrUdpResult(occ.Url,
+							"VULNERABLE to Cross-site scripting ...",
+							[]string{string(payload)},
+							[]string{string("")},
+							"high")
+						fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
+						return Result, err
+					}
+				}
 			}
 		}
-		for _, html := range htmls {
-			select {
-			case <-ctx.Done():
-				// t.Stop()
-				return nil, ctx.Err()
-			default:
-			}
-			// fmt.Println(aurora.html))
-			for payload, checkfilter := range payloadinfo {
-				Node := ast.SearchInputInResponse(playload, html)
-				if len(Node) == 0 {
-					break
-				}
-				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
-					Result := util.VulnerableTcpOrUdpResult(spider.Url.String(),
-						"VULNERABLE to Cross-site scripting ...",
-						[]string{string(payload)},
-						[]string{string("")},
-						"high")
-					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-					return Result, err
-				}
-			}
-		}
-		htmls = []string{}
+
 	}
 	return nil, errors.New("No VULNERABLE Found")
 }
@@ -462,6 +474,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return Result, errors.New("xss::not found")
 		}
+		// Url := map[string]interface {}
 		Result, err = DoCheckXss(resources, flag, Spider, *ctx)
 		if err != nil {
 			return nil, err
