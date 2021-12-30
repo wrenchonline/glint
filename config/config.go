@@ -171,7 +171,7 @@ const (
 	Password = "root"
 	Ip       = "127.0.0.1"
 	Port     = "3306"
-	DbName   = "webscan"
+	DbName   = "rjweb"
 )
 
 type SqlInject struct {

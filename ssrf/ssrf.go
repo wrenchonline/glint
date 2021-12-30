@@ -21,12 +21,13 @@ func SSRF(args interface{}) (*util.ScanResult, error) {
 	ctx := *group.Pctx
 
 	for _, s := range group.GroupUrls {
+
 		select {
 		case <-ctx.Done():
-			// t.Stop()
 			return nil, ctx.Err()
 		default:
 		}
+
 		session := s.(map[string]interface{})
 		url := session["url"].(string)
 		method := session["method"].(string)

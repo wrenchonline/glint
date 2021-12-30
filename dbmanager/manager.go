@@ -16,46 +16,51 @@ type DbManager struct {
 	Db *sqlx.DB
 }
 
+type DbTargetInfo struct {
+	Urls sql.NullString `db:"scan_target"`
+}
+
 type DbTaskConfig struct {
-	TaskId                      sql.NullInt64  `db:"TaskId"`
-	Urls                        sql.NullString `db:"Urls"`
-	FilterMode                  sql.NullString `db:"FilterMode"`
-	ExtraHeadersUuid            sql.NullString `db:"ExtraHeadersUuid"`
-	AllDomainReturn             sql.NullBool   `db:"AllDomainReturn"`
-	SubDomainReturn             sql.NullBool   `db:"SubDomainReturn"`
-	IncognitoContext            sql.NullBool   `db:"IncognitoContext"`
-	NoHeadless                  sql.NullBool   `db:"NoHeadless"`
-	DomContentLoadedTimeout     sql.NullInt64  `db:"DomContentLoadedTimeout"`
-	TabRunTimeout               sql.NullInt64  `db:"TabRunTimeout"`
-	PathByFuzz                  sql.NullBool   `db:"PathByFuzz"`
-	FuzzDictPath                sql.NullString `db:"FuzzDictPath"`
-	PathFromRobots              sql.NullBool   `db:"PathFromRobots"`
-	MaxTabsCount                sql.NullInt64  `db:"MaxTabsCount"`
-	ChromiumPath                sql.NullString `db:"ChromiumPath"`
-	EventTriggerMode            sql.NullString `db:"EventTriggerMode"`
-	EventTriggerInterval        sql.NullInt64  `db:"EventTriggerInterval"`
-	BeforeExitDelay             sql.NullInt64  `db:"BeforeExitDelay"`
-	EncodeURLWithCharset        sql.NullBool   `db:"EncodeURLWithCharset"`
-	IgnoreKeywords              sql.NullString `db:"IgnoreKeywords"`
-	Proxy                       sql.NullString `db:"Proxy"`
-	CustomFormValuesUuid        sql.NullString `db:"CustomFormValuesUuid"`
-	CustomFormKeywordValuesUuid sql.NullString `db:"CustomFormKeywordValuesUuid"`
-	XssPayloadsUuid             sql.NullString `db:"XssPayloadsUuid"`
+	Configid                    sql.NullInt64 `db:"web_param_id"`
+	TaskId                      sql.NullInt64 `db:"task_id"`
+	Urls                        sql.NullString
+	FilterMode                  sql.NullString `db:"filter_mode"`
+	ExtraHeadersUuid            sql.NullString `db:"extra_headers_id"`
+	AllDomainReturn             sql.NullBool   `db:"is_all_domain"`
+	SubDomainReturn             sql.NullBool   `db:"is_sub_domain"`
+	IncognitoContext            sql.NullBool   `db:"is_invisible_mode"`
+	NoHeadless                  sql.NullBool   `db:"is_no_headless"`
+	DomContentLoadedTimeout     sql.NullInt64  `db:"dom_timeout"`
+	TabRunTimeout               sql.NullInt64  `db:"request_timeout"`
+	PathByFuzz                  sql.NullBool   `db:"is_fuzz_dict"`
+	FuzzDictPath                sql.NullString `db:"fuzz_dict_value"`
+	PathFromRobots              sql.NullBool   `db:"robot_path"`
+	MaxTabsCount                sql.NullInt64  `db:"max_page_count"`
+	ChromiumPath                sql.NullString `db:"chrom_path"`
+	EventTriggerMode            sql.NullString `db:"event_trigger_mode"`
+	EventTriggerInterval        sql.NullInt64  `db:"event_trigger_interval"`
+	BeforeExitDelay             sql.NullInt64  `db:"exit_delay_time"`
+	EncodeURLWithCharset        sql.NullBool   `db:"is_auto_check_code"`
+	IgnoreKeywords              sql.NullString `db:"ignore_events"`
+	Proxy                       sql.NullString `db:"http_proxy"`
+	CustomFormValuesUuid        sql.NullString `db:"custom_fill_form_id"`
+	CustomFormKeywordValuesUuid sql.NullString `db:"custom_fill_keyword_id"`
+	XssPayloadsUuid             sql.NullString `db:"xss_paloads_id"`
 }
 
 type ExtraHeaders struct {
-	Key   string `db:"Key"`
-	Value string `db:"Value"`
+	Key   string `db:"header_key"`
+	Value string `db:"header_value"`
 }
 
 type PublishState struct {
-	Id          sql.NullString `db:"Id"`
-	Host        sql.NullString `db:"Host"`
-	Method      sql.NullString `db:"Method"`
-	Data        sql.NullString `db:"Data"`
-	UserAgent   sql.NullString `db:"User_Agent"`
-	ContentType sql.NullString `db:"Content_Type"`
-	CreatedTime time.Time      `db:"Created_Time"`
+	Id          sql.NullString `db:"msg_id"`
+	Host        sql.NullString `db:"host_info"`
+	Method      sql.NullString `db:"request_mode"`
+	Data        sql.NullString `db:"post_param"`
+	UserAgent   sql.NullString `db:"user_agent"`
+	ContentType sql.NullString `db:"content_type"`
+	CreatedTime time.Time      `db:"create_time"`
 }
 
 //Init 初始化mysql数据库
@@ -88,17 +93,33 @@ func (Dm *DbManager) Init() error {
 func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 	sql := `
 	SELECT
-	task_config.*
+		exweb_scan_param.*
 	FROM
-		task_config
+		exweb_scan_param
 	WHERE
-		task_config.TaskId = ?
+		exweb_scan_param.task_id = ?
 	`
 	values := DbTaskConfig{}
 	err := Dm.Db.Get(&values, sql, taskid)
 	if err != nil {
 		logger.Error(err.Error())
 	}
+
+	//两张表
+	sql = `
+	SELECT
+	exweb_target_info.scan_target
+	FROM
+	exweb_target_info
+	WHERE
+	exweb_target_info.task_id = ?
+	`
+	val2 := DbTargetInfo{}
+	err = Dm.Db.Get(&val2, sql, taskid)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	values.Urls = val2.Urls
 	return values, err
 }
 
@@ -106,12 +127,12 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 	sql := `
 	SELECT
-	headers_uuid.Key, 
-	headers_uuid.Value
+	exweb_header_info.header_key, 
+	exweb_header_info.header_value
 	FROM
-		headers_uuid
+	exweb_header_info
 	WHERE
-	headers_uuid.Uuid = ?`
+	exweb_header_info.header_uuid = ?`
 	values := []ExtraHeaders{}
 	err := Dm.Db.Select(&values, sql, uuid)
 	if err != nil {
@@ -134,8 +155,8 @@ func (Dm *DbManager) SaveScanResult(
 	sql := `
 	INSERT  
 	INTO 
-	scan_result (TaskId,Plugin_Name,Vulnerable,Target,Output,ReqMsg,RespMsg,VulnerableLevel) 
-	VALUES(:taskid,:name,:vul,:target,:output,:reqmsg,:respmsg,:vulnerability); 
+	exweb_task_result (task_id,plugin_type,is_vul,url,vul_msg,request_info,response_info,risk_level) 
+	VALUES(:taskid,:name,:vul,:target,:output,:reqmsg,:respmsg,:vulnerability);
 	`
 	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
 		"taskid":        taskid,
@@ -153,7 +174,7 @@ func (Dm *DbManager) SaveScanResult(
 
 //DeleteScanResult 开始扫描时候删除脚本
 func (Dm *DbManager) DeleteScanResult(taskid int) error {
-	_, err := Dm.Db.Exec("delete from scan_result where TaskId=?", taskid)
+	_, err := Dm.Db.Exec("delete from exweb_task_result where task_id=?", taskid)
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -202,7 +223,7 @@ func (Dm *DbManager) InstallHttpsReqStatus(State *PublishState) error {
 	sql := `
 	INSERT
 	INTO
-	publish_msg (Id,Host,Method,Data,User_Agent,Content_Type,Created_Time) 
+	exweb_publish_msg (msg_id,host_info,request_mode,post_param,user_agent,content_type,create_time) 
 	VALUES(:id,:host,:method,:data,:user_agent,:content_type,:created_time); 
 	`
 	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{

@@ -212,6 +212,7 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	var task Task
 	var Err error
 	json := v.(map[string]interface{})
+	// logger.DebugEnable(true)
 	logger.Debug("%v", json)
 
 	task.TaskId, Err = GetTaskId(json)
