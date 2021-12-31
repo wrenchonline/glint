@@ -9,6 +9,7 @@ import (
 	"glint/logger"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
@@ -231,16 +232,13 @@ func (g *BuildPayload) GetPayloadValue() (string, error) {
 //PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
 func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
 	spider.ReqMode = reqmod
+
 	if reqmod == "GET" {
-		// params, err := spider.GetRequrlparam()
-		// if err != nil {
-		// 	return err
-		// }
 		if len(Getparams) == 0 {
 			return fmt.Errorf("GET参数为空")
 		}
-
-		Getparams[paramname][0] = payload
+		payloads := []string{payload}
+		Getparams[paramname] = payloads
 		spider.Url.RawQuery = Getparams.Encode()
 	} else {
 		if len(spider.PostData) == 0 {
@@ -255,6 +253,10 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 	var htmls []string
 	if spider.ReqMode == "GET" {
 		Getparams, err := spider.GetRequrlparam()
+		tmpParams := make(url.Values)
+		for key, value := range Getparams {
+			tmpParams[key] = value
+		}
 		if err != nil {
 			panic(err.Error())
 		}
@@ -265,8 +267,10 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			}
 			htmls = append(htmls, html)
 		} else {
+
 			for param, _ := range Getparams {
 				spider.PayloadHandle(newpayload, "GET", param, Getparams)
+				Getparams = tmpParams
 				html, err := spider.Sendreq()
 				if err != nil {
 					return nil, err
@@ -282,8 +286,6 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			}
 			htmls = append(htmls, html)
 		}
-		//重置Get参数
-		spider.Url.RawQuery = Getparams.Encode()
 		return htmls, nil
 	} else {
 		PostData := spider.PostData
@@ -314,9 +316,15 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
+	// if v, ok := urlrequst.(map[string]interface{}); ok {
+	// 	if funk.Contains(v["url"], "京元动态") {
+	// 		logger.Success("sssss")
+	// 	}
+	// }
 	htmls, _ := spider.CheckPayloadLocation(playload)
 	var bOnhtml bool = false
 	for i, html := range htmls {
+
 		Node := ast.SearchInputInResponse(playload, html)
 		if len(Node) != 0 {
 			bOnhtml = true
@@ -331,6 +339,9 @@ func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (
 }
 
 func (spider *Spider) CopyRequest(data interface{}) {
+	var lock sync.Mutex
+	lock.Lock()
+	defer lock.Unlock()
 	switch v := data.(type) {
 	case map[string]interface{}:
 		spider.ReqMode = v["method"].(string)

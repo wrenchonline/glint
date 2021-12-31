@@ -182,10 +182,24 @@ extension 扩展类型
 */
 func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata payload.PayloadData, extension interface{}) interface{} {
 	g.flag = flag
+	var (
+		htmlok     bool
+		attibuteoK bool
+		CommentoK  bool
+		scriptok   bool
+	)
 	if Htmlmode == Tagmode {
-		g.CopyPayLoadtoXSS(payloaddata, "html", nil)
+		if !htmlok {
+			g.CopyPayLoadtoXSS(payloaddata, "html", nil)
+			htmlok = true
+		}
+
 	} else if Comment == Tagmode {
-		g.CopyPayLoadtoXSS(payloaddata, "comment", nil)
+		if !CommentoK {
+			g.CopyPayLoadtoXSS(payloaddata, "comment", nil)
+			CommentoK = true
+		}
+
 	} else if Attibute == Tagmode {
 		Occurences := extension.([]ast.Occurence)
 		for _, Occurence := range Occurences {
@@ -193,13 +207,13 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 				g.CopyPayLoadtoXSS(payloaddata, "html", nil)
 			} else {
 				//替换'<'和'>'为 url 编码
-				if ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "srcdoc", false); ok {
-					g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
-						Lstr := strings.Replace(payload, "<", "%26lt;", -1)
-						Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
-						return Rstr
-					})
-				}
+				// if ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "srcdoc", false); ok {
+				// 	g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
+				// 		Lstr := strings.Replace(payload, "<", "%26lt;", -1)
+				// 		Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
+				// 		return Rstr
+				// 	})
+				// }
 				//处理链接属性
 				ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "href", false)
 				ok1, _ := CheckHtmlNodeAttributes(Occurence, "val", flag, false)
@@ -225,25 +239,31 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 					mode.CheckTag = ""
 					g.extension = append(g.extension, mode)
 				}
-				g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
-					Rstr := `'">` + payload
-					return Rstr
-				})
+				if !attibuteoK {
+					g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
+						Rstr := `'">` + payload
+						return Rstr
+					})
+					attibuteoK = true
+				}
 			}
 		}
 
 	} else if Script == Tagmode {
-		Occurence := extension.(ast.Occurence)
-		payload, err := ast.AnalyseJSFuncByFlag(flag, Occurence.Details.Content)
-		if err != nil {
-			return err
+		if !scriptok {
+			Occurence := extension.(ast.Occurence)
+			payload, err := ast.AnalyseJSFuncByFlag(flag, Occurence.Details.Content)
+			if err != nil {
+				return err
+			}
+			var mode PayloadMode
+			mode.Mode = Checktype(CheckConsoleLog)
+			mode.IsNeedFlag = true
+			mode.payload = payload
+			mode.CheckTag = ""
+			g.extension = append(g.extension, mode)
+			scriptok = true
 		}
-		var mode PayloadMode
-		mode.Mode = Checktype(CheckConsoleLog)
-		mode.IsNeedFlag = true
-		mode.payload = payload
-		mode.CheckTag = ""
-		g.extension = append(g.extension, mode)
 	}
 	return nil
 }
@@ -337,6 +357,11 @@ type xssOcc struct {
 
 func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
+	var (
+		htmlok     bool
+		attibuteoK bool
+		scriptok   bool
+	)
 	// t := time.NewTimer(time.Millisecond * 200)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
@@ -363,17 +388,27 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, spi
 		vlen := len(v)
 		for i := 0; i < vlen; i++ {
 			urlocc := v[i].(brohttp.UrlOCC)
-			logger.Info("url %s", urlocc.Request.Url)
 			nodes := urlocc.OCC
+			logger.Info("url %s nodes %d", urlocc.Request.Url, len(nodes))
 			if len(nodes) != 0 {
 				funk.Map(nodes, func(n ast.Occurence) interface{} {
 					switch n.Type {
 					case "html":
-						g.GeneratorPayload(Htmlmode, playload, payloadsdata, nodes)
+						if !htmlok {
+							g.GeneratorPayload(Htmlmode, playload, payloadsdata, nodes)
+							htmlok = true
+						}
 					case "attibute":
-						g.GeneratorPayload(Attibute, playload, payloadsdata, nodes)
+						if !attibuteoK {
+							g.GeneratorPayload(Attibute, playload, payloadsdata, nodes)
+							attibuteoK = true
+						}
 					case "script":
-						g.GeneratorPayload(Script, playload, payloadsdata, nodes)
+						if !scriptok {
+							g.GeneratorPayload(Script, playload, payloadsdata, nodes)
+							scriptok = true
+						}
+
 					}
 					return false
 				})
@@ -469,10 +504,8 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		resources := make([]map[int]interface{}, len(groups.GroupUrls))
 		for _, Urlinfo := range groups.GroupUrls {
 			Spider.CopyRequest(Urlinfo)
-			// println("pre", Spider.Url.String())
+			println("pre", Spider.Url.String())
 			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
-			Spider.CopyRequest(Urlinfo)
-			// println("post", Spider.Url.String())
 			if b {
 				bflag = true
 			}
