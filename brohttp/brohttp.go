@@ -229,24 +229,23 @@ func (g *BuildPayload) GetPayloadValue() (string, error) {
 }
 
 //PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
-func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string) error {
+func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
 	spider.ReqMode = reqmod
 	if reqmod == "GET" {
-		params, err := spider.GetRequrlparam()
-		if err != nil {
-			return err
-		}
-		if len(params) == 0 {
+		// params, err := spider.GetRequrlparam()
+		// if err != nil {
+		// 	return err
+		// }
+		if len(Getparams) == 0 {
 			return fmt.Errorf("GET参数为空")
 		}
 
-		params[paramname][0] = payload
-		spider.Url.RawQuery = params.Encode()
+		Getparams[paramname][0] = payload
+		spider.Url.RawQuery = Getparams.Encode()
 	} else {
 		if len(spider.PostData) == 0 {
 			return fmt.Errorf("POST参数为空")
 		}
-
 		spider.PostData = []byte(payload)
 	}
 	return nil
@@ -255,7 +254,7 @@ func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname str
 func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) {
 	var htmls []string
 	if spider.ReqMode == "GET" {
-		params, err := spider.GetRequrlparam()
+		Getparams, err := spider.GetRequrlparam()
 		if err != nil {
 			panic(err.Error())
 		}
@@ -266,8 +265,8 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			}
 			htmls = append(htmls, html)
 		} else {
-			for param, _ := range params {
-				spider.PayloadHandle(newpayload, "GET", param)
+			for param, _ := range Getparams {
+				spider.PayloadHandle(newpayload, "GET", param, Getparams)
 				html, err := spider.Sendreq()
 				if err != nil {
 					return nil, err
@@ -276,18 +275,21 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			}
 		}
 
-		if len(params) == 0 {
+		if len(Getparams) == 0 {
 			html, err := spider.Sendreq()
 			if err != nil {
 				return nil, err
 			}
 			htmls = append(htmls, html)
 		}
+		//重置Get参数
+		spider.Url.RawQuery = Getparams.Encode()
 		return htmls, nil
 	} else {
 		PostData := spider.PostData
 		params := strings.Split(string(PostData), "&")
 		var newpayload1 string
+		var Getparams url.Values
 
 		for i, _ := range params {
 			// k := strings.Split(string(params[i]), "=")[0]
@@ -299,7 +301,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			}
 		}
 		spider.PostData = PostData
-		spider.PayloadHandle(newpayload1, "POST", "")
+		spider.PayloadHandle(newpayload1, "POST", "", Getparams)
 		html, err := spider.Sendreq()
 		if err != nil {
 			logger.Error(err.Error())
@@ -309,7 +311,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 	}
 }
 
-func (spider *Spider) CheckRandOnHtmlS(playload string) (bool, map[int]interface{}) {
+func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
 	htmls, _ := spider.CheckPayloadLocation(playload)
@@ -319,6 +321,8 @@ func (spider *Spider) CheckRandOnHtmlS(playload string) (bool, map[int]interface
 		if len(Node) != 0 {
 			bOnhtml = true
 		}
+		//重置Url参数
+		spider.CopyRequest(urlrequst)
 		urlocc.Request = spider.ReqtoJson()
 		urlocc.OCC = Node
 		ReponseInfo[i] = urlocc

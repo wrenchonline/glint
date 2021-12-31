@@ -75,13 +75,13 @@ func (p *Plugin) Run(args PluginOption) error {
 	var err error
 	for k, v := range args.Data {
 		p.threadwg.Add(1)
-		go func() {
+		go func(k string, v []interface{}) {
 			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
 			err = p.Pool.Invoke(data)
 			if err != nil {
 				logger.Error(err.Error())
 			}
-		}()
+		}(k, v)
 	}
 	p.threadwg.Wait()
 	logger.Info("Plugin %s is Finish!", p.PluginName)

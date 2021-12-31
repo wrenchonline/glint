@@ -32,25 +32,31 @@ func NewReverse() *proto.Reverse {
 	}
 }
 
-func ReverseCheck(r *proto.Reverse, timeout int64) bool {
-	ceyeApiToken := "0e43a818cb3cd0d1326ae6fb147b96b0" //修改过的，建议重新写
-	if ceyeApiToken == "" || r.Domain == "" {
-		return false
-	}
-	// 延迟 x 秒获取结果
-	time.Sleep(time.Second * time.Duration(timeout))
+func ReverseCheck(v interface{}, timeout int64) bool {
+	if r, ok := v.(*proto.Reverse); ok {
+		ceyeApiToken := "0e43a818cb3cd0d1326ae6fb147b96b0" //修改过的，建议重新写
+		if ceyeApiToken == "" || r.Domain == "" {
+			return false
+		}
+		// 延迟 x 秒获取结果
+		time.Sleep(time.Second * time.Duration(timeout))
 
-	//check dns
-	verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=dns&filter=%s", ceyeApiToken, r.Flag)
-	if GetReverseResp(verifyUrl) {
-		return true
-	} else {
-		//	check request
-		verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=http&filter=%s", ceyeApiToken, r.Flag)
+		//check dns
+		verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=dns&filter=%s", ceyeApiToken, r.Flag)
 		if GetReverseResp(verifyUrl) {
 			return true
+		} else {
+			//	check request
+			verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=http&filter=%s", ceyeApiToken, r.Flag)
+			if GetReverseResp(verifyUrl) {
+				return true
+			}
 		}
+		return false
+	} else {
+
 	}
+	// r := *proto.Reverse
 	return false
 }
 

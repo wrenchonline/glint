@@ -335,19 +335,36 @@ type xssOcc struct {
 	Htmls []string
 }
 
-func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
+func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, spider *brohttp.Spider, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
 	// t := time.NewTimer(time.Millisecond * 200)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
-		return nil, errors.New("Empty to xss payload ")
+		return nil, errors.New("empty to xss payload ")
 	}
-	for _, v := range ReponseInfo {
+	// for _, v := range GroupUrlsReponseInfo {
+	// 	vlen := len(v)
+	// 	for i := 0; i < vlen; i++ {
+
+	// 	}
+	// }
+	var Occs []xssOcc
+	payloadinfo := make(map[string]stf)
+
+	//这里的map不是顺序执行
+	for _, v := range GroupUrlsReponseInfo {
+		select {
+		case <-ctx.Done():
+			// t.Stop()
+			return nil, ctx.Err()
+		default:
+		}
+
 		vlen := len(v)
 		for i := 0; i < vlen; i++ {
 			urlocc := v[i].(brohttp.UrlOCC)
+			logger.Info("url %s", urlocc.Request.Url)
 			nodes := urlocc.OCC
-
 			if len(nodes) != 0 {
 				funk.Map(nodes, func(n ast.Occurence) interface{} {
 					switch n.Type {
@@ -361,70 +378,55 @@ func DoCheckXss(ReponseInfo []map[int]interface{}, playload string, spider *broh
 					return false
 				})
 			}
+
+			for {
+				payload, Evalmode, tag := g.GetPayloadValue()
+				if payload == "" {
+					break
+				}
+				info := stf{mode: Evalmode, Tag: tag}
+				payloadinfo[payload] = info
+				urlocc := v[i].(brohttp.UrlOCC)
+				if len(urlocc.OCC) > 0 {
+					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
+					spider.CopyRequest(urlocc.Request)
+					response, _ := spider.CheckPayloadLocation(payload)
+					occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
+					Occs = append(Occs, occ)
+				}
+			}
 		}
 	}
 
-	for {
-		var Occs []xssOcc
-
-		payload, Evalmode, tag := g.GetPayloadValue()
-		if payload == "" {
-			break
-		}
-		info := stf{mode: Evalmode, Tag: tag}
-		payloadinfo := make(map[string]stf)
-		payloadinfo[payload] = info
-		//这里的map不是顺序执行
-		for _, v := range ReponseInfo {
-
+	for _, occ := range Occs {
+		for _, html := range occ.Htmls {
 			select {
 			case <-ctx.Done():
-				// t.Stop()
 				return nil, ctx.Err()
 			default:
 			}
 
-			vlen := len(v)
-			for i := 0; i < vlen; i++ {
-				urlocc := v[i].(brohttp.UrlOCC)
-				logger.Debug("xss eval payload url: %s", urlocc.Request.Url)
-				spider.CopyRequest(urlocc.Request)
-				response, _ := spider.CheckPayloadLocation(payload)
-				occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
-				Occs = append(Occs, occ)
-			}
-
-		}
-		for _, occ := range Occs {
-			for _, html := range occ.Htmls {
-				select {
-				case <-ctx.Done():
-					// t.Stop()
-					return nil, ctx.Err()
-				default:
+			// fmt.Println(aurora.html))
+			for payload, checkfilter := range payloadinfo {
+				Node := ast.SearchInputInResponse(playload, html)
+				if len(Node) == 0 {
+					break
 				}
-				// fmt.Println(aurora.html))
-				for payload, checkfilter := range payloadinfo {
-					Node := ast.SearchInputInResponse(playload, html)
-					if len(Node) == 0 {
-						break
-					}
-					if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
+				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, spider) {
 
-						Result := util.VulnerableTcpOrUdpResult(occ.Url,
-							"VULNERABLE to Cross-site scripting ...",
-							[]string{string(payload)},
-							[]string{string("")},
-							"high")
-						fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-						return Result, err
-					}
+					Result := util.VulnerableTcpOrUdpResult(occ.Url,
+						"VULNERABLE to Cross-site scripting ...",
+						[]string{string(payload)},
+						[]string{string("")},
+						"high")
+					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
+					return Result, err
 				}
 			}
 		}
-
 	}
-	return nil, errors.New("No VULNERABLE Found")
+
+	return nil, errors.New("no found xss vulnerabilities")
 }
 
 func CheckXss(args interface{}) (*util.ScanResult, error) {
@@ -445,8 +447,10 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		resources := make([]map[int]interface{}, len(groups.GroupUrls))
 		for _, Urlinfo := range groups.GroupUrls {
 			Spider.CopyRequest(Urlinfo)
-			// println(Spider.Url.String())
-			b, Occ := Spider.CheckRandOnHtmlS(flag)
+			// println("pre", Spider.Url.String())
+			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
+			// Spider.CopyRequest(Urlinfo)
+			// println("post", Spider.Url.String())
 			if b {
 				bflag = true
 			}
@@ -465,7 +469,10 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		resources := make([]map[int]interface{}, len(groups.GroupUrls))
 		for _, Urlinfo := range groups.GroupUrls {
 			Spider.CopyRequest(Urlinfo)
-			b, Occ := Spider.CheckRandOnHtmlS(flag)
+			// println("pre", Spider.Url.String())
+			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
+			Spider.CopyRequest(Urlinfo)
+			// println("post", Spider.Url.String())
 			if b {
 				bflag = true
 			}
@@ -474,7 +481,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return Result, errors.New("xss::not found")
 		}
-		// Url := map[string]interface {}
+
 		Result, err = DoCheckXss(resources, flag, Spider, *ctx)
 		if err != nil {
 			return nil, err
