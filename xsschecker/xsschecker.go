@@ -504,7 +504,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		resources := make([]map[int]interface{}, len(groups.GroupUrls))
 		for _, Urlinfo := range groups.GroupUrls {
 			Spider.CopyRequest(Urlinfo)
-			println("pre", Spider.Url.String())
+			logger.Debug("pre", Spider.Url.String())
 			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
 			if b {
 				bflag = true
