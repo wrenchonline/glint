@@ -132,7 +132,7 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 		c.PluginBrowser.Close()
 		os.Exit(-1)
 	case <-(*t.Ctx).Done():
-		logger.Warning("Task exit ...")
+		logger.Success("Task exit ...")
 		if !c.Pool.IsClosed() {
 			c.Pool.Tune(1)
 			c.Pool.Release()

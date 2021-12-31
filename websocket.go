@@ -138,7 +138,7 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Warning(err.Error())
 			return err
 		}
 		err = json.Unmarshal([]byte(v.(string)), &jsonobj)
