@@ -40,7 +40,7 @@ func ReverseCheck(v interface{}, timeout int64) bool {
 		}
 		// 延迟 x 秒获取结果
 		time.Sleep(time.Second * time.Duration(timeout))
-
+		// http://api.ceye.io/v1/records?token=0e43a818cb3cd0d1326ae6fb147b96b0&type=dns&filter=123456
 		//check dns
 		verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=dns&filter=%s", ceyeApiToken, r.Flag)
 		if GetReverseResp(verifyUrl) {

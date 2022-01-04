@@ -33,6 +33,11 @@ func SSRF(args interface{}) (*util.ScanResult, error) {
 		method := session["method"].(string)
 		headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 		body := []byte(session["data"].(string))
+
+		for _, v := range v {
+
+		}
+
 		if strings.ToUpper(method) == "POST" {
 			_, resp1, errs := fastreq.Post(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
