@@ -14,6 +14,14 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type Reverse1 struct {
+	Url                string
+	Flag               string
+	Domain             string
+	Ip                 string
+	IsDomainNameServer bool
+}
+
 // use ceye api
 func NewReverse() *proto.Reverse {
 	ceyeDomain := "fkuior.ceye.io" //修改过的，建议重新写
@@ -26,6 +34,24 @@ func NewReverse() *proto.Reverse {
 	return &proto.Reverse{
 		Flag:               flag,
 		Url:                util.ParseUrl(u),
+		Domain:             u.Hostname(),
+		Ip:                 "",
+		IsDomainNameServer: false,
+	}
+}
+
+// use ceye api
+func NewReverse1() interface{} {
+	ceyeDomain := "fkuior.ceye.io" //修改过的，建议重新写
+	flag := util.RandLowLetterNumber(8)
+	if ceyeDomain == "" {
+		return &proto.Reverse{}
+	}
+	urlStr := fmt.Sprintf("http://%s.%s", flag, ceyeDomain)
+	u, _ := url.Parse(urlStr)
+	return &Reverse1{
+		Flag:               flag,
+		Url:                u.String(),
 		Domain:             u.Hostname(),
 		Ip:                 "",
 		IsDomainNameServer: false,
@@ -53,8 +79,26 @@ func ReverseCheck(v interface{}, timeout int64) bool {
 			}
 		}
 		return false
-	} else {
-
+	} else if r, ok := v.(*Reverse1); ok {
+		ceyeApiToken := "0e43a818cb3cd0d1326ae6fb147b96b0" //修改过的，建议重新写
+		if ceyeApiToken == "" || r.Domain == "" {
+			return false
+		}
+		// 延迟 x 秒获取结果
+		time.Sleep(time.Second * time.Duration(timeout))
+		// http://api.ceye.io/v1/records?token=0e43a818cb3cd0d1326ae6fb147b96b0&type=dns&filter=123456
+		// check dns
+		verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=dns&filter=%s", ceyeApiToken, r.Flag)
+		if GetReverseResp(verifyUrl) {
+			return true
+		} else {
+			//	check request
+			verifyUrl := fmt.Sprintf("http://api.ceye.io/v1/records?token=%s&type=http&filter=%s", ceyeApiToken, r.Flag)
+			if GetReverseResp(verifyUrl) {
+				return true
+			}
+		}
+		return false
 	}
 	// r := *proto.Reverse
 	return false
