@@ -55,7 +55,6 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 	for _, s := range group.GroupUrls {
 		select {
 		case <-ctx.Done():
-			// t.Stop()
 			return nil, ctx.Err()
 		default:
 		}
@@ -65,6 +64,14 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 		headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 		body := []byte(session["data"].(string))
 		if strings.ToUpper(method) == "POST" {
+			params, err := util.ParseUri(url, body, "POST")
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			if params.Len() == 0 {
+				return nil, fmt.Errorf("post the url have no params")
+			}
+
 			_, resp1, errs := fastreq.Post(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
 			if errs != nil {
@@ -90,6 +97,13 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 			}
 			return nil, errors.New("params errors")
 		} else {
+			params, err := util.ParseUri(url, []byte(""), "GET")
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			if params.Len() == 0 {
+				return nil, fmt.Errorf("get the url have no params")
+			}
 			_, resp1, errs := fastreq.Get(url, headers,
 				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
 			if errs != nil {
@@ -130,7 +144,6 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 	for _, s := range group.GroupUrls {
 		select {
 		case <-ctx.Done():
-
 			return nil, ctx.Err()
 		default:
 		}
