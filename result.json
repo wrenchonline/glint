@@ -1,10 +1,13 @@
 {
     "": [
         {
-            "url": "http://192.168.166.8/file_get_content.php",
-            "method": "POST",
-            "headers": {},
-            "data": "file=1235&read=load+file",
+            "url": "http://192.168.166.8/vulnerabilities/csrf/?password_new=1111&password_conf=11111&Change=Change&user_token=c33b652825ec455ad2b4b09adf30ba5c",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/csrf/",
+                "Cookie": "PHPSESSID=oo3m7dnfofpu4mnb49bk47r4du; security=high"
+            },
+            "data": "",
             "source": "Target"
         }
     ]

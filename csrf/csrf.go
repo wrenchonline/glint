@@ -44,11 +44,11 @@ var anti_csrf = []string{
 
 // var DefaultProxy string = "127.0.0.1:7777"
 
-var DefaultProxy string = ""
+var DefaultProxy string = "127.0.0.1:7777"
 
 func Origin(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
-	ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
+	ORIGIN_URL := `http://192.168.166.8/vulnerabilities/csrf`
 	// t := time.NewTimer(time.Millisecond * 200)
 	ctx := *group.Pctx
 
@@ -138,7 +138,7 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 
 func Referer(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
-	REFERER_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
+	REFERER_URL := `http://192.168.166.8/vulnerabilities/csrf`
 	ctx := *group.Pctx
 
 	for _, s := range group.GroupUrls {
