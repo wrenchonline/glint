@@ -17,6 +17,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"github.com/logrusorgru/aurora"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -43,6 +44,8 @@ func (spider *Spider) Close() {
 	defer (*spider.Cancel)()
 	defer chromedp.Cancel(*spider.Ctx)
 }
+
+var reqId1 network.RequestID
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	// co := cf.Conf{}
@@ -112,13 +115,31 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
-			//fmt.Println(color.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", color.Red(ev.Request.URL), color.Red(ev.RequestID)))
+			fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 			request := ev
+			reqId1 = request.RequestID
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
+		case *network.EventLoadingFinished:
+			//fmtres := ev.(*network.EventLoadingFinished)
+			go func() {
+				var data []byte
+				var e error
+				c := chromedp.FromContext(ctx)
+				ctx := cdp.WithExecutor(ctx, c.Target)
+				if reqId1 == ev.RequestID {
+					data, e = network.GetResponseBody(reqId1).Do(ctx)
+				}
+				if e != nil {
+					panic(e)
+				}
+				if len(data) > 0 {
+					fmt.Printf("=========data: %+v\n", string(data))
+				}
+			}()
 		case *network.EventResponseReceived:
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)

@@ -1,13 +1,16 @@
 {
     "": [
         {
-            "url": "http://192.168.166.8/vulnerabilities/csrf/?password_new=1111&password_conf=11111&Change=Change&user_token=c33b652825ec455ad2b4b09adf30ba5c",
-            "method": "GET",
+            "url": "http://192.168.123.1/apply.cgi",
+            "method": "POST",
             "headers": {
-                "Referer": "http://192.168.166.8/vulnerabilities/csrf/",
-                "Cookie": "PHPSESSID=oo3m7dnfofpu4mnb49bk47r4du; security=high"
+                "Authorization": "Basic YWRtaW46YWRtaW4=",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Origin": "http://192.168.123.1",
+                "Referer": "http://192.168.123.1/Main_LogStatus_Content.asp",
+                "Accept-Encoding": "gzip"
             },
-            "data": "",
+            "data": "action_mode=+ClearLog+&action_script=&current_page=Main_LogStatus_Content.asp&group_id=&next_host=&next_page=&sid_list=",
             "source": "Target"
         }
     ]
