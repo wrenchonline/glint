@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
@@ -52,7 +53,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	// //读取配置文件
 	// conf := co.GetConf()
 	// spider.ReqMode = "GET"
-
+	// Resp = make(chan string)
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
@@ -137,6 +138,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 					panic(e)
 				}
 				if len(data) > 0 {
+					spider.Source <- string(data)
 					fmt.Printf("=========data: %+v\n", string(data))
 				}
 			}()
@@ -165,15 +167,24 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 }
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
-func (spider *Spider) Sendreq() (string, error) {
-	var res string
+func (spider *Spider) Sendreq() ([]string, error) {
+	var htmls []string
 	err := chromedp.Run(
 		*spider.Ctx,
 		chromedp.Navigate(spider.Url.String()),
-		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
+		// chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
 		logger.Error(err.Error())
+	}
+
+	for {
+		select {
+		case html := <-spider.Source:
+			htmls = append(htmls, html)
+		case time.After():
+		}
+
 	}
 	// res = html.UnescapeString(res)
 	return res, err
