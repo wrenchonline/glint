@@ -25,7 +25,7 @@ func TestXSS(t *testing.T) {
 	logger.DebugEnable(false)
 	Spider := brohttp.Spider{}
 	var taskconfig config.TaskConfig
-	taskconfig.Proxy = "127.0.0.1:7777"
+	// taskconfig.Proxy = "127.0.0.1:7777"
 	err := Spider.Init(taskconfig)
 	if err != nil {
 		t.Fatal(err)

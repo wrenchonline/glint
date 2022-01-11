@@ -78,10 +78,10 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	//监听Console.log事件
+	//目前有个bug，就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
-		// fmt.Println(reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
@@ -141,7 +141,10 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
-			go func() {
+			go func(ev *network.EventLoadingFinished) {
+				spider.lock.Lock()
+				fmt.Printf("ev %v", ev.RequestID)
+				spider.lock.Unlock()
 				c := chromedp.FromContext(*spider.Ctx)
 				ctx := cdp.WithExecutor(*spider.Ctx, c.Target)
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
@@ -153,7 +156,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 					spider.Source <- string(data)
 					fmt.Printf("=========data: %+v\n", string(data))
 				}
-			}()
+			}(ev)
 		case *network.EventResponseReceived:
 
 		case *page.EventJavascriptDialogOpening:
