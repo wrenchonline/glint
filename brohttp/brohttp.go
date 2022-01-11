@@ -49,13 +49,14 @@ func (spider *Spider) Close() {
 var reqId1 network.RequestID
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
-	// co := cf.Conf{}
-	// //读取配置文件
-	// conf := co.GetConf()
-	// spider.ReqMode = "GET"
-	// Resp = make(chan string)
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
+
+	// if  TaskConfig.Proxy != nil {
+
+	// }
+
+	// chromedp.Flag("proxy-server", TaskConfig.Proxy),
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
@@ -68,10 +69,13 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.Flag("proxy-server", TaskConfig.Proxy),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
+	if TaskConfig.Proxy != "" {
+		options = append(options, chromedp.Flag("proxy-server", TaskConfig.Proxy))
+	}
+
 	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -139,10 +143,11 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 				if len(data) > 0 {
 					spider.Source <- string(data)
-					fmt.Printf("=========data: %+v\n", string(data))
+					// fmt.Printf("=========data: %+v\n", string(data))
 				}
 			}()
 		case *network.EventResponseReceived:
+
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
 			// fmt.Println(Red(ev.Message))
@@ -178,16 +183,16 @@ func (spider *Spider) Sendreq() ([]string, error) {
 		logger.Error(err.Error())
 	}
 
-	for {
+	for i := 0; i < 3; i++ {
 		select {
 		case html := <-spider.Source:
 			htmls = append(htmls, html)
-		case time.After():
+		case <-time.After(time.Second * 2):
+			break
 		}
-
 	}
 	// res = html.UnescapeString(res)
-	return res, err
+	return htmls, err
 }
 
 func (spider *Spider) GetRequrlparam() (url.Values, error) {
@@ -290,33 +295,33 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			tmpParams[key] = value
 		}
 		if err != nil {
-			panic(err.Error())
+			logger.Error(err.Error())
 		}
 		if spider.Headers["Referer"] == spider.Url.String() {
-			html, err := spider.Sendreq()
+			html_s, err := spider.Sendreq()
 			if err != nil {
 				return nil, err
 			}
-			htmls = append(htmls, html)
+			htmls = append(htmls, html_s...)
 		} else {
 
 			for param, _ := range Getparams {
 				spider.PayloadHandle(newpayload, "GET", param, Getparams)
 				Getparams = tmpParams
-				html, err := spider.Sendreq()
+				html_s, err := spider.Sendreq()
 				if err != nil {
 					return nil, err
 				}
-				htmls = append(htmls, html)
+				htmls = append(htmls, html_s...)
 			}
 		}
 
 		if len(Getparams) == 0 {
-			html, err := spider.Sendreq()
+			html_s, err := spider.Sendreq()
 			if err != nil {
 				return nil, err
 			}
-			htmls = append(htmls, html)
+			htmls = append(htmls, html_s...)
 		}
 		return htmls, nil
 	} else {
@@ -326,7 +331,6 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		var Getparams url.Values
 
 		for i, _ := range params {
-			// k := strings.Split(string(params[i]), "=")[0]
 			v := strings.Split(string(params[i]), "=")[1]
 			if v == "" || len(v) == 8 { //8 是payload的长度
 				newpayload := strings.Split(string(params[i]), "=")[0] + "=" + newpayload
@@ -336,11 +340,11 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		}
 		spider.PostData = PostData
 		spider.PayloadHandle(newpayload1, "POST", "", Getparams)
-		html, err := spider.Sendreq()
+		html_s, err := spider.Sendreq()
 		if err != nil {
-			logger.Error(err.Error())
+			return nil, err
 		}
-		htmls = append(htmls, html)
+		htmls = append(htmls, html_s...)
 		return htmls, nil
 	}
 }
@@ -348,15 +352,9 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
-	// if v, ok := urlrequst.(map[string]interface{}); ok {
-	// 	if funk.Contains(v["url"], "京元动态") {
-	// 		logger.Success("sssss")
-	// 	}
-	// }
 	htmls, _ := spider.CheckPayloadLocation(playload)
 	var bOnhtml bool = false
 	for i, html := range htmls {
-
 		Node := ast.SearchInputInResponse(playload, html)
 		if len(Node) != 0 {
 			bOnhtml = true
