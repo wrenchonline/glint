@@ -34,6 +34,7 @@ type Spider struct {
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
 	Source        chan string //当前爬虫的html的源码
+	lock          sync.Mutex
 }
 
 type UrlOCC struct {
@@ -120,6 +121,8 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
+			spider.lock.Lock()
+			defer spider.lock.Unlock()
 			fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 			request := ev
@@ -131,10 +134,13 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		case *network.EventLoadingFinished:
 			//fmtres := ev.(*network.EventLoadingFinished)
 			go func() {
+				// spider.lock.Lock()
+				// defer spider.lock.Unlock()
 				var data []byte
 				var e error
 				c := chromedp.FromContext(ctx)
 				ctx := cdp.WithExecutor(ctx, c.Target)
+				logger.Success("network.EventLoadingFinished RequestID %v", ev.RequestID)
 				if reqId1 == ev.RequestID {
 					data, e = network.GetResponseBody(reqId1).Do(ctx)
 				}

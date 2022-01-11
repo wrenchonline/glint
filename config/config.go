@@ -167,11 +167,11 @@ type TaskConfig struct {
 
 //数据库配置203
 const (
-	UserName = "root"
-	Password = "root"
-	Ip       = "127.0.0.1"
+	UserName = "itop"
+	Password = "rjjsoft"
+	Ip       = "192.168.166.84"
 	Port     = "3306"
-	DbName   = "rjweb"
+	DbName   = "itop"
 )
 
 type SqlInject struct {
