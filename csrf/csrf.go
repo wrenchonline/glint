@@ -135,7 +135,7 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 
 		// }
 	}
-	return nil, errors.New("params errors")
+	return nil, errors.New("these is get method or params errors")
 }
 
 func Referer(args interface{}) (*util.ScanResult, error) {
@@ -210,5 +210,5 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 		// 	return nil, errs
 		// }
 	}
-	return nil, errors.New("params errors")
+	return nil, errors.New("these is get method or params errors")
 }

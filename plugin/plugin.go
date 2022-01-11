@@ -54,7 +54,7 @@ func (p *Plugin) Init() {
 			p.mu.Lock()
 			scanresult, err := f(data)
 			if err != nil {
-				logger.Warning(err.Error())
+				logger.Error("plugin::error %s", err.Error())
 			} else {
 				p.ScanResult = append(p.ScanResult, scanresult)
 			}
