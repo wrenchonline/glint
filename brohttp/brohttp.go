@@ -52,12 +52,6 @@ var reqId1 network.RequestID
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
-
-	// if  TaskConfig.Proxy != nil {
-
-	// }
-
-	// chromedp.Flag("proxy-server", TaskConfig.Proxy),
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
@@ -188,7 +182,7 @@ func (spider *Spider) Sendreq() ([]string, error) {
 	if err != nil {
 		logger.Error(err.Error())
 	}
-
+	//循环三次获取,不会获取过多内容
 	for i := 0; i < 3; i++ {
 		select {
 		case html := <-spider.Source:
