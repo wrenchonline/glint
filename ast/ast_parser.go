@@ -70,7 +70,8 @@ func Duplicate(a interface{}) (ret []interface{}) {
 func AnalyseJs(script string) []string {
 	var params = []string{}
 	var vardiscover bool
-	ast, err := js.Parse(parse.NewInputString(script))
+	o := js.Options{}
+	ast, err := js.Parse(parse.NewInputString(script), o)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -333,7 +334,8 @@ func SearchInputInResponse(input string, body string) []Occurence {
 
 //AnalyseJSByFlag 分析js语法获取部分语法数据
 func AnalyseJSFuncByFlag(input string, script string) (string, error) {
-	ast, err := js.Parse(parse.NewInputString(script))
+	o := js.Options{}
+	ast, err := js.Parse(parse.NewInputString(script), o)
 	if err != nil {
 		return "", err
 	}

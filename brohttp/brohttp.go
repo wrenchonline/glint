@@ -47,9 +47,12 @@ func (spider *Spider) Close() {
 	defer chromedp.Cancel(*spider.Ctx)
 }
 
-var reqId1 network.RequestID
+// var reqId1 network.RequestID
+var Jump chan bool
+var J bool
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
+	Jump = make(chan bool)
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
@@ -78,7 +81,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
-		// fmt.Println(Yellow(reflect.TypeOf(ev)))
+		// fmt.Println(reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
@@ -115,35 +118,40 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
-			spider.lock.Lock()
-			defer spider.lock.Unlock()
+			//
+			//
+
+			// spider.lock.Lock()
+			// defer spider.lock.Unlock()
+			// if J {
+			// 	select {
+			// 	case <-Jump:
+			// 	}
+			// 	J = false
+			// }
 			fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 			request := ev
-			reqId1 = request.RequestID
+
+			// spider.lock.Lock()
+			// reqId1 = request.RequestID
+			// spider.lock.Unlock()
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
-			//fmtres := ev.(*network.EventLoadingFinished)
 			go func() {
-				// spider.lock.Lock()
-				// defer spider.lock.Unlock()
-				var data []byte
-				var e error
-				c := chromedp.FromContext(ctx)
-				ctx := cdp.WithExecutor(ctx, c.Target)
-				logger.Success("network.EventLoadingFinished RequestID %v", ev.RequestID)
-				if reqId1 == ev.RequestID {
-					data, e = network.GetResponseBody(reqId1).Do(ctx)
-				}
+				c := chromedp.FromContext(*spider.Ctx)
+				ctx := cdp.WithExecutor(*spider.Ctx, c.Target)
+				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
+				// }
 				if e != nil {
-					panic(e)
+					logger.Error("network.EventResponseReceived error: %v", e)
 				}
 				if len(data) > 0 {
 					spider.Source <- string(data)
-					// fmt.Printf("=========data: %+v\n", string(data))
+					fmt.Printf("=========data: %+v\n", string(data))
 				}
 			}()
 		case *network.EventResponseReceived:
