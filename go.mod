@@ -14,6 +14,7 @@ require (
 	github.com/deckarep/golang-set v1.8.0
 	github.com/elazarl/goproxy v0.0.0-20211114080932-d06c3be7c11b
 	github.com/fatih/color v1.13.0
+	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.9.0
