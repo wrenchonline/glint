@@ -1,17 +1,17 @@
 {
-    "": [
+    "Normal": [
         {
-            "url": "http://192.168.123.1/apply.cgi",
-            "method": "POST",
+            "url": "http://www.jykc.com/newshow.asp?id=68\u0026class=1\u0026classname=京元动态\u0026uppage=",
+            "method": "GET",
             "headers": {
-                "Authorization": "Basic YWRtaW46YWRtaW4=",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Origin": "http://192.168.123.1",
-                "Referer": "http://192.168.123.1/Main_LogStatus_Content.asp",
-                "Accept-Encoding": "gzip"
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "safedog-flow-item=; ASPSESSIONIDACDSCSCS=KJANJONDMOFGLOJMHCCPAAFO",
+                "Referer": "http://www.jykc.com/",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
             },
-            "data": "action_mode=+ClearLog+&action_script=&current_page=Main_LogStatus_Content.asp&group_id=&next_host=&next_page=&sid_list=",
-            "source": "Target"
+            "data": "",
+            "source": "DOM"
         }
     ]
 }

@@ -18,6 +18,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.9.0
 	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/martian/v3 v3.2.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213

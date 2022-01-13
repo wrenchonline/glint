@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
@@ -18,7 +17,6 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
-	"github.com/logrusorgru/aurora"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -118,33 +116,15 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
-			//
-			//
-
-			// spider.lock.Lock()
-			// defer spider.lock.Unlock()
-			// if J {
-			// 	select {
-			// 	case <-Jump:
-			// 	}
-			// 	J = false
-			// }
-			fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
+			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 			request := ev
-
-			// spider.lock.Lock()
-			// reqId1 = request.RequestID
-			// spider.lock.Unlock()
 			if ev.RedirectResponse != nil {
 				//url = request.DocumentURL
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
 			go func(ev *network.EventLoadingFinished) {
-				spider.lock.Lock()
-				fmt.Printf("ev %v", ev.RequestID)
-				spider.lock.Unlock()
 				c := chromedp.FromContext(*spider.Ctx)
 				ctx := cdp.WithExecutor(*spider.Ctx, c.Target)
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
@@ -154,7 +134,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 				if len(data) > 0 {
 					spider.Source <- string(data)
-					fmt.Printf("=========data: %+v\n", string(data))
+					// fmt.Printf("=========data: %+v\n", string(data))
 				}
 			}(ev)
 		case *network.EventResponseReceived:
@@ -185,23 +165,32 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (spider *Spider) Sendreq() ([]string, error) {
 	var htmls []string
-	err := chromedp.Run(
+	var res string
+	var err error
+	err = chromedp.Run(
 		*spider.Ctx,
 		chromedp.Navigate(spider.Url.String()),
-		// chromedp.OuterHTML("html", &res, chromedp.ByQuery),
+		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
 		logger.Error(err.Error())
 	}
-	//循环三次获取,不会获取过多内容
-	for i := 0; i < 3; i++ {
-		select {
-		case html := <-spider.Source:
-			htmls = append(htmls, html)
-		case <-time.After(time.Second * 2):
-			break
-		}
-	}
+
+	htmls = append(htmls, res)
+	//循环两次获取,不会获取过多内容
+	// for i := 0; i < 2; i++ {
+	// 	select {
+	// 	case html := <-spider.Source:
+	// 		htmls = append(htmls, html)
+	// 	case <-time.After(time.Second * 2):
+	// 		err = chromedp.Run(
+	// 			*spider.Ctx,
+	// 			chromedp.OuterHTML("html", &res, chromedp.ByQuery),
+	// 		)
+	// 		htmls = append(htmls, res)
+	// 		break
+	// 	}
+	// }
 	// res = html.UnescapeString(res)
 	return htmls, err
 }

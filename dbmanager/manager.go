@@ -24,6 +24,7 @@ type DbTaskConfig struct {
 	Configid                    sql.NullInt64 `db:"web_param_id"`
 	TaskId                      sql.NullInt64 `db:"task_id"`
 	Urls                        sql.NullString
+	ParamModelId                sql.NullInt64  `db:"param_model_id"`
 	FilterMode                  sql.NullString `db:"filter_mode"`
 	ExtraHeadersUuid            sql.NullString `db:"extra_headers_id"`
 	AllDomainReturn             sql.NullBool   `db:"is_all_domain"`

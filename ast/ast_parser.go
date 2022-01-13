@@ -256,7 +256,7 @@ func SearchInputInResponse(input string, body string) []Occurence {
 	tokens := parse.GetTokenizer()
 	// fmt.Println(aurora.Cyan(tokens))
 	if len(tokens) == 0 {
-		logger.Error("SearchInputInResponse tokens 没有发现节点")
+		// logger.Error("SearchInputInResponse tokens 没有发现节点")
 		return Occurences
 	}
 	for _, token := range tokens {
