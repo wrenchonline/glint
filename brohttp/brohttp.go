@@ -17,6 +17,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"github.com/logrusorgru/aurora"
 )
 
 //Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
@@ -76,7 +77,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	//监听Console.log事件
-	//目前有个bug，就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
+	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		Response := make(map[string]string)
 		Responses := []map[string]string{}
@@ -116,11 +117,10 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				}
 			}()
 		case *network.EventRequestWillBeSent:
-			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
+			fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
 			request := ev
 			if ev.RedirectResponse != nil {
-				//url = request.DocumentURL
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
@@ -141,7 +141,6 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
-			// fmt.Println(Red(ev.Message))
 			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
 			Responses = append(Responses, Response)
 			go func() {
