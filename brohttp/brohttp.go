@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
@@ -165,8 +166,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 func (spider *Spider) Sendreq() ([]string, error) {
 	var htmls []string
 	var res string
-	var err error
-	err = chromedp.Run(
+	err := chromedp.Run(
 		*spider.Ctx,
 		chromedp.Navigate(spider.Url.String()),
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
@@ -177,19 +177,13 @@ func (spider *Spider) Sendreq() ([]string, error) {
 
 	htmls = append(htmls, res)
 	//循环两次获取,不会获取过多内容
-	// for i := 0; i < 2; i++ {
-	// 	select {
-	// 	case html := <-spider.Source:
-	// 		htmls = append(htmls, html)
-	// 	case <-time.After(time.Second * 2):
-	// 		err = chromedp.Run(
-	// 			*spider.Ctx,
-	// 			chromedp.OuterHTML("html", &res, chromedp.ByQuery),
-	// 		)
-	// 		htmls = append(htmls, res)
-	// 		break
-	// 	}
-	// }
+	for i := 0; i < 2; i++ {
+		select {
+		case html := <-spider.Source:
+			htmls = append(htmls, html)
+		case <-time.After(time.Second):
+		}
+	}
 	// res = html.UnescapeString(res)
 	return htmls, err
 }
@@ -285,6 +279,7 @@ func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname str
 	return nil
 }
 
+//这个要改一下加速发包速度
 func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) {
 	var htmls []string
 	if spider.ReqMode == "GET" {
