@@ -3,13 +3,14 @@ module glint
 go 1.16
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20220106001210-12edfdeb56f8
+	github.com/chromedp/cdproto v0.0.0-20220113222801-0725d94bb6ee
 	github.com/chromedp/chromedp v0.7.6
 	github.com/chzyer/logex v1.2.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
 	github.com/deckarep/golang-set v1.8.0
 	github.com/fatih/color v1.13.0
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.9.0
@@ -20,12 +21,12 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/panjf2000/ants/v2 v2.4.7
 	github.com/pkg/errors v0.9.1
-	github.com/tdewolff/parse/v2 v2.5.26
+	github.com/tdewolff/parse/v2 v2.5.27
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/valyala/fasthttp v1.32.0
-	golang.org/x/net v0.0.0-20220111093109-d55c255bac03
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	google.golang.org/genproto v0.0.0-20220112215332-a9c7c0acf9f2
 	google.golang.org/protobuf v1.27.1
