@@ -251,18 +251,21 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 
 	} else if Script == Tagmode {
 		if !scriptok {
-			Occurence := extension.(ast.Occurence)
-			payload, err := ast.AnalyseJSFuncByFlag(flag, Occurence.Details.Content)
-			if err != nil {
-				return err
+			Occurence := extension.([]ast.Occurence)
+			for _, v := range Occurence {
+				payload, err := ast.AnalyseJSFuncByFlag(flag, v.Details.Content)
+				if err != nil {
+					return err
+				}
+				var mode PayloadMode
+				mode.Mode = Checktype(CheckConsoleLog)
+				mode.IsNeedFlag = true
+				mode.payload = payload
+				mode.CheckTag = ""
+				g.extension = append(g.extension, mode)
+				scriptok = true
 			}
-			var mode PayloadMode
-			mode.Mode = Checktype(CheckConsoleLog)
-			mode.IsNeedFlag = true
-			mode.payload = payload
-			mode.CheckTag = ""
-			g.extension = append(g.extension, mode)
-			scriptok = true
+
 		}
 	}
 	return nil
@@ -512,7 +515,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			resources = append(resources, Occ)
 		}
 		if !bflag {
-			return Result, errors.New("xss::not found")
+			return nil, errors.New("xss::not found")
 		}
 
 		Result, err = DoCheckXss(resources, flag, Spider, *ctx)

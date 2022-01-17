@@ -56,7 +56,9 @@ func (p *Plugin) Init() {
 			if err != nil {
 				logger.Error("plugin::error %s", err.Error())
 			} else {
-				p.ScanResult = append(p.ScanResult, scanresult)
+				if scanresult != nil {
+					p.ScanResult = append(p.ScanResult, scanresult)
+				}
 			}
 			p.mu.Unlock()
 		}

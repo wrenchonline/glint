@@ -276,13 +276,21 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
 				}
 				var req model2.Request
-				u, _ := url.Parse(ev.Request.URL)
+				decodedValue, err := url.QueryUnescape(ev.Request.URL)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				u, err := url.Parse(decodedValue)
+				if err != nil {
+					logger.Error(err.Error())
+				}
 				req.URL = &model2.URL{*u}
 				req.Method = ev.Request.Method
 				req.Headers = map[string]interface{}{}
 				req.PostData = ev.Request.PostData
-
-				req.Headers = ev.Request.Headers
+				if len(ev.Request.Headers) > 0 {
+					req.Headers = ev.Request.Headers
+				}
 				// 修正Referer
 				req.Headers["Referer"] = ev.Request.Headers["Referer"]
 				req.Source = string(ev.ResourceType)
