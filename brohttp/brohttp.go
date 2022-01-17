@@ -130,7 +130,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
 				// }
 				if e != nil {
-					logger.Error("network.EventLoadingFinished error: %v", e)
+					fmt.Printf("network.EventLoadingFinished error: %v", e)
 				}
 				if len(data) > 0 {
 					spider.Source <- string(data)
