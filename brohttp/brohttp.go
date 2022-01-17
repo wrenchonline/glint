@@ -33,7 +33,7 @@ type Spider struct {
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
 	Source        chan string //当前爬虫的html的源码
-	lock          sync.Mutex
+	// lock          sync.Mutex
 }
 
 type UrlOCC struct {

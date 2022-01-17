@@ -49,12 +49,12 @@ func TestXSS(t *testing.T) {
 	PluginWg.Add(1)
 	Progress := 0.0
 	args := plugin.PluginOption{
-		PluginWg:   &PluginWg,
-		Progress:   &Progress,
-		IsSocket:   false,
-		Data:       data,
-		TaskId:     999,
-		Sendstatus: &PliuginsMsg,
+		PluginWg: &PluginWg,
+		Progress: &Progress,
+		IsSocket: false,
+		Data:     data,
+		TaskId:   999,
+		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {
 		pluginInternal.Run(args)

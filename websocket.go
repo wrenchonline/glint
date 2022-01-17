@@ -44,11 +44,14 @@ type TaskServer struct {
 //Tasks 进行的任务
 var Tasks []Task
 
+type soketinfo struct {
+	Conn *websocket.Conn
+	Ctx  context.Context
+}
+
+var Socketinfo []*soketinfo
+
 var Taskslock sync.Mutex
-
-var DoStartSignal chan bool
-
-var PliuginsMsg chan map[string]interface{}
 
 type TaskStatus int
 
@@ -58,12 +61,12 @@ const (
 	TaskHasStart     TaskStatus = 1
 )
 
-func quitmsg(ctx context.Context, c *websocket.Conn) {
-	<-DoStartSignal
+func (t *Task) quitmsg(ctx context.Context, c *websocket.Conn) {
+	<-t.DoStartSignal
 	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
 		<-(*task.Ctx).Done()
-		sendmsg(ctx, c, 2, "The Task is End")
+		sendmsg(2, "The Task is End")
 	}
 }
 
@@ -98,10 +101,13 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err.Error())
 		return
 	}
+
 	go func() {
 		defer c.Close(websocket.StatusInternalError, "")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+		info := soketinfo{Conn: c, Ctx: ctx}
+		Socketinfo = append(Socketinfo, &info)
 		err = ts.Task(ctx, c)
 		if errors.Is(err, context.Canceled) {
 			logger.Error(err.Error())
@@ -119,56 +125,72 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func sendmsg(ctx context.Context, c *websocket.Conn, status int, message string) error {
+func sendmsg(status int, message string) error {
+	var err error
 	reponse := make(map[string]interface{})
 	reponse["status"] = status
 	reponse["msg"] = message
 	logger.Info("%v", reponse)
-	err := wsjson.Write(ctx, c, reponse)
+restart:
+	for idx, info := range Socketinfo {
+		if _, ok := info.Ctx.Deadline(); ok {
+			Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
+			goto restart
+		} else {
+			err = wsjson.Write(info.Ctx, info.Conn, reponse)
+		}
+	}
 	return err
 }
 
 func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
-	DoStartSignal = make(chan bool)
-	PliuginsMsg = make(chan map[string]interface{})
+
+	mjson := make(map[string]interface{})
 	var v interface{}
 	var jsonobj interface{}
-	go PluginMsgHandler(ctx, c)
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
 			logger.Warning(err.Error())
 			return err
 		}
-		err = json.Unmarshal([]byte(v.(string)), &jsonobj)
-		if err != nil {
-			logger.Error(err.Error())
-			return err
-		}
-		json := jsonobj.(map[string]interface{})
-		Status := json["action"].(string)
-		if strings.ToLower(Status) == "start" {
-			status, err := ts.GetTaskStatus(json)
+		if value, ok := v.(string); ok {
+			err = json.Unmarshal([]byte(value), &jsonobj)
 			if err != nil {
-				sendmsg(ctx, c, -1, err.Error())
+				logger.Error(err.Error())
+				return err
+			}
+			mjson = jsonobj.(map[string]interface{})
+		} else if value, ok := v.((map[string]interface{})); ok {
+			for k, v := range value {
+				mjson[k] = v
+			}
+		}
+
+		Status := mjson["action"].(string)
+		if strings.ToLower(Status) == "start" {
+			status, err := ts.GetTaskStatus(mjson)
+			if err != nil {
+				sendmsg(-1, err.Error())
 				continue
 			}
 			if status == TaskHasStart {
-				sendmsg(ctx, c, 1, "The Task Has Started")
+				sendmsg(1, "The Task Has Started")
 				continue
 			}
 			//开始任务
-			task, err := ts.start(jsonobj)
+			task, err := ts.start(mjson)
 			if err != nil {
-				sendmsg(ctx, c, -1, err.Error())
+				sendmsg(-1, err.Error())
 				continue
 			}
 			Taskslock.Lock()
 			Tasks = append(Tasks, task)
 			Taskslock.Unlock()
-			sendmsg(ctx, c, 0, "The Task is Starting")
-			go quitmsg(ctx, c)
+			sendmsg(0, "The Task is Starting")
+			go task.PluginMsgHandler(*task.Ctx)
+			go task.quitmsg(ctx, c)
 		} else if strings.ToLower(Status) == "close" {
 			if len(Tasks) != 0 {
 				for _, task := range Tasks {
@@ -282,15 +304,24 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func PluginMsgHandler(ctx context.Context, c *websocket.Conn) {
+func (t *Task) PluginMsgHandler(ctx context.Context) {
+	var err error
 	for {
 		select {
-		case msg := <-PliuginsMsg:
+		case msg := <-t.PliuginsMsg:
 			fmt.Printf("msg: %v\n", msg)
 			reponse := make(map[string]interface{})
 			reponse["status"] = 0
 			reponse["msg"] = msg
-			err := wsjson.Write(ctx, c, reponse)
+		restart:
+			for idx, info := range Socketinfo {
+				if _, ok := info.Ctx.Deadline(); ok {
+					Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
+					goto restart
+				} else {
+					err = wsjson.Write(info.Ctx, info.Conn, reponse)
+				}
+			}
 			if err != nil {
 				logger.Error(err.Error())
 			}

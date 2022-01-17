@@ -40,18 +40,20 @@ var Plugins cli.StringSlice
 var Socket string
 
 type Task struct {
-	TaskId     int
-	XssSpider  brohttp.Spider
-	Targets    []*model.Request
-	TaskConfig config.TaskConfig
-	PluginWg   sync.WaitGroup
-	Plugins    []*plugin.Plugin
-	Ctx        *context.Context
-	Cancel     *context.CancelFunc
-	lock       *sync.Mutex
-	Dm         *dbmanager.DbManager
-	InstallDb  bool
-	Progress   float64
+	TaskId        int
+	XssSpider     brohttp.Spider
+	Targets       []*model.Request
+	TaskConfig    config.TaskConfig
+	PluginWg      sync.WaitGroup
+	Plugins       []*plugin.Plugin
+	Ctx           *context.Context
+	Cancel        *context.CancelFunc
+	lock          *sync.Mutex
+	Dm            *dbmanager.DbManager
+	InstallDb     bool
+	Progress      float64
+	DoStartSignal chan bool
+	PliuginsMsg   chan map[string]interface{}
 }
 
 func main() {
@@ -156,7 +158,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 	var err error
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
-	DoStartSignal <- true
+	t.DoStartSignal <- true
 	if installDb {
 		err := t.Dm.DeleteScanResult(t.TaskId)
 		if err != nil {
@@ -203,7 +205,15 @@ func (t *Task) dostartTasks(installDb bool) error {
 	Element["status"] = 0
 	Element["progress"] = t.Progress
 
-	PliuginsMsg <- Element
+	// select {
+	// case <-(*t.Ctx).Done():
+	// 	Element["status"] = 0
+	// 	Element["progress"] = 1
+	// 	goto quit
+	// default:
+	// }
+
+	t.PliuginsMsg <- Element
 
 	funk.Map(result.ReqList, func(r *model.Request) bool {
 		element0 := ast.JsonUrl{
@@ -250,7 +260,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				IsSocket:   true,
 				Data:       ReqList,
 				TaskId:     t.TaskId,
-				Sendstatus: &PliuginsMsg,
+				Sendstatus: &t.PliuginsMsg,
 				Totalprog:  percentage,
 			}
 			go func() {
@@ -281,7 +291,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 				IsSocket:   true,
 				Data:       ReqList,
 				TaskId:     t.TaskId,
-				Sendstatus: &PliuginsMsg,
+				Sendstatus: &t.PliuginsMsg,
 				Totalprog:  percentage,
 			}
 			go func() {
@@ -335,6 +345,8 @@ func (t *Task) Init() {
 	t.Ctx = &Ctx
 	t.Cancel = &Cancel
 	t.lock = &sync.Mutex{}
+	t.PliuginsMsg = make(chan map[string]interface{})
+	t.DoStartSignal = make(chan bool)
 }
 
 func (t *Task) UrlPackage(_url string) error {
