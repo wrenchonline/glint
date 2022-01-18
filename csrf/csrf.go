@@ -46,7 +46,7 @@ var anti_csrf = []string{
 
 var DefaultProxy string = "127.0.0.1:7777"
 
-func Origin(args interface{}) (*util.ScanResult, error) {
+func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://192.168.166.8/vulnerabilities/csrf`
 	// t := time.NewTimer(time.Millisecond * 200)
@@ -96,42 +96,28 @@ func Origin(args interface{}) (*util.ScanResult, error) {
 				"middle")
 			return Result, errs
 		}
-		return nil, errors.New("params errors")
-	}
 
-	return nil, errors.New("these is get method or params errors")
-}
-
-func Referer(args interface{}) (*util.ScanResult, error) {
-	group := args.(plugin.GroupData)
-	REFERER_URL := `http://192.168.166.8/vulnerabilities/csrf`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	if strings.ToUpper(method) == "POST" {
-		_, resp1, errs := fastreq.Post(url, headers,
+		REFERER_URL := `http://192.168.166.8/vulnerabilities/csrf`
+		ctx := *group.Pctx
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		_, resp1, errs = fastreq.Post(url, headers,
 			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
 		if errs != nil {
 			return nil, errs
 		}
-		b1 := resp1.Body()
+		b1 = resp1.Body()
 		if resp1.StatusCode() != 200 {
 			errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
 			return nil, errors.New(errstr)
 		}
 		headers["Referer"] = REFERER_URL
-		req2, resp2, errs := fastreq.Post(url, headers,
+		req2, resp2, errs = fastreq.Post(url, headers,
 			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
-		b2 := resp2.Body()
+		b2 = resp2.Body()
 		if len(b1) == len(b2) {
 			logger.Debug("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")
 			Result := util.VulnerableTcpOrUdpResult(url,
@@ -142,7 +128,13 @@ func Referer(args interface{}) (*util.ScanResult, error) {
 			return Result, errs
 		}
 		return nil, errs
+
 	}
 
 	return nil, errors.New("these is get method or params errors")
 }
+
+// func Referer(args interface{}) (*util.ScanResult, error) {
+
+// 	return nil, errors.New("these is get method or params errors")
+// }

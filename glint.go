@@ -239,7 +239,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
 			myfunc := []plugin.PluginCallback{}
-			myfunc = append(myfunc, csrf.Origin, csrf.Referer)
+			myfunc = append(myfunc, csrf.Csrfeval)
 			pluginInternal := plugin.Plugin{
 				PluginName:   PluginName,
 				MaxPoolCount: 20,

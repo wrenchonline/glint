@@ -15,7 +15,7 @@ func Test_CSRF(t *testing.T) {
 	var PluginWg sync.WaitGroup
 	config.ReadResultConf("result.json", &data)
 	myfunc := []plugin.PluginCallback{}
-	myfunc = append(myfunc, csrf.Origin, csrf.Referer)
+	myfunc = append(myfunc, csrf.Csrfeval)
 	pluginInternal := plugin.Plugin{
 		PluginName:   "csrf",
 		MaxPoolCount: 20,
