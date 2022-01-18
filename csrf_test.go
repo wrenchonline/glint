@@ -18,9 +18,9 @@ func Test_CSRF(t *testing.T) {
 	myfunc = append(myfunc, csrf.Origin, csrf.Referer)
 	pluginInternal := plugin.Plugin{
 		PluginName:   "csrf",
-		MaxPoolCount: 5,
+		MaxPoolCount: 20,
 		Callbacks:    myfunc,
-		Timeout:      30 * time.Second,
+		Timeout:      200 * time.Second,
 	}
 	pluginInternal.Init()
 	PluginWg.Add(1)

@@ -35,12 +35,13 @@ type PluginOption struct {
 	IsSocket   bool
 	Data       map[string][]interface{}
 	Sendstatus *chan map[string]interface{}
-	TaskId     int //该插件所属的taskid
+	TaskId     int  //该插件所属的taskid
+	Bstripurl  bool //是否分开groupurl
 }
 
 type GroupData struct {
 	GroupType string
-	GroupUrls []interface{}
+	GroupUrls interface{}
 	Spider    *brohttp.Spider
 	Pctx      *context.Context
 	Pcancel   *context.CancelFunc
@@ -71,19 +72,20 @@ func (p *Plugin) Init() {
 type PluginCallback func(args interface{}) (*util.ScanResult, error)
 
 func (p *Plugin) Run(args PluginOption) error {
-	// var lock sync.RWMutex
 	defer args.PluginWg.Done()
 	defer p.Pool.Release()
 	var err error
-	for k, v := range args.Data {
-		p.threadwg.Add(1)
-		go func(k string, v []interface{}) {
-			data := GroupData{GroupType: k, GroupUrls: v, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
-			err = p.Pool.Invoke(data)
-			if err != nil {
-				logger.Error(err.Error())
+	for type_name, urlinters := range args.Data {
+		p.threadwg.Add(len(urlinters))
+		go func(type_name string, urlinters []interface{}) {
+			for _, urlinter := range urlinters {
+				data := GroupData{GroupType: type_name, GroupUrls: urlinter, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
+				err = p.Pool.Invoke(data)
+				if err != nil {
+					logger.Error(err.Error())
+				}
 			}
-		}(k, v)
+		}(type_name, urlinters)
 	}
 	p.threadwg.Wait()
 	logger.Info("Plugin %s is Finish!", p.PluginName)

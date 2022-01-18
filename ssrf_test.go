@@ -31,6 +31,7 @@ func Test_ssrf(t *testing.T) {
 		IsSocket: false,
 		Data:     data,
 		TaskId:   999,
+
 		// Sendstatus: &PliuginsMsg,
 	}
 	go func() {

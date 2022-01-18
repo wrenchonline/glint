@@ -482,18 +482,17 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
 		flag := funk.RandomString(8)
 		bflag := false
-		resources := make([]map[int]interface{}, len(groups.GroupUrls))
-		for _, Urlinfo := range groups.GroupUrls {
-			Spider.CopyRequest(Urlinfo)
-			// println("pre", Spider.Url.String())
-			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
-			// Spider.CopyRequest(Urlinfo)
-			// println("post", Spider.Url.String())
-			if b {
-				bflag = true
-			}
-			resources = append(resources, Occ)
+		resources := make([]map[int]interface{}, 1)
+		Spider.CopyRequest(groups.GroupUrls)
+		// println("pre", Spider.Url.String())
+		b, Occ := Spider.CheckRandOnHtmlS(flag, groups.GroupUrls)
+		// Spider.CopyRequest(Urlinfo)
+		// println("post", Spider.Url.String())
+		if b {
+			bflag = true
 		}
+		resources = append(resources, Occ)
+
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
@@ -504,11 +503,11 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	} else {
 		flag := funk.RandomString(8)
 		bflag := false
-		resources := make([]map[int]interface{}, len(groups.GroupUrls))
-		for _, Urlinfo := range groups.GroupUrls {
-			Spider.CopyRequest(Urlinfo)
+		resources := make([]map[int]interface{}, 1)
+		{
+			Spider.CopyRequest(groups.GroupUrls)
 			// logger.Debug("pre", Spider.Url.String())
-			b, Occ := Spider.CheckRandOnHtmlS(flag, Urlinfo)
+			b, Occ := Spider.CheckRandOnHtmlS(flag, groups.GroupUrls)
 			if b {
 				bflag = true
 			}
@@ -517,7 +516,6 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss::not found")
 		}
-
 		Result, err = DoCheckXss(resources, flag, Spider, *ctx)
 		if err != nil {
 			return nil, err
