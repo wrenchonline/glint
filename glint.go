@@ -232,6 +232,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 		List[r.GroupsId] = append(List[r.GroupsId], element0)
 		return false
 	})
+
 	util.SaveCrawOutPut(List, "result.json")
 	//Crawtask.PluginBrowser = t.XssSpider
 	//爬完虫加载插件检测漏洞
