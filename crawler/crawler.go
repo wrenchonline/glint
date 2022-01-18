@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	config2 "glint/config"
 	"glint/logger"
 	model2 "glint/model"
 	"glint/util"
@@ -207,6 +208,33 @@ func (tab *Tab) AfterDOMRun() {
 }
 
 /**
+执行JS
+*/
+func (tab *Tab) Evaluate(expression string) {
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+	_, exception, err := runtime.Evaluate(expression).Do(tCtx)
+	if exception != nil {
+		logger.Debug("tab Evaluate: ", exception.Text)
+	}
+	if err != nil {
+		logger.Debug("tab Evaluate: ", err)
+	}
+}
+
+/**
+a标签的href值为伪协议，
+*/
+func (tab *Tab) triggerJavascriptProtocol() {
+	defer tab.loadedWG.Done()
+	logger.Success("clickATagJavascriptProtocol start")
+	tab.Evaluate(fmt.Sprintf(TriggerJavascriptProtocol, tab.config.EventTriggerInterval.Seconds()*1000,
+		tab.config.EventTriggerInterval.Seconds()*1000))
+	logger.Success("clickATagJavascriptProtocol end")
+}
+
+/**
 在页面Loaded之后执行
 同时等待 afterDOMRun 之后执行
 */
@@ -214,7 +242,7 @@ func (tab *Tab) AfterLoadedRun() {
 	defer tab.WG.Done()
 	logger.Success("afterLoadedRun start")
 	tab.formSubmitWG.Add(2)
-	// tab.loadedWG.Add(3)
+	tab.loadedWG.Add(1)
 	// tab.removeLis.Add(1)
 
 	logger.Success("formSubmit start")
@@ -224,10 +252,10 @@ func (tab *Tab) AfterLoadedRun() {
 	logger.Success("formSubmit end")
 
 	// if tab.config.EventTriggerMode == config.EventTriggerAsync {
-	// 	go tab.triggerJavascriptProtocol()
+	go tab.triggerJavascriptProtocol()
 	// 	go tab.triggerInlineEvents()
 	// 	go tab.triggerDom2Events()
-	// 	tab.loadedWG.Wait()
+	tab.loadedWG.Wait()
 	// } else if tab.config.EventTriggerMode == config.EventTriggerSync {
 	// 	tab.triggerInlineEvents()
 	// 	time.Sleep(tab.config.EventTriggerInterval)
@@ -353,10 +381,19 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 		case *page.EventDocumentOpened:
 			// logger.Println("EventDocumentOpened url:", ev.Frame.URL)
 		case *network.EventRequestWillBeSentExtraInfo:
-		case *network.EventResponseReceived:
-			if ev.Type == "XHR" {
 
+		// 解析所有JS文件中的URL并添加到结果中
+		// 解析HTML文档中的URL
+		// 查找当前页面的编码
+		case *network.EventResponseReceived:
+			if ev.Response.MimeType == "application/javascript" || ev.Response.MimeType == "text/html" || ev.Response.MimeType == "application/json" {
+				tab.WG.Add(1)
+				go tab.ParseResponseURL(ev)
 			}
+			// if ev.RequestID.String() == tab.NavNetworkID {
+			// 	tab.WG.Add(1)
+			// 	go tab.GetContentCharset(ev)
+			// }
 		case *network.EventRequestWillBeSent:
 			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
@@ -561,6 +598,33 @@ func (tab *Tab) CommitBySubmit() error {
 
 	}
 	return nil
+}
+
+/**
+解析响应内容中的URL 使用正则匹配
+*/
+func (tab *Tab) ParseResponseURL(v *network.EventResponseReceived) {
+	defer tab.WG.Done()
+	ctx := tab.GetExecutor()
+	res, err := network.GetResponseBody(v.RequestID).Do(ctx)
+	if err != nil {
+		logger.Debug("ParseResponseURL ", err)
+		return
+	}
+	resStr := string(res)
+
+	urlRegex := regexp.MustCompile(config2.SuspectURLRegex)
+	urlList := urlRegex.FindAllString(resStr, -1)
+	for _, url := range urlList {
+
+		url = url[1 : len(url)-1]
+		url_lower := strings.ToLower(url)
+		if strings.HasPrefix(url_lower, "image/x-icon") || strings.HasPrefix(url_lower, "text/css") || strings.HasPrefix(url_lower, "text/javascript") {
+			continue
+		}
+
+		tab.AddResultUrl("GET", url, config2.FromJSFile)
+	}
 }
 
 /**
