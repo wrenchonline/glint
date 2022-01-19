@@ -81,9 +81,9 @@ func TestURL(t *testing.T) {
 		Headers: Headers,
 	}
 	Spider.CopyRequest(a)
-	Spider.Sendreq()
+	Spider.Send()
 	time.Sleep(5 * time.Second)
-	Spider.Sendreq()
+	Spider.Send()
 	time.Sleep(5 * time.Second)
 }
 func Test_JS(t *testing.T) {

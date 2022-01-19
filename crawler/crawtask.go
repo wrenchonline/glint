@@ -133,6 +133,15 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 	}()
 }
 
+func (c *CrawlerTask) Deadline() bool {
+	select {
+	case <-(*c.Ctx).Done():
+		return true
+	default:
+		return false
+	}
+}
+
 /**
 单个运行的tab标签任务，实现了workpool的接口
 */

@@ -20,7 +20,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-//Spider 爬虫资源，设计目的是爬网页，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
+//Spider 爬虫资源，设计目的是基于浏览器发送payload，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
 	Ctx           *context.Context //存储着浏览器的资源
 	Cancel        *context.CancelFunc
@@ -33,7 +33,6 @@ type Spider struct {
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
 	Source        chan string //当前爬虫的html的源码
-	// lock          sync.Mutex
 }
 
 type UrlOCC struct {
@@ -46,12 +45,7 @@ func (spider *Spider) Close() {
 	defer chromedp.Cancel(*spider.Ctx)
 }
 
-// var reqId1 network.RequestID
-var Jump chan bool
-var J bool
-
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
-	Jump = make(chan bool)
 	spider.Responses = make(chan []map[string]string)
 	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
@@ -69,6 +63,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
+
 	if TaskConfig.Proxy != "" {
 		options = append(options, chromedp.Flag("proxy-server", TaskConfig.Proxy))
 	}
@@ -162,7 +157,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 }
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
-func (spider *Spider) Sendreq() ([]string, error) {
+func (spider *Spider) Send() ([]string, error) {
 	var htmls []string
 	var res string
 	err := chromedp.Run(
@@ -208,7 +203,7 @@ func (spider *Spider) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 	if JsonUrls.MetHod == "GET" {
 		spider.ReqMode = "GET"
 		spider.Url, _ = url.Parse(JsonUrls.Url)
-		response, err := spider.Sendreq()
+		response, err := spider.Send()
 		if err != nil {
 			return err
 		}
@@ -217,7 +212,7 @@ func (spider *Spider) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 		spider.ReqMode = "POST"
 		spider.Url, _ = url.Parse(JsonUrls.Url)
 		spider.PostData = []byte(JsonUrls.Data)
-		response, err := spider.Sendreq()
+		response, err := spider.Send()
 		if err != nil {
 			return err
 		}
@@ -291,7 +286,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			logger.Error(err.Error())
 		}
 		if spider.Headers["Referer"] == spider.Url.String() {
-			html_s, err := spider.Sendreq()
+			html_s, err := spider.Send()
 			if err != nil {
 				return nil, err
 			}
@@ -301,7 +296,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 			for param, _ := range Getparams {
 				spider.PayloadHandle(newpayload, "GET", param, Getparams)
 				Getparams = tmpParams
-				html_s, err := spider.Sendreq()
+				html_s, err := spider.Send()
 				if err != nil {
 					return nil, err
 				}
@@ -310,7 +305,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		}
 
 		if len(Getparams) == 0 {
-			html_s, err := spider.Sendreq()
+			html_s, err := spider.Send()
 			if err != nil {
 				return nil, err
 			}
@@ -333,7 +328,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		}
 		spider.PostData = PostData
 		spider.PayloadHandle(newpayload1, "POST", "", Getparams)
-		html_s, err := spider.Sendreq()
+		html_s, err := spider.Send()
 		if err != nil {
 			return nil, err
 		}

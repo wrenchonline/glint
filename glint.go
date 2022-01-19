@@ -46,7 +46,7 @@ type Task struct {
 	TaskConfig    config.TaskConfig
 	PluginWg      sync.WaitGroup
 	Plugins       []*plugin.Plugin
-	Ctx           *context.Context
+	Ctx           *context.Context //当前任务的现场
 	Cancel        *context.CancelFunc
 	lock          *sync.Mutex
 	Dm            *dbmanager.DbManager
@@ -124,7 +124,7 @@ func run(c *cli.Context) error {
 	return nil
 }
 
-func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
+func (t *Task) waitquit(c *crawler.CrawlerTask) {
 	select {
 	case <-signalChan:
 		logger.Warning("Interput exit ...")
@@ -154,66 +154,73 @@ func (t *Task) WaitInterputQuit(c *crawler.CrawlerTask) {
 	}
 }
 
+//删除数据库内容
+func (t *Task) deletedbresult() error {
+	err := t.Dm.DeleteScanResult(t.TaskId)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	return err
+}
+
+func (t *Task) close() {
+	//由外部socket关闭避免重复释放
+	if _, ok := (*t.Ctx).Deadline(); !ok {
+		(*t.Cancel)()
+	}
+}
+
+func (t *Task) setprog(progress float64) {
+	t.lock.Lock()
+	t.Progress += progress
+	t.lock.Unlock()
+}
+
+//发送进度条到通知队列
+func (t *Task) sendprog() {
+	Element := make(map[string]interface{})
+	Element["status"] = 0
+	Element["progress"] = t.Progress
+	t.PliuginsMsg <- Element
+}
+
 func (t *Task) dostartTasks(installDb bool) error {
 	var err error
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
 	t.DoStartSignal <- true
 	if installDb {
-		err := t.Dm.DeleteScanResult(t.TaskId)
-		if err != nil {
-			logger.Error(err.Error())
-		}
+		t.deletedbresult()
 	}
 	//完成后通知上下文
-	defer func() {
-		//由外部socket关闭避免重复释放
-		if _, ok := (*t.Ctx).Deadline(); !ok {
-			(*t.Cancel)()
-		}
-	}()
+	defer t.close()
 
 	StartPlugins := Plugins.Value()
 	percentage := 1 / float64(len(StartPlugins)+1)
 	Crawtask, err := crawler.NewCrawlerTask(t.Ctx, t.Targets, t.TaskConfig)
 	t.XssSpider.Init(t.TaskConfig)
 	Crawtask.PluginBrowser = &t.XssSpider
-	Element := make(map[string]interface{})
-
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
-	go t.WaitInterputQuit(Crawtask)
+
+	go t.waitquit(Crawtask)
+
 	logger.Info("Start crawling.")
 	//Crawtask.Run()是同步函数
 	Crawtask.Run()
 	result := Crawtask.Result
 	logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 		len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
-	//监听是否在爬虫的时候退出
-	select {
-	case <-(*Crawtask.Ctx).Done():
+
+	if Crawtask.Deadline() {
 		goto quit
-	default:
 	}
 
-	t.lock.Lock()
-	t.Progress += percentage
-	t.lock.Unlock()
+	t.setprog(percentage)
 
-	Element["status"] = 0
-	Element["progress"] = t.Progress
-
-	// select {
-	// case <-(*t.Ctx).Done():
-	// 	Element["status"] = 0
-	// 	Element["progress"] = 1
-	// 	goto quit
-	// default:
-	// }
-
-	t.PliuginsMsg <- Element
+	t.sendprog()
 
 	funk.Map(result.ReqList, func(r *model.Request) bool {
 		element0 := ast.JsonUrl{
@@ -341,7 +348,6 @@ func removetasks(id int) {
 }
 
 func (t *Task) Init() {
-	// t.XssSpider.Init()
 	Ctx, Cancel := context.WithCancel(context.Background())
 	t.Ctx = &Ctx
 	t.Cancel = &Cancel
