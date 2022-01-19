@@ -22,7 +22,12 @@ import (
 
 //Spider 爬虫资源，设计目的是基于浏览器发送payload，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
-	Ctx           *context.Context //存储着浏览器的资源
+	Ctx    *context.Context //存储着浏览器的资源
+	Cancel *context.CancelFunc
+}
+
+type Tab struct {
+	Ctx           *context.Context
 	Cancel        *context.CancelFunc
 	Responses     chan []map[string]string
 	ReqMode       string
@@ -45,9 +50,94 @@ func (spider *Spider) Close() {
 	defer chromedp.Cancel(*spider.Ctx)
 }
 
+func NewTab(spider *Spider) (*Tab, error) {
+	var tab Tab
+	ctx, cancel := chromedp.NewContext(*spider.Ctx)
+	tab.Ctx = &ctx
+	tab.Cancel = &cancel
+	tab.Responses = make(chan []map[string]string)
+	tab.Source = make(chan string)
+	return &tab, nil
+}
+
+func (t *Tab) ListenTarget() {
+	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
+	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
+		Response := make(map[string]string)
+		Responses := []map[string]string{}
+		switch ev := ev.(type) {
+		case *page.EventLoadEventFired:
+		case *runtime.EventConsoleAPICalled:
+			logger.Debug("* console.%s call:\n", ev.Type)
+			for _, arg := range ev.Args {
+				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
+				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
+				Responses = append(Responses, Response)
+			}
+			go func() {
+				t.Responses <- Responses
+			}()
+		case *runtime.EventExceptionThrown:
+		case *fetch.EventRequestPaused:
+			go func() {
+				c := chromedp.FromContext(*t.Ctx)
+				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				// var req *fetch.ContinueRequestParams
+				req := fetch.ContinueRequest(ev.RequestID)
+				// req.URL = spider.Url.String()
+				req.Headers = []*fetch.HeaderEntry{}
+				//设置文件头
+				for key, value := range t.Headers {
+					if value != nil {
+						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+					}
+				}
+				if t.ReqMode == "POST" {
+					req.Method = "POST"
+					req.PostData = base64.StdEncoding.EncodeToString(t.PostData)
+				}
+				if err := req.Do(ctx); err != nil {
+					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
+				}
+			}()
+		case *network.EventRequestWillBeSent:
+			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
+			//重定向
+			request := ev
+			if ev.RedirectResponse != nil {
+				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
+			}
+		case *network.EventLoadingFinished:
+			go func(ev *network.EventLoadingFinished) {
+				c := chromedp.FromContext(*t.Ctx)
+				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
+				// }
+				if e != nil {
+					fmt.Printf("network.EventLoadingFinished error: %v", e)
+				}
+				if len(data) > 0 {
+					t.Source <- string(data)
+				}
+			}(ev)
+		case *network.EventResponseReceived:
+
+		case *page.EventJavascriptDialogOpening:
+			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
+			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
+			Responses = append(Responses, Response)
+			go func() {
+				c := chromedp.FromContext(*t.Ctx)
+				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				//关闭弹窗
+				page.HandleJavaScriptDialog(false).Do(ctx)
+				t.Responses <- Responses
+			}()
+		}
+	})
+}
+
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
-	spider.Responses = make(chan []map[string]string)
-	spider.Source = make(chan string)
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
@@ -70,83 +160,6 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 
 	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
-	//timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	//监听Console.log事件
-	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
-	chromedp.ListenTarget(ctx, func(ev interface{}) {
-		Response := make(map[string]string)
-		Responses := []map[string]string{}
-		switch ev := ev.(type) {
-		case *page.EventLoadEventFired:
-		case *runtime.EventConsoleAPICalled:
-			logger.Debug("* console.%s call:\n", ev.Type)
-			for _, arg := range ev.Args {
-				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
-				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
-				Responses = append(Responses, Response)
-			}
-			go func() {
-				spider.Responses <- Responses
-			}()
-		case *runtime.EventExceptionThrown:
-		case *fetch.EventRequestPaused:
-			go func() {
-				c := chromedp.FromContext(ctx)
-				ctx := cdp.WithExecutor(ctx, c.Target)
-				// var req *fetch.ContinueRequestParams
-				req := fetch.ContinueRequest(ev.RequestID)
-				// req.URL = spider.Url.String()
-				req.Headers = []*fetch.HeaderEntry{}
-				//设置文件头
-				for key, value := range spider.Headers {
-					if value != nil {
-						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
-					}
-				}
-				if spider.ReqMode == "POST" {
-					req.Method = "POST"
-					req.PostData = base64.StdEncoding.EncodeToString(spider.PostData)
-				}
-				if err := req.Do(ctx); err != nil {
-					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
-				}
-			}()
-		case *network.EventRequestWillBeSent:
-			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
-			//重定向
-			request := ev
-			if ev.RedirectResponse != nil {
-				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
-			}
-		case *network.EventLoadingFinished:
-			go func(ev *network.EventLoadingFinished) {
-				c := chromedp.FromContext(*spider.Ctx)
-				ctx := cdp.WithExecutor(*spider.Ctx, c.Target)
-				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
-				// }
-				if e != nil {
-					fmt.Printf("network.EventLoadingFinished error: %v", e)
-				}
-				if len(data) > 0 {
-					spider.Source <- string(data)
-					// fmt.Printf("=========data: %+v\n", string(data))
-				}
-			}(ev)
-		case *network.EventResponseReceived:
-
-		case *page.EventJavascriptDialogOpening:
-			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
-			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
-			Responses = append(Responses, Response)
-			go func() {
-				c := chromedp.FromContext(ctx)
-				ctx := cdp.WithExecutor(ctx, c.Target)
-				//关闭弹窗
-				page.HandleJavaScriptDialog(false).Do(ctx)
-				spider.Responses <- Responses
-			}()
-		}
-	})
 	spider.Cancel = &cancel
 	spider.Ctx = &ctx
 	err := chromedp.Run(
@@ -157,12 +170,12 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 }
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
-func (spider *Spider) Send() ([]string, error) {
+func (t *Tab) Send() ([]string, error) {
 	var htmls []string
 	var res string
 	err := chromedp.Run(
-		*spider.Ctx,
-		chromedp.Navigate(spider.Url.String()),
+		*t.Ctx,
+		chromedp.Navigate(t.Url.String()),
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
 	if err != nil {
@@ -173,7 +186,7 @@ func (spider *Spider) Send() ([]string, error) {
 	//循环两次获取,不会获取过多内容
 	for i := 0; i < 2; i++ {
 		select {
-		case html := <-spider.Source:
+		case html := <-t.Source:
 			htmls = append(htmls, html)
 		case <-time.After(time.Second):
 		}
@@ -182,11 +195,11 @@ func (spider *Spider) Send() ([]string, error) {
 	return htmls, err
 }
 
-func (spider *Spider) GetRequrlparam() (url.Values, error) {
-	if len(spider.Url.String()) == 0 {
+func (t *Tab) GetRequrlparam() (url.Values, error) {
+	if len(t.Url.String()) == 0 {
 		panic("request url is emtry")
 	}
-	u, err := url.Parse(spider.Url.String())
+	u, err := url.Parse(t.Url.String())
 	if err != nil {
 		panic(err)
 	}
@@ -195,28 +208,28 @@ func (spider *Spider) GetRequrlparam() (url.Values, error) {
 }
 
 //GetReqLensByHtml 二度获取请求的长度
-func (spider *Spider) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
-	if len(spider.Url.String()) == 0 {
+func (t *Tab) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
+	if len(t.Url.String()) == 0 {
 		panic("request url is emtry")
 	}
 
 	if JsonUrls.MetHod == "GET" {
-		spider.ReqMode = "GET"
-		spider.Url, _ = url.Parse(JsonUrls.Url)
-		response, err := spider.Send()
+		t.ReqMode = "GET"
+		t.Url, _ = url.Parse(JsonUrls.Url)
+		response, err := t.Send()
 		if err != nil {
 			return err
 		}
-		spider.Standardlen = len(response)
+		t.Standardlen = len(response)
 	} else {
-		spider.ReqMode = "POST"
-		spider.Url, _ = url.Parse(JsonUrls.Url)
-		spider.PostData = []byte(JsonUrls.Data)
-		response, err := spider.Send()
+		t.ReqMode = "POST"
+		t.Url, _ = url.Parse(JsonUrls.Url)
+		t.PostData = []byte(JsonUrls.Data)
+		response, err := t.Send()
 		if err != nil {
 			return err
 		}
-		spider.Standardlen = len(response)
+		t.Standardlen = len(response)
 	}
 
 	return nil
@@ -254,8 +267,8 @@ func (g *BuildPayload) GetPayloadValue() (string, error) {
 }
 
 //PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
-func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
-	spider.ReqMode = reqmod
+func (t *Tab) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
+	t.ReqMode = reqmod
 
 	if reqmod == "GET" {
 		if len(Getparams) == 0 {
@@ -263,21 +276,21 @@ func (spider *Spider) PayloadHandle(payload string, reqmod string, paramname str
 		}
 		payloads := []string{payload}
 		Getparams[paramname] = payloads
-		spider.Url.RawQuery = Getparams.Encode()
+		t.Url.RawQuery = Getparams.Encode()
 	} else {
-		if len(spider.PostData) == 0 {
+		if len(t.PostData) == 0 {
 			return fmt.Errorf("POST参数为空")
 		}
-		spider.PostData = []byte(payload)
+		t.PostData = []byte(payload)
 	}
 	return nil
 }
 
 //这个要改一下加速发包速度
-func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) {
+func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 	var htmls []string
-	if spider.ReqMode == "GET" {
-		Getparams, err := spider.GetRequrlparam()
+	if t.ReqMode == "GET" {
+		Getparams, err := t.GetRequrlparam()
 		tmpParams := make(url.Values)
 		for key, value := range Getparams {
 			tmpParams[key] = value
@@ -285,8 +298,8 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		if spider.Headers["Referer"] == spider.Url.String() {
-			html_s, err := spider.Send()
+		if t.Headers["Referer"] == t.Url.String() {
+			html_s, err := t.Send()
 			if err != nil {
 				return nil, err
 			}
@@ -294,9 +307,9 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		} else {
 
 			for param, _ := range Getparams {
-				spider.PayloadHandle(newpayload, "GET", param, Getparams)
+				t.PayloadHandle(newpayload, "GET", param, Getparams)
 				Getparams = tmpParams
-				html_s, err := spider.Send()
+				html_s, err := t.Send()
 				if err != nil {
 					return nil, err
 				}
@@ -305,7 +318,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		}
 
 		if len(Getparams) == 0 {
-			html_s, err := spider.Send()
+			html_s, err := t.Send()
 			if err != nil {
 				return nil, err
 			}
@@ -313,7 +326,7 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 		}
 		return htmls, nil
 	} else {
-		PostData := spider.PostData
+		PostData := t.PostData
 		params := strings.Split(string(PostData), "&")
 		var newpayload1 string
 		var Getparams url.Values
@@ -326,9 +339,9 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 				PostData = []byte(newpayload1)
 			}
 		}
-		spider.PostData = PostData
-		spider.PayloadHandle(newpayload1, "POST", "", Getparams)
-		html_s, err := spider.Send()
+		t.PostData = PostData
+		t.PayloadHandle(newpayload1, "POST", "", Getparams)
+		html_s, err := t.Send()
 		if err != nil {
 			return nil, err
 		}
@@ -337,10 +350,10 @@ func (spider *Spider) CheckPayloadLocation(newpayload string) ([]string, error) 
 	}
 }
 
-func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
+func (t *Tab) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
-	htmls, _ := spider.CheckPayloadLocation(playload)
+	htmls, _ := t.CheckPayloadLocation(playload)
 	var bOnhtml bool = false
 	for i, html := range htmls {
 		Node := ast.SearchInputInResponse(playload, html)
@@ -348,37 +361,37 @@ func (spider *Spider) CheckRandOnHtmlS(playload string, urlrequst interface{}) (
 			bOnhtml = true
 		}
 		//重置Url参数
-		spider.CopyRequest(urlrequst)
-		urlocc.Request = spider.ReqtoJson()
+		t.CopyRequest(urlrequst)
+		urlocc.Request = t.ReqtoJson()
 		urlocc.OCC = Node
 		ReponseInfo[i] = urlocc
 	}
 	return bOnhtml, ReponseInfo
 }
 
-func (spider *Spider) CopyRequest(data interface{}) {
+func (t *Tab) CopyRequest(data interface{}) {
 	var lock sync.Mutex
 	lock.Lock()
 	defer lock.Unlock()
 	switch v := data.(type) {
 	case map[string]interface{}:
-		spider.ReqMode = v["method"].(string)
-		spider.Url, _ = url.Parse(v["url"].(string))
-		spider.PostData = []byte(v["data"].(string))
-		spider.Headers = v["headers"].(map[string]interface{})
+		t.ReqMode = v["method"].(string)
+		t.Url, _ = url.Parse(v["url"].(string))
+		t.PostData = []byte(v["data"].(string))
+		t.Headers = v["headers"].(map[string]interface{})
 	case ast.JsonUrl:
-		spider.ReqMode = v.MetHod
-		spider.Url, _ = url.Parse(v.Url)
-		spider.PostData = []byte(v.Data)
-		spider.Headers = v.Headers
+		t.ReqMode = v.MetHod
+		t.Url, _ = url.Parse(v.Url)
+		t.PostData = []byte(v.Data)
+		t.Headers = v.Headers
 	}
 }
 
-func (spider *Spider) ReqtoJson() ast.JsonUrl {
+func (t *Tab) ReqtoJson() ast.JsonUrl {
 	var data ast.JsonUrl
-	data.MetHod = spider.ReqMode
-	data.Url = spider.Url.String()
-	data.Data = string(spider.PostData)
-	data.Headers = spider.Headers
+	data.MetHod = t.ReqMode
+	data.Url = t.Url.String()
+	data.Data = string(t.PostData)
+	data.Headers = t.Headers
 	return data
 }
