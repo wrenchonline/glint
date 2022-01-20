@@ -171,8 +171,9 @@ func (t *Task) close() {
 }
 
 func (t *Task) setprog(progress float64) {
+	p := util.Decimal(progress)
 	t.lock.Lock()
-	t.Progress += progress
+	t.Progress += p
 	t.lock.Unlock()
 }
 

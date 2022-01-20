@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
@@ -225,4 +226,9 @@ func ParseUri(uri string, body []byte, method string) (Param, error) {
 		err = fmt.Errorf("method not supported")
 	}
 	return nil, err
+}
+
+func Decimal(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", value), 64)
+	return value
 }
