@@ -311,8 +311,9 @@ func (t *Task) PluginMsgHandler(ctx context.Context) {
 		case msg := <-t.PliuginsMsg:
 			fmt.Printf("msg: %v\n", msg)
 			reponse := make(map[string]interface{})
-			reponse["status"] = 0
+			reponse["status"] = 1
 			reponse["msg"] = msg
+			reponse["taskid"] = strconv.Itoa(t.TaskId)
 		restart:
 			for idx, info := range Socketinfo {
 				if _, ok := info.Ctx.Deadline(); ok {
