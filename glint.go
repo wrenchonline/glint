@@ -171,16 +171,16 @@ func (t *Task) close() {
 }
 
 func (t *Task) setprog(progress float64) {
-	p := util.Decimal(progress)
+	// p := util.Decimal(progress)
 	t.lock.Lock()
-	t.Progress += p
+	t.Progress += progress
 	t.lock.Unlock()
 }
 
 //发送进度条到通知队列
 func (t *Task) sendprog() {
 	Element := make(map[string]interface{})
-	Element["status"] = 0
+	Element["status"] = 1
 	Element["progress"] = t.Progress
 	t.PliuginsMsg <- Element
 }
@@ -264,13 +264,13 @@ func (t *Task) dostartTasks(installDb bool) error {
 			t.Plugins = append(t.Plugins, &pluginInternal)
 			t.lock.Unlock()
 			args := plugin.PluginOption{
-				PluginWg:   &t.PluginWg,
-				Progress:   &t.Progress,
-				IsSocket:   true,
-				Data:       ReqList,
-				TaskId:     t.TaskId,
-				Sendstatus: &t.PliuginsMsg,
-				Totalprog:  percentage,
+				PluginWg:  &t.PluginWg,
+				Progress:  &t.Progress,
+				IsSocket:  true,
+				Data:      ReqList,
+				TaskId:    t.TaskId,
+				SingelMsg: &t.PliuginsMsg,
+				Totalprog: percentage,
 			}
 			go func() {
 				pluginInternal.Run(args)
@@ -295,13 +295,13 @@ func (t *Task) dostartTasks(installDb bool) error {
 			t.lock.Unlock()
 
 			args := plugin.PluginOption{
-				PluginWg:   &t.PluginWg,
-				Progress:   &t.Progress,
-				IsSocket:   true,
-				Data:       ReqList,
-				TaskId:     t.TaskId,
-				Sendstatus: &t.PliuginsMsg,
-				Totalprog:  percentage,
+				PluginWg:  &t.PluginWg,
+				Progress:  &t.Progress,
+				IsSocket:  true,
+				Data:      ReqList,
+				TaskId:    t.TaskId,
+				SingelMsg: &t.PliuginsMsg,
+				Totalprog: percentage,
 			}
 			go func() {
 				pluginInternal.Run(args)

@@ -311,7 +311,7 @@ func (t *Task) PluginMsgHandler(ctx context.Context) {
 		case msg := <-t.PliuginsMsg:
 			fmt.Printf("msg: %v\n", msg)
 			reponse := make(map[string]interface{})
-			reponse["status"] = 1
+			reponse["status"] = msg["status"]
 			reponse["msg"] = msg
 			reponse["taskid"] = strconv.Itoa(t.TaskId)
 		restart:
