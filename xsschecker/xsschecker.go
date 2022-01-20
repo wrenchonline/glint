@@ -451,7 +451,6 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 					break
 				}
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
-
 					Result := util.VulnerableTcpOrUdpResult(occ.Url,
 						"VULNERABLE to Cross-site scripting ...",
 						[]string{string(payload)},

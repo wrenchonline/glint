@@ -52,16 +52,16 @@ func (p *Plugin) Init() {
 		defer p.threadwg.Done()
 		data := args.(GroupData)
 		for _, f := range p.Callbacks {
-			p.mu.Lock()
 			scanresult, err := f(data)
 			if err != nil {
-				logger.Error("plugin::error %s", err.Error())
+				logger.Warning("plugin::error %s", err.Error())
 			} else {
 				if scanresult != nil {
+					p.mu.Lock()
 					p.ScanResult = append(p.ScanResult, scanresult)
+					p.mu.Unlock()
 				}
 			}
-			p.mu.Unlock()
 		}
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), p.Timeout)
@@ -76,18 +76,20 @@ func (p *Plugin) Run(args PluginOption) error {
 	defer p.Pool.Release()
 	var err error
 	for type_name, urlinters := range args.Data {
+		// fmt.Println(len(urlinters))
 		p.threadwg.Add(len(urlinters))
-		go func(type_name string, urlinters []interface{}) {
-			for _, urlinter := range urlinters {
+		for _, urlinter := range urlinters {
+			go func(type_name string, urlinter interface{}) {
 				data := GroupData{GroupType: type_name, GroupUrls: urlinter, Spider: p.Spider, Pctx: p.Ctx, Pcancel: p.Cancel}
 				err = p.Pool.Invoke(data)
 				if err != nil {
 					logger.Error(err.Error())
 				}
-			}
-		}(type_name, urlinters)
+			}(type_name, urlinter)
+		}
+		p.threadwg.Wait()
 	}
-	p.threadwg.Wait()
+
 	logger.Info("Plugin %s is Finish!", p.PluginName)
 	if args.IsSocket {
 		Element := make(map[string]interface{})
