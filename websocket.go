@@ -66,7 +66,7 @@ func (t *Task) quitmsg(ctx context.Context, c *websocket.Conn) {
 	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
 		<-(*task.Ctx).Done()
-		sendmsg(2, "The Task is End")
+		sendmsg(2, "The Task is End", t.TaskId)
 	}
 }
 
@@ -125,11 +125,12 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func sendmsg(status int, message string) error {
+func sendmsg(status int, message string, taskid int) error {
 	var err error
 	reponse := make(map[string]interface{})
 	reponse["status"] = status
 	reponse["msg"] = message
+	reponse["taskid"] = strconv.Itoa(taskid)
 	logger.Info("%v", reponse)
 restart:
 	for idx, info := range Socketinfo {
@@ -169,26 +170,31 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 		}
 
 		Status := mjson["action"].(string)
+		id, err := strconv.Atoi(mjson["taskid"].(string))
+		if err != nil {
+			panic(err)
+		}
+
 		if strings.ToLower(Status) == "start" {
 			status, err := ts.GetTaskStatus(mjson)
 			if err != nil {
-				sendmsg(-1, err.Error())
+				sendmsg(-1, err.Error(), id)
 				continue
 			}
 			if status == TaskHasStart {
-				sendmsg(1, "The Task Has Started")
+				sendmsg(1, "The Task Has Started", id)
 				continue
 			}
 			//开始任务
 			task, err := ts.start(mjson)
 			if err != nil {
-				sendmsg(-1, err.Error())
+				sendmsg(-1, err.Error(), task.TaskId)
 				continue
 			}
 			Taskslock.Lock()
 			Tasks = append(Tasks, task)
 			Taskslock.Unlock()
-			sendmsg(0, "The Task is Starting")
+			sendmsg(0, "The Task is Starting", task.TaskId)
 			go task.PluginMsgHandler(*task.Ctx)
 			go task.quitmsg(ctx, c)
 		} else if strings.ToLower(Status) == "close" {
