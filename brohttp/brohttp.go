@@ -50,6 +50,11 @@ func (spider *Spider) Close() {
 	defer chromedp.Cancel(*spider.Ctx)
 }
 
+func (t *Tab) Close() {
+	defer (*t.Cancel)()
+	defer chromedp.Cancel(*t.Ctx)
+}
+
 func NewTab(spider *Spider) (*Tab, error) {
 	var tab Tab
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)

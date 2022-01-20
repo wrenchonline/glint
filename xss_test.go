@@ -80,10 +80,11 @@ func TestURL(t *testing.T) {
 		MetHod:  "GET",
 		Headers: Headers,
 	}
-	Spider.CopyRequest(a)
-	Spider.Send()
+	tab, _ := brohttp.NewTab(&Spider)
+	tab.CopyRequest(a)
+	tab.Send()
 	time.Sleep(5 * time.Second)
-	Spider.Send()
+	tab.Send()
 	time.Sleep(5 * time.Second)
 }
 func Test_JS(t *testing.T) {

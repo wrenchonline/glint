@@ -279,7 +279,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			myfunc = append(myfunc, xsschecker.CheckXss)
 			pluginInternal := plugin.Plugin{
 				PluginName:   "xss",
-				MaxPoolCount: 1,
+				MaxPoolCount: 20,
 				Callbacks:    myfunc,
 				Spider:       &t.XssSpider,
 				InstallDB:    installDb,
