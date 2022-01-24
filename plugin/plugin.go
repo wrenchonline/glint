@@ -66,12 +66,15 @@ func (p *Plugin) Init() {
 					Element := make(map[string]interface{})
 					Element["status"] = 3
 					Element["vul"] = p.PluginName
-					Element["request"] = scanresult.ReqMsg[0]
-					Element["response"] = scanresult.RespMsg[0]
+					Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
+					Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
 					Element["deail"] = scanresult.Output
 					Element["url"] = scanresult.Target
 					Element["vul_level"] = scanresult.VulnerableLevel
-					(*data.Msg) <- Element
+					if data.IsSocket {
+						(*data.Msg) <- Element
+					}
+
 				}
 			}
 		}

@@ -475,13 +475,15 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	spider.tabCancels = append(spider.tabCancels, cancel)
 	spider.lock.Unlock()
 
-	tab.ExtraHeaders = map[string]interface{}{}
+	// tab.ExtraHeaders = map[string]interface{}{}
 	// host := navigateReq.URL.Host
 	tab.Ctx = &tCtx
 	tab.Cancel = cancel
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
-	if len(tab.ExtraHeaders) > 0 {
+	lens := len(tab.ExtraHeaders)
+	if lens > 0 {
+		fmt.Println(len(tab.ExtraHeaders))
 		if tab.ExtraHeaders["HOST"] == "/" {
 			delete(tab.ExtraHeaders, "HOST")
 		}

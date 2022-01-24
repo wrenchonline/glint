@@ -131,7 +131,7 @@ func sendmsg(status int, message string, taskid int) error {
 	reponse["status"] = status
 	reponse["msg"] = message
 	reponse["taskid"] = strconv.Itoa(taskid)
-	logger.Info("%v", reponse)
+	// logger.Info("%v", reponse)
 restart:
 	for idx, info := range Socketinfo {
 		if _, ok := info.Ctx.Deadline(); ok {
