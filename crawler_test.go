@@ -21,7 +21,7 @@ import (
 func Test_Crawler(t *testing.T) {
 	logger.DebugEnable(true)
 	TaskConfig := config.TaskConfig{}
-	TaskConfig.Proxy = "127.0.0.1:7777"
+	TaskConfig.Proxy = ""
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
@@ -45,7 +45,7 @@ func Test_Crawler(t *testing.T) {
 		os.Exit(-1)
 	}
 	if len(targets) != 0 {
-		logger.Info("sdads")
+		// logger.Info("sdads")
 		msg := fmt.Sprintf("Init crawler task, host: %s, max tab count: %d, max crawl count: %d.",
 			targets[0].URL.Host, TaskConfig.MaxTabsCount, TaskConfig.MaxCrawlCount)
 		logger.Info(msg)

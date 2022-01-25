@@ -448,9 +448,14 @@ func InitSpider(
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("block-new-web-contents", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.Flag("proxy-server", Proxy),
+		// chromedp.Flag("proxy-server", Proxy),
 		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
+
+	if Proxy != "" {
+		options = append(options, chromedp.Flag("proxy-server", Proxy))
+	}
+
 	ExecAllocator := append(chromedp.DefaultExecAllocatorOptions[:], options...)
 	//NewExecAllocator 是新建一个浏览器
 	ctx, Cancel := chromedp.NewExecAllocator(context.Background(), ExecAllocator...)

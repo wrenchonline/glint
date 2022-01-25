@@ -103,9 +103,8 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 	values := DbTaskConfig{}
 	err := Dm.Db.Get(&values, sql, taskid)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("get exweb_scan_param error %v", err.Error())
 	}
-
 	//两张表
 	sql = `
 	SELECT
@@ -118,7 +117,7 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 	val2 := DbTargetInfo{}
 	err = Dm.Db.Get(&val2, sql, taskid)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("gettaskConfig error %v", err.Error())
 	}
 	values.Urls = val2.Urls
 	return values, err
@@ -137,7 +136,7 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 	values := []ExtraHeaders{}
 	err := Dm.Db.Select(&values, sql, uuid)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("get extra headers error %v", err.Error())
 	}
 	return values, err
 }
@@ -169,7 +168,9 @@ func (Dm *DbManager) SaveScanResult(
 		"respmsg":       RespMsg,
 		"vulnerability": VulnerableLevel,
 	})
-
+	if err != nil {
+		logger.Error("save scan result error %v", err.Error())
+	}
 	return err
 }
 
@@ -177,7 +178,7 @@ func (Dm *DbManager) SaveScanResult(
 func (Dm *DbManager) DeleteScanResult(taskid int) error {
 	_, err := Dm.Db.Exec("delete from exweb_task_result where task_id=?", taskid)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("delete scan result error %v", err.Error())
 	}
 	return err
 }
@@ -236,7 +237,9 @@ func (Dm *DbManager) InstallHttpsReqStatus(State *PublishState) error {
 		"content_type": State.ContentType,
 		"created_time": State.CreatedTime,
 	})
-
+	if err != nil {
+		logger.Error("install https req status error %v", err.Error())
+	}
 	return err
 }
 

@@ -28,7 +28,7 @@ NoHeadless: true
 
 PathByFuzz: false
 
-Proxy: "127.0.0.1:7777"
+Proxy: ""
 
 
 

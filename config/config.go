@@ -169,7 +169,7 @@ type TaskConfig struct {
 const (
 	UserName = "itop"
 	Password = "rjjsoft"
-	Ip       = "192.168.166.84"
+	Ip       = "192.168.166.83"
 	Port     = "3306"
 	DbName   = "itop"
 )
