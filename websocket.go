@@ -150,6 +150,8 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 	mjson := make(map[string]interface{})
 	var v interface{}
 	var jsonobj interface{}
+	var Status string
+	var taskid string
 	for {
 		err := wsjson.Read(ctx, c, &v)
 		if err != nil {
@@ -169,8 +171,24 @@ func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
 			}
 		}
 
-		Status := mjson["action"].(string)
-		id, err := strconv.Atoi(mjson["taskid"].(string))
+		if mjson == nil {
+			return err
+		}
+
+		if value, ok := mjson["action"].(string); ok {
+			Status = value
+		} else {
+			sendmsg(-1, "error: unkown action for the json", 65535)
+			return err
+		}
+		if value, ok := mjson["taskid"].(string); ok {
+			taskid = value
+		} else {
+			sendmsg(-1, "error: unkown taskid for the json", 65535)
+			return err
+		}
+
+		id, err := strconv.Atoi(taskid)
 		if err != nil {
 			panic(err)
 		}
