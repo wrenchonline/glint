@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
+	"glint/logger"
 	"io"
 	"log"
 	"net"
+	"strconv"
 )
 
 type ConnCallback func(args interface{}) error
@@ -17,19 +20,47 @@ type MConn struct {
 	SOCKETCONN   []*net.Conn
 }
 
+//
+func transportconn() {
+
+}
+
 func (m *MConn) Init() error {
 	m.Signal = make(chan string)
 	return nil
 }
 
-//此框架我准备设计成一对多的形式模块处理业务，方便自己以后二次开发。
+func (m *MConn) SendAll(status int, message string, taskid int) error {
+	var err error
+	reponse := make(map[string]interface{})
+	reponse["status"] = status
+	reponse["msg"] = message
+	reponse["taskid"] = strconv.Itoa(taskid)
+	// logger.Info("%v", reponse)
+restart:
+	for idx, conn := range m.SOCKETCONN {
+		data, err := json.Marshal(reponse)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		if len(data) > 0 {
+			_, err = (*conn).Write(data)
+			if err != nil {
+				logger.Error(err.Error())
+				m.SOCKETCONN = append(m.SOCKETCONN[:idx], m.SOCKETCONN[(idx+1):]...)
+				goto restart
+			}
+		}
+	}
+	return err
+}
 
+//此框架我准备设计成一对多的形式模块处理业务，方便自己以后二次开发。
 func (m *MConn) handle(data []byte) {
 	m.CallbackFunc(data)
 }
 
 func (m *MConn) listeningSocket(con net.Conn) {
-
 	defer con.Close()
 	reader := bufio.NewReader(con)
 	for {
@@ -56,6 +87,7 @@ func (m *MConn) listeningSocket(con net.Conn) {
 			continue
 		}
 		log.Println("received msg", string(data[4:]))
+		m.handle(data[4:])
 	}
 
 }
