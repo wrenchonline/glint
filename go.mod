@@ -3,8 +3,8 @@ module glint
 go 1.16
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20220113222801-0725d94bb6ee
-	github.com/chromedp/chromedp v0.7.6
+	github.com/chromedp/cdproto v0.0.0-20220131204822-e6abebe7b8cd
+	github.com/chromedp/chromedp v0.7.7
 	github.com/chzyer/logex v1.2.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
@@ -25,10 +25,10 @@ require (
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/valyala/fasthttp v1.32.0
-	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	github.com/valyala/fasthttp v1.33.0
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
-	google.golang.org/genproto v0.0.0-20220112215332-a9c7c0acf9f2
+	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
