@@ -31,20 +31,27 @@ func (m *MConn) Init() error {
 }
 
 func (m *MConn) SendAll(status int, message string, taskid int) error {
-	var err error
+	var (
+		err error
+	)
+
 	reponse := make(map[string]interface{})
 	reponse["status"] = status
 	reponse["msg"] = message
 	reponse["taskid"] = strconv.Itoa(taskid)
+	data, err := json.Marshal(reponse)
+	bs := make([]byte, len(data)+4)
+	//大端通讯
+	binary.BigEndian.PutUint32(bs, uint32(len(data)+4))
+	copy(bs[4:], data)
 	// logger.Info("%v", reponse)
 restart:
 	for idx, conn := range m.SOCKETCONN {
-		data, err := json.Marshal(reponse)
 		if err != nil {
 			logger.Error(err.Error())
 		}
 		if len(data) > 0 {
-			_, err = (*conn).Write(data)
+			_, err = (*conn).Write(bs)
 			if err != nil {
 				logger.Error(err.Error())
 				m.SOCKETCONN = append(m.SOCKETCONN[:idx], m.SOCKETCONN[(idx+1):]...)
