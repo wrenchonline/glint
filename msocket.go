@@ -80,18 +80,18 @@ func (m *MConn) Listen(con net.Conn) {
 		peek, err := reader.Peek(4)
 		if err != nil {
 			if err != io.EOF {
-				log.Println(err)
+				logger.Error(err.Error())
 			} else {
 				break
 			}
 		}
 		buffer := bytes.NewBuffer(peek)
-		var length int32
+		var length uint32
 		err = binary.Read(buffer, binary.BigEndian, &length)
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 		}
-		if int32(reader.Buffered()) < length+4 {
+		if uint32(reader.Buffered()) < length+4 {
 			continue
 		}
 		data := make([]byte, length+4)
