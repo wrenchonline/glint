@@ -37,6 +37,7 @@ var DefaultPlugins = cli.NewStringSlice("xss", "csrf")
 var signalChan chan os.Signal
 var ConfigpPath string
 var Plugins cli.StringSlice
+var WebSocket string
 var Socket string
 
 type Task struct {
@@ -86,6 +87,15 @@ func main() {
 				Destination: &Plugins,
 			},
 
+			//设置websocket地址
+			&cli.StringFlag{
+				Name: "websocket",
+				// Aliases:     []string{"p"},
+				Usage:       "Websocket Communication Address. Example `--websocket 127.0.0.1:8081`",
+				Value:       DefaultSocket,
+				Destination: &WebSocket,
+			},
+
 			//设置socket地址
 			&cli.StringFlag{
 				Name: "socket",
@@ -110,8 +120,10 @@ func run(c *cli.Context) error {
 	signalChan = make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 
-	if Socket != "" {
-		ServerHandler(c)
+	if strings.ToLower(WebSocket) != "" {
+		WebSocketHandler(c)
+	} else if strings.ToLower(Socket) != "" {
+		SocketHandler(c)
 	} else {
 		if c.Args().Len() == 0 {
 			logger.Error("url must be set")
@@ -393,17 +405,19 @@ func CmdHandler(c *cli.Context, t *Task) {
 	t.PluginWg.Wait()
 }
 
-func ServerHandler(c *cli.Context) error {
-	l, err := net.Listen("tcp", Socket)
+func WebSocketHandler(c *cli.Context) error {
+	l, err := net.Listen("tcp", WebSocket)
 	if err != nil {
 		return err
 	}
 	logger.Info("listening on http://%v", l.Addr())
-	cs, err := NewTaskServer()
+
+	cs, err := NewTaskServer("websocket")
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+
 	s := &http.Server{
 		Handler: cs,
 	}
@@ -426,4 +440,30 @@ func ServerHandler(c *cli.Context) error {
 	defer cancel()
 
 	return s.Shutdown(ctx)
+}
+
+func SocketHandler(c *cli.Context) error {
+	var m MConn
+	m.Init()
+	server_control, err := NewTaskServer("socket")
+	m.CallbackFunc = server_control.Task
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+	listener, err := net.Listen("tcp", Socket)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+	defer listener.Close()
+	for {
+		con, err := listener.Accept()
+		if err != nil {
+			logger.Error(err.Error())
+			continue
+		}
+		go m.Listen(con)
+		SOCKETCONN = append(SOCKETCONN, &con)
+	}
 }

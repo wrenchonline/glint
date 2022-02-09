@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"glint/logger"
@@ -12,18 +13,14 @@ import (
 	"strconv"
 )
 
-type ConnCallback func(args interface{}) error
+type ConnCallback func(ctx context.Context, mjson map[string]interface{}) error
 
 type MConn struct {
 	CallbackFunc ConnCallback
 	Signal       chan string
-	SOCKETCONN   []*net.Conn
 }
 
-//
-func transportconn() {
-
-}
+var SOCKETCONN []*net.Conn
 
 func (m *MConn) Init() error {
 	m.Signal = make(chan string)
@@ -46,7 +43,7 @@ func (m *MConn) SendAll(status int, message string, taskid int) error {
 	copy(bs[4:], data)
 	// logger.Info("%v", reponse)
 restart:
-	for idx, conn := range m.SOCKETCONN {
+	for idx, conn := range SOCKETCONN {
 		if err != nil {
 			logger.Error(err.Error())
 		}
@@ -54,7 +51,7 @@ restart:
 			_, err = (*conn).Write(bs)
 			if err != nil {
 				logger.Error(err.Error())
-				m.SOCKETCONN = append(m.SOCKETCONN[:idx], m.SOCKETCONN[(idx+1):]...)
+				SOCKETCONN = append(SOCKETCONN[:idx], SOCKETCONN[(idx+1):]...)
 				goto restart
 			}
 		}
@@ -63,13 +60,22 @@ restart:
 }
 
 //此框架我准备设计成一对多的形式模块处理业务，方便自己以后二次开发。
-func (m *MConn) handle(data []byte) {
-	m.CallbackFunc(data)
+func (m *MConn) handle(ctx context.Context, data []byte) error {
+	mjson := make(map[string]interface{})
+	err := json.Unmarshal(data, &mjson)
+	if err != nil {
+		return err
+	}
+	err = m.CallbackFunc(ctx, mjson)
+	return err
 }
 
-func (m *MConn) listeningSocket(con net.Conn) {
+func (m *MConn) Listen(con net.Conn) {
 	defer con.Close()
 	reader := bufio.NewReader(con)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for {
 		peek, err := reader.Peek(4)
 		if err != nil {
@@ -94,29 +100,7 @@ func (m *MConn) listeningSocket(con net.Conn) {
 			continue
 		}
 		log.Println("received msg", string(data[4:]))
-		m.handle(data[4:])
+		go m.handle(ctx, data[4:])
 	}
 
-}
-
-func Start() {
-
-	var m MConn
-	m.Init()
-
-	listener, err := net.Listen("tcp", "127.0.0.1:3010")
-	defer listener.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for {
-		con, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		go m.listeningSocket(con)
-		m.SOCKETCONN = append(m.SOCKETCONN, &con)
-	}
 }

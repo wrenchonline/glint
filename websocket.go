@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,6 +38,8 @@ type TaskServer struct {
 	// serveMux routes the various endpoints to the appropriate handler.
 	serveMux http.ServeMux
 
+	server_type string
+
 	// DM
 	Dm *dbmanager.DbManager
 }
@@ -53,6 +56,8 @@ var Socketinfo []*soketinfo
 
 var Taskslock sync.Mutex
 
+var ServerType string
+
 type TaskStatus int
 
 const (
@@ -61,7 +66,7 @@ const (
 	TaskHasStart     TaskStatus = 1
 )
 
-func (t *Task) quitmsg(ctx context.Context, c *websocket.Conn) {
+func (t *Task) quitmsg() {
 	<-t.DoStartSignal
 	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
@@ -71,21 +76,27 @@ func (t *Task) quitmsg(ctx context.Context, c *websocket.Conn) {
 }
 
 // NewTaskServer
-func NewTaskServer() (*TaskServer, error) {
+func NewTaskServer(server_type string) (*TaskServer, error) {
 	ts := &TaskServer{
 		subscriberMessageBuffer: 16,
 		// subscribers:             make(map[*subscriber]struct{}),
 		publishLimiter: rate.NewLimiter(rate.Every(time.Millisecond*100), 8),
 	}
-	ts.serveMux.Handle("/", http.FileServer(http.Dir(".")))
-	ts.serveMux.HandleFunc("/task", ts.TaskHandler)
-	ts.serveMux.HandleFunc("/publish", ts.PublishHandler)
+	if strings.ToLower(server_type) == "websocket" {
+		ts.serveMux.Handle("/", http.FileServer(http.Dir(".")))
+		ts.serveMux.HandleFunc("/task", ts.TaskHandler)
+		ts.serveMux.HandleFunc("/publish", ts.PublishHandler)
+	}
+
 	ts.Dm = &dbmanager.DbManager{}
+	ts.server_type = server_type
+	ServerType = ts.server_type
 	err := ts.Dm.Init()
 	if err != nil {
 		return nil, err
 	}
 	return ts, nil
+
 }
 
 func (ts *TaskServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -103,12 +114,45 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
+		var (
+			err     error
+			v       interface{}
+			jsonobj interface{}
+		)
+
+		mjson := make(map[string]interface{})
+
 		defer c.Close(websocket.StatusInternalError, "")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		info := soketinfo{Conn: c, Ctx: ctx}
 		Socketinfo = append(Socketinfo, &info)
-		err = ts.Task(ctx, c)
+
+		for {
+			err := wsjson.Read(ctx, c, &v)
+			if err != nil {
+				logger.Warning(err.Error())
+				break
+			}
+			if value, ok := v.(string); ok {
+				err = json.Unmarshal([]byte(value), &jsonobj)
+				if err != nil {
+					logger.Error(err.Error())
+					break
+				}
+				mjson = jsonobj.(map[string]interface{})
+			} else if value, ok := v.((map[string]interface{})); ok {
+				for k, v := range value {
+					mjson[k] = v
+				}
+			}
+			err = ts.Task(ctx, mjson)
+			if err != nil {
+				logger.Error(err.Error())
+				continue
+			}
+		}
+
 		if errors.Is(err, context.Canceled) {
 			logger.Error(err.Error())
 			return
@@ -132,98 +176,103 @@ func sendmsg(status int, message string, taskid int) error {
 	reponse["msg"] = message
 	reponse["taskid"] = strconv.Itoa(taskid)
 	// logger.Info("%v", reponse)
-restart:
-	for idx, info := range Socketinfo {
-		if _, ok := info.Ctx.Deadline(); ok {
-			Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
-			goto restart
-		} else {
-			err = wsjson.Write(info.Ctx, info.Conn, reponse)
+	if ServerType == "websocket" {
+	restart:
+		for idx, info := range Socketinfo {
+			if _, ok := info.Ctx.Deadline(); ok {
+				Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
+				goto restart
+			} else {
+				err = wsjson.Write(info.Ctx, info.Conn, reponse)
+			}
+		}
+	} else {
+		data, err := json.Marshal(reponse)
+		bs := make([]byte, len(data)+4)
+		//大端通讯
+		binary.BigEndian.PutUint32(bs, uint32(len(data)+4))
+		copy(bs[4:], data)
+		// logger.Info("%v", reponse)
+	restart1:
+		for idx, conn := range SOCKETCONN {
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			if len(data) > 0 {
+				_, err = (*conn).Write(bs)
+				if err != nil {
+					logger.Error(err.Error())
+					SOCKETCONN = append(SOCKETCONN[:idx], SOCKETCONN[(idx+1):]...)
+					goto restart1
+				}
+			}
 		}
 	}
+
 	return err
 }
 
-func (ts *TaskServer) Task(ctx context.Context, c *websocket.Conn) error {
-	// ctx = c.CloseRead(ctx)
+func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) error {
 
-	mjson := make(map[string]interface{})
-	var v interface{}
-	var jsonobj interface{}
-	var Status string
-	var taskid string
-	for {
-		err := wsjson.Read(ctx, c, &v)
+	var (
+		err    error
+		Status string
+		taskid string
+	)
+
+	if mjson == nil {
+		return err
+	}
+
+	if value, ok := mjson["action"].(string); ok {
+		Status = value
+	} else {
+		sendmsg(-1, "error: unkown action for the json", 65535)
+		return err
+	}
+	if value, ok := mjson["taskid"].(string); ok {
+		taskid = value
+	} else {
+		sendmsg(-1, "error: unkown taskid for the json", 65535)
+		return err
+	}
+
+	id, err := strconv.Atoi(taskid)
+	if err != nil {
+		panic(err)
+	}
+
+	if strings.ToLower(Status) == "start" {
+		status, err := ts.GetTaskStatus(mjson)
 		if err != nil {
-			logger.Warning(err.Error())
+			sendmsg(-1, err.Error(), id)
 			return err
 		}
-		if value, ok := v.(string); ok {
-			err = json.Unmarshal([]byte(value), &jsonobj)
-			if err != nil {
-				logger.Error(err.Error())
-				return err
-			}
-			mjson = jsonobj.(map[string]interface{})
-		} else if value, ok := v.((map[string]interface{})); ok {
-			for k, v := range value {
-				mjson[k] = v
-			}
-		}
-
-		if mjson == nil {
+		if status == TaskHasStart {
+			sendmsg(1, "The Task Has Started", id)
 			return err
 		}
-
-		if value, ok := mjson["action"].(string); ok {
-			Status = value
-		} else {
-			sendmsg(-1, "error: unkown action for the json", 65535)
-			return err
-		}
-		if value, ok := mjson["taskid"].(string); ok {
-			taskid = value
-		} else {
-			sendmsg(-1, "error: unkown taskid for the json", 65535)
-			return err
-		}
-
-		id, err := strconv.Atoi(taskid)
+		//开始任务
+		task, err := ts.start(mjson)
 		if err != nil {
-			panic(err)
+			sendmsg(-1, err.Error(), task.TaskId)
+			return err
 		}
-
-		if strings.ToLower(Status) == "start" {
-			status, err := ts.GetTaskStatus(mjson)
-			if err != nil {
-				sendmsg(-1, err.Error(), id)
-				continue
+		Taskslock.Lock()
+		Tasks = append(Tasks, task)
+		Taskslock.Unlock()
+		sendmsg(0, "The Task is Starting", task.TaskId)
+		go task.PluginMsgHandler(*task.Ctx)
+		go task.quitmsg()
+	} else if strings.ToLower(Status) == "close" {
+		if len(Tasks) != 0 {
+			for _, task := range Tasks {
+				(*task.Cancel)()
 			}
-			if status == TaskHasStart {
-				sendmsg(1, "The Task Has Started", id)
-				continue
-			}
-			//开始任务
-			task, err := ts.start(mjson)
-			if err != nil {
-				sendmsg(-1, err.Error(), task.TaskId)
-				continue
-			}
-			Taskslock.Lock()
-			Tasks = append(Tasks, task)
-			Taskslock.Unlock()
-			sendmsg(0, "The Task is Starting", task.TaskId)
-			go task.PluginMsgHandler(*task.Ctx)
-			go task.quitmsg(ctx, c)
-		} else if strings.ToLower(Status) == "close" {
-			if len(Tasks) != 0 {
-				for _, task := range Tasks {
-					(*task.Cancel)()
-				}
-				Tasks = nil
-			}
+			Tasks = nil
 		}
 	}
+	return err
 }
 
 func (ts *TaskServer) GetTaskStatus(json map[string]interface{}) (TaskStatus, error) {
