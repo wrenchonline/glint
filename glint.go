@@ -51,6 +51,8 @@ type Task struct {
 	Cancel        *context.CancelFunc
 	lock          *sync.Mutex
 	Dm            *dbmanager.DbManager
+	ScartTime     time.Time
+	EndTime       time.Time
 	InstallDb     bool
 	Progress      float64
 	DoStartSignal chan bool
@@ -334,7 +336,9 @@ quit:
 }
 
 func (t *Task) SaveQuitTime() {
-	t.Dm.SaveQuitTime(t.TaskId, time.Now())
+	t.EndTime = time.Now()
+	time.Since(t.ScartTime)
+	t.Dm.SaveQuitTime(t.TaskId, t.EndTime)
 }
 
 func (t *Task) SavePluginResult() {
@@ -372,6 +376,7 @@ func (t *Task) Init() {
 	t.lock = &sync.Mutex{}
 	t.PliuginsMsg = make(chan map[string]interface{})
 	t.DoStartSignal = make(chan bool)
+	t.ScartTime = time.Now()
 }
 
 func (t *Task) UrlPackage(_url string) error {

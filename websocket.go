@@ -71,7 +71,7 @@ func (t *Task) quitmsg() {
 	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
 		<-(*task.Ctx).Done()
-		sendmsg(3, "The Task is End", t.TaskId)
+		sendmsg(2, "The Task is End", t.TaskId)
 	}
 }
 
