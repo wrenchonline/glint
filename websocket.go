@@ -169,7 +169,7 @@ func (ts *TaskServer) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func sendmsg(status int, message string, taskid int) error {
+func sendmsg(status int, message interface{}, taskid int) error {
 	var err error
 	reponse := make(map[string]interface{})
 	reponse["status"] = status
@@ -192,7 +192,7 @@ func sendmsg(status int, message string, taskid int) error {
 		//大端通讯
 		binary.BigEndian.PutUint32(bs, uint32(len(data)+4))
 		copy(bs[4:], data)
-		// logger.Info("%v", reponse)
+		logger.Info("sendmsg: %v", reponse)
 	restart1:
 		for idx, conn := range SOCKETCONN {
 			if err != nil {
@@ -378,27 +378,30 @@ func (ts *TaskServer) PublishHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Task) PluginMsgHandler(ctx context.Context) {
-	var err error
+	// var err error
 	for {
 		select {
 		case msg := <-t.PliuginsMsg:
 			fmt.Printf("msg: %v\n", msg)
-			reponse := make(map[string]interface{})
-			reponse["status"] = msg["status"]
-			reponse["msg"] = msg
-			reponse["taskid"] = strconv.Itoa(t.TaskId)
-		restart:
-			for idx, info := range Socketinfo {
-				if _, ok := info.Ctx.Deadline(); ok {
-					Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
-					goto restart
-				} else {
-					err = wsjson.Write(info.Ctx, info.Conn, reponse)
-				}
-			}
-			if err != nil {
-				logger.Error(err.Error())
-			}
+			// reponse := make(map[string]interface{})
+			// reponse["status"] = msg["status"].(int)
+			// reponse["msg"] = msg
+			// reponse["taskid"] = strconv.Itoa(t.TaskId)
+			status := msg["status"].(int)
+			sendmsg(status, msg, t.TaskId)
+
+		// restart:
+		// 	for idx, info := range Socketinfo {
+		// 		if _, ok := info.Ctx.Deadline(); ok {
+		// 			Socketinfo = append(Socketinfo[:idx], Socketinfo[(idx+1):]...)
+		// 			goto restart
+		// 		} else {
+		// 			err = wsjson.Write(info.Ctx, info.Conn, reponse)
+		// 		}
+		// 	}
+		// 	if err != nil {
+		// 		logger.Error(err.Error())
+		// 	}
 		// case <-time.After(time.Millisecond * 500):
 		case <-ctx.Done():
 			logger.Warning("PluginMsgHandler exit ...")

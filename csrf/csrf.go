@@ -64,8 +64,13 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	method := session["method"].(string)
 	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
+
+	var ContentType string = "None"
+	if value, ok := headers["Content-Type"]; ok {
+		ContentType = value
+	}
 	if strings.ToUpper(method) == "POST" {
-		params, err := util.ParseUri(url, body, "POST")
+		params, err := util.ParseUri(url, body, "POST", ContentType)
 		if err != nil {
 			logger.Error(err.Error())
 		}

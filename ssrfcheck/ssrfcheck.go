@@ -30,7 +30,12 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
 
-	params, err := util.ParseUri(url, body, method)
+	var ContentType string = "None"
+	if value, ok := headers["Content-Type"]; ok {
+		ContentType = value
+	}
+
+	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
 		logger.Error(err.Error())
 	}

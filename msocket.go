@@ -64,6 +64,7 @@ func (m *MConn) handle(ctx context.Context, data []byte) error {
 	mjson := make(map[string]interface{})
 	err := json.Unmarshal(data, &mjson)
 	if err != nil {
+		logger.Error(err.Error())
 		return err
 	}
 	err = m.CallbackFunc(ctx, mjson)

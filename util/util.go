@@ -124,9 +124,10 @@ func CopyMap(m map[string]interface{}) map[string]interface{} {
 }
 
 type post struct {
-	Key   string
-	Value string
-	index int //
+	Key          string
+	Value        string
+	index        int //
+	Content_type string
 	// url   string
 }
 
@@ -192,7 +193,7 @@ func (s *Param) SetPayload(uri string, payload string, method string) []string {
 	return result
 }
 
-func ParseUri(uri string, body []byte, method string) (Param, error) {
+func ParseUri(uri string, body []byte, method string, content_type string) (Param, error) {
 	var err error
 	if strings.ToUpper(method) == "POST" {
 		if len(body) > 0 {
@@ -201,7 +202,7 @@ func ParseUri(uri string, body []byte, method string) (Param, error) {
 			for i, kv := range strs {
 				key := strings.Split(string(kv), "=")[0]
 				value := strings.Split(string(kv), "=")[1]
-				Post := post{Key: key, Value: value, index: i}
+				Post := post{Key: key, Value: value, index: i, Content_type: content_type}
 				params = append(params, Post)
 			}
 			sort.Sort(params)
@@ -217,7 +218,7 @@ func ParseUri(uri string, body []byte, method string) (Param, error) {
 		for i, kv := range strs {
 			key := strings.Split(string(kv), "=")[0]
 			value := strings.Split(string(kv), "=")[1]
-			Post := post{Key: key, Value: value, index: i}
+			Post := post{Key: key, Value: value, index: i, Content_type: content_type}
 			params = append(params, Post)
 		}
 		sort.Sort(params)
