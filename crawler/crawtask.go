@@ -127,8 +127,9 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 	go func() {
 		err := t.Pool.Submit(task.Task)
 		if err != nil {
-			t.taskWG.Done()
 			logger.Error("addTask2Pool ", err)
+			t.taskWG.Done()
+
 		}
 	}()
 }

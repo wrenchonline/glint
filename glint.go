@@ -326,10 +326,15 @@ quit:
 	removetasks(t.TaskId)
 	if installDb {
 		t.SavePluginResult()
+		t.SaveQuitTime()
 	}
 	Taskslock.Unlock()
 	logger.Info("The End for task:%d", t.TaskId)
 	return err
+}
+
+func (t *Task) SaveQuitTime() {
+	t.Dm.SaveQuitTime(t.TaskId, time.Now())
 }
 
 func (t *Task) SavePluginResult() {

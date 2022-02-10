@@ -64,3 +64,19 @@ func Test_install_http_status_(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func Test_QuitTime(t *testing.T) {
+	var err error
+	Dm := dbmanager.DbManager{}
+	err = Dm.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	err = Dm.SaveQuitTime(
+		1,
+		time.Now(),
+	)
+	if err != nil {
+		t.Error(err)
+	}
+}
