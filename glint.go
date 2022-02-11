@@ -337,8 +337,9 @@ quit:
 
 func (t *Task) SaveQuitTime() {
 	t.EndTime = time.Now()
-	over_time := util.FmtDuration(time.Since(t.ScartTime))
-	t.Dm.SaveQuitTime(t.TaskId, t.EndTime, over_time)
+	otime := time.Since(t.ScartTime)
+	// over_time := util.FmtDuration(otime)
+	t.Dm.SaveQuitTime(t.TaskId, t.EndTime, otime.String())
 }
 
 func (t *Task) SavePluginResult() {
