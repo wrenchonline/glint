@@ -180,19 +180,17 @@ func (Dm *DbManager) SaveQuitTime(
 	taskid int,
 	t time.Time,
 ) error {
-	sql := "update exweb_task_info set end_time=? WHERE task_id=?"
-	//通过Exec更新数据, 这里传入了三个参数，对应sql语句定义的三个问号所在的位置
-	result1, err := Dm.Db.Exec(sql, t, taskid)
+	sql := `UPDATE exweb_task_info SET end_time=:end_time , task_status=:task_status WHERE task_id=:task_id`
+	_, err := Dm.Db.NamedExec(sql,
+		map[string]interface{}{
+			"end_time":    t,
+			"task_status": uint16(3),
+			"task_id":     taskid,
+		})
 	//错误处理
 	if err != nil {
 		fmt.Println("更新退出时间失败!")
 	}
-	affectedRows, err := result1.RowsAffected()
-	if err != nil {
-		fmt.Printf("get affected failed, err:%v\n", err)
-		return err
-	}
-	fmt.Printf("update data success, affected rows:%d\n", affectedRows)
 	return err
 }
 
