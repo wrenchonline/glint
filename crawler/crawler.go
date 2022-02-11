@@ -375,7 +375,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					tab.AddResultRequest(req)
 					// logger.Println("EventWindowOpen Add crawer url:", req)
 				} else {
-					//logger.Println("The url is exist:", req)
+					// logger.Println("The url is exist:", req)
 				}
 			}
 		case *page.EventDocumentOpened:

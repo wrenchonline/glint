@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"
@@ -232,4 +233,14 @@ func ParseUri(uri string, body []byte, method string, content_type string) (Para
 func Decimal(value float64) float64 {
 	value, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", value), 64)
 	return value
+}
+
+func FmtDuration(d time.Duration) string {
+	d = d.Round(time.Second)
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	d -= m * time.Hour
+	s := d / time.Second
+	return fmt.Sprintf("%02d小时%02d分钟%02d秒", h, m, s)
 }

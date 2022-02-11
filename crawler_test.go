@@ -29,14 +29,25 @@ func Test_Crawler(t *testing.T) {
 		t.Errorf("test ReadTaskConf() fail")
 	}
 	murl, _ := url.Parse("http://www.jykc.com")
+	murl2, _ := url.Parse("http://www.rongji.com")
 	Headers := make(map[string]interface{})
-	Headers["HOST"] = "http://www.jykc.com"
+	Headers["HOST"] = "http://www.jykc.com/"
+
+	Headers2 := make(map[string]interface{})
+	Headers2["HOST"] = "http://www.rongji.com/"
+
 	targets := []*model.Request{
 		&model.Request{
 			URL:           &model.URL{URL: *murl},
 			Method:        "GET",
 			FasthttpProxy: TaskConfig.Proxy,
 			Headers:       Headers,
+		},
+		&model.Request{
+			URL:           &model.URL{URL: *murl2},
+			Method:        "GET",
+			FasthttpProxy: TaskConfig.Proxy,
+			Headers:       Headers2,
 		},
 	}
 	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
@@ -55,7 +66,7 @@ func Test_Crawler(t *testing.T) {
 	logger.Info("Start crawling.")
 	task.Run()
 	result := task.Result
-	for _, rest := range result.ReqList {
+	for _, rest := range result.AllReqList {
 		fmt.Println(aurora.Red(rest))
 	}
 	ReqList := make(map[string][]ast.JsonUrl)

@@ -179,13 +179,15 @@ func (Dm *DbManager) SaveScanResult(
 func (Dm *DbManager) SaveQuitTime(
 	taskid int,
 	t time.Time,
+	over string,
 ) error {
-	sql := `UPDATE exweb_task_info SET end_time=:end_time , task_status=:task_status WHERE task_id=:task_id`
+	sql := `UPDATE exweb_task_info SET end_time=:end_time,task_status=:task_status,scan_time=:scan_time WHERE task_id=:task_id`
 	_, err := Dm.Db.NamedExec(sql,
 		map[string]interface{}{
 			"end_time":    t,
 			"task_status": uint16(3),
 			"task_id":     taskid,
+			"scan_time":   over,
 		})
 	//错误处理
 	if err != nil {
