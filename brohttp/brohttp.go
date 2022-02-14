@@ -22,8 +22,9 @@ import (
 
 //Spider 爬虫资源，设计目的是基于浏览器发送payload，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
-	Ctx    *context.Context //存储着浏览器的资源
-	Cancel *context.CancelFunc
+	Ctx        *context.Context //存储着浏览器的资源
+	Cancel     *context.CancelFunc
+	TabTimeOut int64
 }
 
 type Tab struct {
@@ -58,6 +59,8 @@ func (t *Tab) Close() {
 func NewTab(spider *Spider) (*Tab, error) {
 	var tab Tab
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
+	logger.Info("set timeout for the tab page : %d second", spider.TabTimeOut)
+	ctx, cancel = context.WithTimeout(ctx, time.Duration(spider.TabTimeOut)*time.Second)
 	tab.Ctx = &ctx
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
@@ -167,10 +170,12 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	spider.Cancel = &cancel
 	spider.Ctx = &ctx
+	spider.TabTimeOut = int64(TaskConfig.TabRunTimeout)
 	err := chromedp.Run(
 		*spider.Ctx,
 		fetch.Enable(),
 	)
+
 	return err
 }
 

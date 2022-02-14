@@ -240,7 +240,7 @@ func FmtDuration(d time.Duration) string {
 	h := d / time.Hour
 	d -= h * time.Hour
 	m := d / time.Minute
-	d -= m * time.Hour
+	d -= m * time.Minute
 	s := d / time.Second
 	return fmt.Sprintf("%02d小时%02d分钟%02d秒", d, m, s)
 }
