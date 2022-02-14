@@ -39,7 +39,7 @@ func (m *MConn) SendAll(status int, message string, taskid int) error {
 	data, err := json.Marshal(reponse)
 	bs := make([]byte, len(data)+4)
 	//大端通讯
-	binary.BigEndian.PutUint32(bs, uint32(len(data)+4))
+	binary.BigEndian.PutUint32(bs, uint32(len(data)))
 	copy(bs[4:], data)
 	// logger.Info("%v", reponse)
 restart:
