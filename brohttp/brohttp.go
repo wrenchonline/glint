@@ -59,8 +59,8 @@ func (t *Tab) Close() {
 func NewTab(spider *Spider) (*Tab, error) {
 	var tab Tab
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
-	logger.Info("set timeout for the tab page : %d second", spider.TabTimeOut)
-	ctx, cancel = context.WithTimeout(ctx, time.Duration(spider.TabTimeOut)*time.Second)
+	// logger.Info("set timeout for the tab page : %d second", 20)
+	ctx, cancel = context.WithTimeout(ctx, time.Duration(300)*time.Second)
 	tab.Ctx = &ctx
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
