@@ -342,6 +342,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 		var Getparams url.Values
 
 		for i, _ := range params {
+			fmt.Println(params[i])
 			v := strings.Split(string(params[i]), "=")[1]
 			if v == "" || len(v) == 8 { //8 是payload的长度
 				newpayload := strings.Split(string(params[i]), "=")[0] + "=" + newpayload

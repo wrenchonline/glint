@@ -18,6 +18,7 @@ import (
 	"glint/xsschecker"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strings"
@@ -60,6 +61,14 @@ type Task struct {
 }
 
 func main() {
+
+	go func() {
+		ip := "0.0.0.0:6060"
+		if err := http.ListenAndServe(ip, nil); err != nil {
+			fmt.Printf("start pprof failed on %s\n", ip)
+		}
+	}()
+
 	author := cli.Author{
 		Name:  "wrench",
 		Email: "ljl260435988@gmail.com",

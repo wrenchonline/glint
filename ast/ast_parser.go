@@ -171,14 +171,24 @@ func (parser *Parser) HttpParser(body string) bool {
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
-						if Tree.Len() != 0 {
-							parser.tokenizer.Set(Tree.PopMax())
+						if Tree.Len() > 0 || Tree != nil {
+							item := Tree.PopMax()
+							if item != nil {
+								parser.tokenizer.Set(item)
+							} else {
+								break
+							}
 						}
 						break
 					}
 					//color.Red("field.Tagname:%s  local TagName:%s", field.Tagname, name)
-					if Tree.Len() != 0 {
-						parser.tokenizer.Set(Tree.PopMax())
+					if Tree.Len() > 0 || Tree != nil {
+						item := Tree.PopMax()
+						if item != nil {
+							parser.tokenizer.Set(item)
+						} else {
+							break
+						}
 					}
 
 				} else {
@@ -207,13 +217,23 @@ func (parser *Parser) HttpParser(body string) bool {
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
-						if Tree.Len() != 0 {
-							parser.tokenizer.Set(Tree.PopMax())
+						if Tree.Len() > 0 || Tree != nil {
+							item := Tree.PopMax()
+							if item != nil {
+								parser.tokenizer.Set(item)
+							} else {
+								break
+							}
 						}
 						break
 					}
-					if Tree.Len() != 0 {
-						parser.tokenizer.Set(Tree.PopMax())
+					if Tree.Len() > 0 || Tree != nil {
+						item := Tree.PopMax()
+						if item != nil {
+							parser.tokenizer.Set(item)
+						} else {
+							break
+						}
 					}
 				} else {
 					break
@@ -240,6 +260,12 @@ func (parser *Parser) GetTokenizer() []Node {
 		tokens = append(tokens, *kvi)
 		return true
 	})
+
+	len := parser.tokenizer.Len()
+	for i := 0; i < len; i++ {
+		parser.tokenizer.DeleteAt(i)
+	}
+
 	return tokens
 }
 

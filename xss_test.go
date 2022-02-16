@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 	"glint/ast"
+	brohttp "glint/brohttp"
 	"glint/config"
 	"glint/logger"
 	"glint/plugin"
 	"glint/xsschecker"
+	"net/http"
+	_ "net/http/pprof"
 	"regexp"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	brohttp "glint/brohttp"
 
 	"github.com/k0kubun/go-ansi"
 	. "github.com/logrusorgru/aurora"
@@ -23,6 +24,13 @@ import (
 
 func TestXSS(t *testing.T) {
 	logger.DebugEnable(false)
+	go func() {
+		ip := "0.0.0.0:6060"
+		if err := http.ListenAndServe(ip, nil); err != nil {
+			fmt.Printf("start pprof failed on %s\n", ip)
+		}
+	}()
+
 	Spider := brohttp.Spider{}
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = ""
