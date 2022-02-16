@@ -151,12 +151,25 @@ func (s Param) Swap(i, j int) {
 
 func (s *Param) Release() string {
 	var buf bytes.Buffer
-	for i, post := range *s {
-		buf.WriteString(post.Key + "=" + post.Value)
-		if i != s.Len()-1 {
-			buf.WriteString("&")
+	mjson := make(map[string]interface{})
+	if (*s)[0].Content_type == "application/json" {
+		for _, post := range *s {
+			mjson[post.Key] = post.Value
+		}
+		jsonary, err := json.Marshal(mjson)
+		if err != nil {
+			panic(err)
+		}
+		buf.Write(jsonary)
+	} else {
+		for i, post := range *s {
+			buf.WriteString(post.Key + "=" + post.Value)
+			if i != s.Len()-1 {
+				buf.WriteString("&")
+			}
 		}
 	}
+
 	return buf.String()
 }
 
@@ -173,6 +186,7 @@ func (s Param) Set(key string, value string) error {
 func (s *Param) SetPayload(uri string, payload string, method string) []string {
 	var result []string
 	if strings.ToUpper(method) == "POST" {
+
 		for _, kv := range *s {
 			s.Set(kv.Key, payload)
 			result = append(result, s.Release())

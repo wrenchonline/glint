@@ -224,7 +224,7 @@ func (tab *Tab) Evaluate(expression string) {
 }
 
 /**
-a标签的href值为伪协议，
+a标签的href值为伪协议
 */
 func (tab *Tab) triggerJavascriptProtocol() {
 	defer tab.loadedWG.Done()
