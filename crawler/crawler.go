@@ -193,15 +193,16 @@ func (tab *Tab) getBodyNodeId() bool {
 func (tab *Tab) AfterDOMRun() {
 	defer tab.WG.Done()
 	logger.Success("afterDOMRun start")
-	// 获取当前body节点的nodeId 用于之后查找子节点
-	if !tab.getBodyNodeId() {
-		fmt.Println(aurora.Red("no body document NodeID, exit."))
-		return
-	}
+	// // 获取当前body节点的nodeId 用于之后查找子节点
+	// if !tab.getBodyNodeId() {
+	// 	fmt.Println(aurora.Red("no body document NodeID, exit."))
+	// 	return
+	// }
 	//填充表单
 	tab.domWG.Add(1)
 	go tab.fillForm()
 	tab.domWG.Wait()
+	tab.ClickNodeByOnClick()
 	logger.Success("afterDOMRun end")
 	tab.WG.Add(1)
 	go tab.AfterLoadedRun()
@@ -435,7 +436,7 @@ func InitSpider(
 
 	spider := Spider{}
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", NoHeadless),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-images", true),
 		chromedp.Flag("disable-web-security", true),
@@ -486,13 +487,16 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	tab.Cancel = cancel
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
-	lens := len(tab.ExtraHeaders)
-	if lens > 0 {
-		fmt.Println(len(tab.ExtraHeaders))
-		if tab.ExtraHeaders["HOST"] == "/" {
-			delete(tab.ExtraHeaders, "HOST")
-		}
+	//lens := len(tab.ExtraHeaders)
+	if _, ok := tab.ExtraHeaders["HOST"]; ok {
+		delete(tab.ExtraHeaders, "HOST")
 	}
+	// if lens > 0 {
+	// 	fmt.Println(len(tab.ExtraHeaders))
+	// 	if tab.ExtraHeaders["HOST"] == "/" {
+	// 		delete(tab.ExtraHeaders, "HOST")
+	// 	}
+	// }
 	tab.Eventchanel.EventInfo = make(map[string]bool)
 	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
 	tab.Eventchanel.SubmitCheckUrl = make(chan bool)
@@ -543,6 +547,7 @@ func (tab *Tab) Crawler(extends interface{}) error {
 		chromedp.Navigate(tab.NavigateReq.URL.String()),
 	)
 	if err != nil {
+		logger.Error(err.Error())
 		return err
 	}
 	//等待DOM更新结束
@@ -652,10 +657,23 @@ func (tab *Tab) fillForm() error {
 	defer cancel()
 	//var res string
 	//获取 input节点
-	err := chromedp.Nodes("//input", &InputNodes, chromedp.ByQueryAll).Do(tCtx)
+	err := chromedp.Nodes("//input", &InputNodes, chromedp.BySearch).Do(tCtx)
 	if err != nil {
 		logger.Warning("fillForm error: %v", err.Error())
 	}
+	if len(InputNodes) == 0 {
+		err_msg := "fillForm::input find node"
+		return errors.New(err_msg)
+	}
+
+	ctx = tab.GetExecutor()
+	aCtx, acancel := context.WithTimeout(ctx, time.Second*5)
+	defer acancel()
+	err = chromedp.Nodes("//textarea", &TextareaNodes, chromedp.BySearch).Do(aCtx)
+	if err != nil {
+		logger.Warning("fillForm error: %v", err.Error())
+	}
+
 	if len(InputNodes) == 0 {
 		err_msg := "fillForm::input find node"
 		return errors.New(err_msg)
@@ -670,41 +688,57 @@ func (tab *Tab) fillForm() error {
 	}
 
 	for _, node := range InputNodes {
+		logger.Info("input node name: %s", node.Name)
 		var ok bool
 		chromedp.EvaluateAsDevTools(fmt.Sprintf(inViewportJS, node.FullXPath()), &ok).Do(tCtx)
-		if err != nil {
-			// fmt.Println(aurora.Sprintf("inViewportJS error: %s", aurora.Red(err.Error())))
-		}
 		if !(node.AttributeValue("type") == "hidden" || node.AttributeValue("display") == "none") {
-			var Jump bool
 			//填写用户名
 			if funk.Contains([]string{"user", "用户名", "username"}, node.AttributeValue("name")) {
-				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "password").Do(tCtx)
+				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "Wrench1997").Do(tCtx)
 				if err != nil {
 					fmt.Println(aurora.Sprintf("SendKeys username error: %s", err.Error()))
 					return err
 				}
-				Jump = true
+				continue
 			}
 			//填写密码
 			if funk.Contains([]string{"pwd", "密码", "pass", "password"}, node.AttributeValue("name")) {
-				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "password").Do(tCtx)
+				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "Liujialin1997").Do(tCtx)
 				if err != nil {
 					fmt.Println(aurora.Sprintf("SendKeys password error: %s", err.Error()))
 					return err
 				}
-				Jump = true
+				continue
 			}
-			if !Jump && funk.Contains("input", node.LocalName) {
-				err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "test1234").Do(tCtx)
-				if err != nil {
-					fmt.Println(aurora.Sprintf("SendKeys %s %s", node.LocalName, err.Error()))
-					return err
-				}
+			//填写其他
+			err = chromedp.SendKeys(fmt.Sprintf(`%s[name=%s]`, node.LocalName, node.AttributeValue("name")), "test1234").Do(tCtx)
+			if err != nil {
+				fmt.Println(aurora.Sprintf("SendKeys %s %s", node.LocalName, err.Error()))
+				return err
 			}
-
 		}
 
+	}
+	return err
+}
+
+//点击input所有onclick属性的节点
+func (tab *Tab) ClickNodeByOnClick() error {
+	// defer tab.domWG.Done()
+	var Nodes []*cdp.Node
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*6)
+	defer cancel()
+	err := chromedp.Nodes("//input[@onclick]", &Nodes, chromedp.BySearch).Do(tCtx)
+	if err != nil {
+		logger.Warning("func ClickNodeByOnClick() serarch error:%s ", err.Error())
+		return err
+	}
+
+	err = chromedp.Click("//input[@onclick]", chromedp.BySearch).Do(tCtx)
+	if err != nil {
+		logger.Warning("func ClickNodeByOnClick() click error:%s ", err.Error())
+		return err
 	}
 	return err
 }

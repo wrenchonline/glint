@@ -37,7 +37,7 @@ func (tab *Tab) Watch() {
 
 	end:
 		if bq {
-			logger.Debug("Watch Thread Exit")
+			logger.Debug("crawler watching thread exit")
 			break
 		}
 	}

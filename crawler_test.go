@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
@@ -21,20 +22,22 @@ import (
 func Test_Crawler(t *testing.T) {
 	logger.DebugEnable(true)
 	TaskConfig := config.TaskConfig{}
-	TaskConfig.Proxy = ""
+	TaskConfig.Proxy = "127.0.0.1:7777"
+	TaskConfig.NoHeadless = false
+	TaskConfig.TabRunTimeout = 20 * time.Second
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("http://www.jykc.com")
-	murl2, _ := url.Parse("http://www.rongji.com")
+	murl, _ := url.Parse("http://192.168.166.8/vulnerabilities/xss_s")
+	// murl2, _ := url.Parse("http://192.168.166.8")
 	Headers := make(map[string]interface{})
-	Headers["HOST"] = "http://www.jykc.com/"
+	// Headers["HOST"] = "192.168.166.8"
 
-	Headers2 := make(map[string]interface{})
-	Headers2["HOST"] = "http://www.rongji.com/"
+	// Headers2 := make(map[string]interface{})
+	// Headers2["HOST"] = "http://www.rongji.com/"
 
 	targets := []*model.Request{
 		&model.Request{
@@ -43,12 +46,12 @@ func Test_Crawler(t *testing.T) {
 			FasthttpProxy: TaskConfig.Proxy,
 			Headers:       Headers,
 		},
-		&model.Request{
-			URL:           &model.URL{URL: *murl2},
-			Method:        "GET",
-			FasthttpProxy: TaskConfig.Proxy,
-			Headers:       Headers2,
-		},
+		// &model.Request{
+		// 	URL:           &model.URL{URL: *murl2},
+		// 	Method:        "GET",
+		// 	FasthttpProxy: TaskConfig.Proxy,
+		// 	Headers:       Headers2,
+		// },
 	}
 	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
 	if err != nil {
@@ -81,7 +84,7 @@ func Test_Crawler(t *testing.T) {
 		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
 		return false
 	})
-	util.SaveCrawOutPut(ReqList, "result.json")
+	util.SaveCrawOutPut(ReqList, "result2.json")
 }
 
 func Test_filter(t *testing.T) {

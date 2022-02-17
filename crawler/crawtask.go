@@ -269,7 +269,7 @@ func NewCrawlerTask(ctx *context.Context, targets []*model.Request, taskConf con
 	}
 
 	crawlerTask.Browser = InitSpider(taskConf.ChromiumPath, taskConf.IncognitoContext, taskConf.ExtraHeaders, taskConf.Proxy, taskConf.NoHeadless)
-	crawlerTask.RootDomain = targets[0].URL.RootDomain()
+	crawlerTask.RootDomain = "192.168.166.8" //targets[0].URL.RootDomain()
 
 	crawlerTask.smartFilter.Init()
 
