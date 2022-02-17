@@ -186,7 +186,6 @@ func (s Param) Set(key string, value string) error {
 func (s *Param) SetPayload(uri string, payload string, method string) []string {
 	var result []string
 	if strings.ToUpper(method) == "POST" {
-
 		for _, kv := range *s {
 			s.Set(kv.Key, payload)
 			result = append(result, s.Release())
@@ -209,16 +208,33 @@ func (s *Param) SetPayload(uri string, payload string, method string) []string {
 }
 
 func ParseUri(uri string, body []byte, method string, content_type string) (Param, error) {
-	var err error
+	var (
+		err    error
+		index  int
+		params Param
+	)
+	json_map := make(map[string]interface{})
 	if strings.ToUpper(method) == "POST" {
 		if len(body) > 0 {
-			strs := strings.Split(string(body), "&")
-			params := Param{}
-			for i, kv := range strs {
-				key := strings.Split(string(kv), "=")[0]
-				value := strings.Split(string(kv), "=")[1]
-				Post := post{Key: key, Value: value, index: i, Content_type: content_type}
-				params = append(params, Post)
+			switch strings.ToLower(content_type) {
+			case "application/json":
+				err := json.Unmarshal(body, &json_map)
+				if err != nil {
+					panic(err)
+				}
+				for k, v := range json_map {
+					index++
+					Post := post{Key: k, Value: v.(string), index: index, Content_type: content_type}
+					params = append(params, Post)
+				}
+			case "application/x-www-form-urlencoded":
+				strs := strings.Split(string(body), "&")
+				for i, kv := range strs {
+					key := strings.Split(string(kv), "=")[0]
+					value := strings.Split(string(kv), "=")[1]
+					Post := post{Key: key, Value: value, index: i, Content_type: content_type}
+					params = append(params, Post)
+				}
 			}
 			sort.Sort(params)
 			return params, nil

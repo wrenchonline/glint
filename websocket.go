@@ -207,6 +207,7 @@ func sendmsg(status int, message interface{}, taskid int) error {
 				}
 			}
 		}
+		bs = bs[:0]
 	}
 
 	return err

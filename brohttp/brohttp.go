@@ -7,6 +7,7 @@ import (
 	ast "glint/ast"
 	"glint/config"
 	"glint/logger"
+	"glint/util"
 	"net/url"
 	"strings"
 	"sync"
@@ -65,6 +66,7 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
 	tab.Source = make(chan string)
+	tab.ListenTarget()
 	return &tab, nil
 }
 
@@ -185,6 +187,7 @@ func (t *Tab) Send() ([]string, error) {
 	var res string
 	err := chromedp.Run(
 		*t.Ctx,
+		fetch.Enable(),
 		chromedp.Navigate(t.Url.String()),
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
@@ -298,7 +301,10 @@ func (t *Tab) PayloadHandle(payload string, reqmod string, paramname string, Get
 
 //这个要改一下加速发包速度
 func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
-	var htmls []string
+	var (
+		htmls []string
+	)
+
 	if t.ReqMode == "GET" {
 		Getparams, err := t.GetRequrlparam()
 		tmpParams := make(url.Values)
@@ -337,26 +343,25 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 		return htmls, nil
 	} else {
 		PostData := t.PostData
-		params := strings.Split(string(PostData), "&")
-		var newpayload1 string
-		var Getparams url.Values
-
-		for i, _ := range params {
-			fmt.Println(params[i])
-			v := strings.Split(string(params[i]), "=")[1]
-			if v == "" || len(v) == 8 { //8 是payload的长度
-				newpayload := strings.Split(string(params[i]), "=")[0] + "=" + newpayload
-				newpayload1 = strings.ReplaceAll(string(PostData), params[i], newpayload)
-				PostData = []byte(newpayload1)
+		if value, ok := t.Headers["Content-Type"]; ok {
+			params, err := util.ParseUri("", PostData, "POST", value.(string))
+			if err != nil {
+				logger.Error(err.Error())
 			}
+			payloads := params.SetPayload("", newpayload, "POST")
+			for _, v := range payloads {
+				t.PostData = []byte(PostData)
+				t.PayloadHandle(v, "POST", "", nil)
+				html_s, err := t.Send()
+				if err != nil {
+					return nil, err
+				}
+				htmls = append(htmls, html_s...)
+			}
+
+		} else {
+			logger.Error("checkpayloadlocation error: haven't found content type")
 		}
-		t.PostData = PostData
-		t.PayloadHandle(newpayload1, "POST", "", Getparams)
-		html_s, err := t.Send()
-		if err != nil {
-			return nil, err
-		}
-		htmls = append(htmls, html_s...)
 		return htmls, nil
 	}
 }

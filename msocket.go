@@ -74,6 +74,7 @@ func (m *MConn) handle(ctx context.Context, data []byte) error {
 func (m *MConn) Listen(con net.Conn) {
 	defer con.Close()
 	reader := bufio.NewReader(con)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -86,8 +87,8 @@ func (m *MConn) Listen(con net.Conn) {
 				break
 			}
 		}
-		buffer := bytes.NewBuffer(peek)
 		var length uint32
+		buffer := bytes.NewBuffer(peek)
 		err = binary.Read(buffer, binary.BigEndian, &length)
 		if err != nil {
 			logger.Error(err.Error())
@@ -102,6 +103,7 @@ func (m *MConn) Listen(con net.Conn) {
 		}
 		log.Println("received msg", string(data[4:]))
 		go m.handle(ctx, data[4:])
+		buffer.Reset()
 	}
 
 }
