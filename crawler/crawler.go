@@ -514,14 +514,8 @@ func (bro *Spider) Close() {
 	}
 	for _, ctx := range bro.tabs {
 		_ = browser.Close().Do(*ctx)
-		// if err != nil {
-		// 	logger.Warning(err.Error())
-		// }
 	}
 	_ = browser.Close().Do(*bro.Ctx)
-	// if err != nil {
-	// 	logger.Warning(err.Error())
-	// }
 	(*bro.Cancel)()
 }
 

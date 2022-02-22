@@ -12,7 +12,7 @@
             // "console": "integratedTerminal", // 新的vscode版本换“internalConsole”
             "program": "${workspaceRoot}",
             "args": [
-                "--socket",
+                "--websocket",
                 "192.168.166.8:3009",
             ]
         }

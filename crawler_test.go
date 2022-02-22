@@ -39,7 +39,6 @@ func Test_Crawler(t *testing.T) {
 		FasthttpProxy: TaskConfig.Proxy,
 		Headers:       Headers,
 	}
-
 	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
 	if err != nil {
 		t.Errorf("create crawler task failed.")

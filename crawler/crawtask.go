@@ -33,8 +33,9 @@ type CrawlerTask struct {
 	taskWG        sync.WaitGroup      // 等待协程池所有任务结束
 	crawledCount  int                 // 爬取过的数量
 	taskCountLock sync.Mutex          // 已爬取的任务总数锁
-	Ctx           *context.Context    // 处理上下文
-	Cancel        *context.CancelFunc // 取消上下文函数
+	TaskCtx       *context.Context    // 任务上下文，这个存储的是任务分配的CTX
+	Cancel        *context.CancelFunc // 取消当前上下文
+	Ctx           *context.Context    // 当前上下文
 }
 
 type tabTask struct {
@@ -66,6 +67,7 @@ func (t *CrawlerTask) generateTabTask(req *model.Request) *tabTask {
 func (t *CrawlerTask) Run() {
 	defer t.Pool.Release()  // 释放协程池
 	defer t.Browser.Close() // 关闭浏览器
+	defer (*t.Cancel)()
 	if t.Config.PathFromRobots {
 		reqsFromRobots := GetPathsFromRobots(*t.Targets[0])
 		logger.Info("get paths from robots.txt: ", len(reqsFromRobots))
@@ -75,10 +77,10 @@ func (t *CrawlerTask) Run() {
 		if t.Config.PathByFuzz {
 			logger.Warning("`--fuzz-path` is ignored, using `--fuzz-path-dict` instead")
 		}
-		reqsByFuzz := GetPathsByFuzzDict(*t.Targets[0], t.Config.FuzzDictPath, *t.Ctx)
+		reqsByFuzz := GetPathsByFuzzDict(*t.Targets[0], t.Config.FuzzDictPath, *t.TaskCtx)
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	} else if t.Config.PathByFuzz {
-		reqsByFuzz := GetPathsByFuzz(*t.Targets[0], *t.Ctx)
+		reqsByFuzz := GetPathsByFuzz(*t.Targets[0], *t.TaskCtx)
 		logger.Info("get paths by fuzzing:%d", len(reqsByFuzz))
 		t.Targets = append(t.Targets, reqsByFuzz...)
 	}
@@ -130,14 +132,16 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 		if err != nil {
 			logger.Error("addTask2Pool ", err)
 			t.taskWG.Done()
-
 		}
 	}()
 }
 
 func (c *CrawlerTask) Waitforsingle() {
 	select {
+	case <-(*c.TaskCtx).Done():
+		logger.Warning("%s 此网站受到当前任务现场回收原因,爬虫结束", c.RootDomain)
 	case <-(*c.Ctx).Done():
+		logger.Info("%s 此网站爬虫正常结束", c.RootDomain)
 	}
 }
 
@@ -192,7 +196,7 @@ func (t *tabTask) Task() {
 新建爬虫任务
 */
 func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
-	// ctx, cancel := context.WithCancel(context.Background())
+	mctx, cancel := context.WithCancel(context.Background())
 	crawlerTask := CrawlerTask{
 		Result: &Result{},
 		Config: &taskConf,
@@ -201,7 +205,9 @@ func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config
 				HostLimit: target.URL.Host,
 			},
 		},
-		Ctx: ctx,
+		TaskCtx: ctx,
+		Ctx:     &mctx,
+		Cancel:  &cancel,
 	}
 
 	_newReq := *target
