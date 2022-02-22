@@ -41,7 +41,7 @@ func TestXSS(t *testing.T) {
 	defer Spider.Close()
 	data := make(map[string][]interface{})
 	var PluginWg sync.WaitGroup
-	config.ReadResultConf("result.json", &data)
+	config.ReadResultConf("result2.json", &data)
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
@@ -139,6 +139,6 @@ func Test_JS(t *testing.T) {
 	}
 
 	if sourceFound && sinkFound {
-		colorstring.Fprintf(io, "[red] 发现DOM XSS漏洞，该对应参考payload代码应由研究人员构造 \n")
+		colorstring.Fprintf(io, "[red] 发现DOM XSS漏洞,该对应参考payload代码应由研究人员构造 \n")
 	}
 }

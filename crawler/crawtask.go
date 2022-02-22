@@ -18,6 +18,7 @@ type Result struct {
 	AllDomainList []string         // 所有域名列表
 	SubDomainList []string         // 子域名列表
 	resultLock    sync.Mutex       // 合并结果时加锁
+	Hostid        int
 }
 
 type CrawlerTask struct {
@@ -134,12 +135,9 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 	}()
 }
 
-func (c *CrawlerTask) Deadline() bool {
+func (c *CrawlerTask) Waitforsingle() {
 	select {
 	case <-(*c.Ctx).Done():
-		return true
-	default:
-		return false
 	}
 }
 
@@ -193,34 +191,34 @@ func (t *tabTask) Task() {
 /**
 新建爬虫任务
 */
-func NewCrawlerTask(ctx *context.Context, targets []*model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
+func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
 	// ctx, cancel := context.WithCancel(context.Background())
 	crawlerTask := CrawlerTask{
 		Result: &Result{},
 		Config: &taskConf,
 		smartFilter: SmartFilter{
 			SimpleFilter: SimpleFilter{
-				HostLimit: targets[0].URL.Host,
+				HostLimit: target.URL.Host,
 			},
 		},
 		Ctx: ctx,
 	}
 
-	if len(targets) == 1 {
-		_newReq := *targets[0]
-		newReq := &_newReq
-		_newURL := *_newReq.URL
-		newReq.URL = &_newURL
-		if targets[0].URL.Scheme == "http" {
-			newReq.URL.Scheme = "https"
-		} else {
-			newReq.URL.Scheme = "http"
-		}
-		targets = append(targets, newReq)
+	_newReq := *target
+	newReq := &_newReq
+	_newURL := *_newReq.URL
+	newReq.URL = &_newURL
+	if target.URL.Scheme == "http" {
+		newReq.URL.Scheme = "https"
+	} else {
+		newReq.URL.Scheme = "http"
 	}
-	crawlerTask.Targets = targets[:]
 
-	for _, req := range targets {
+	crawlerTask.Targets = append(crawlerTask.Targets, target)
+
+	// crawlerTask.Targets = targets[:]
+
+	for _, req := range crawlerTask.Targets {
 		req.Source = config.FromTarget
 	}
 
@@ -269,7 +267,7 @@ func NewCrawlerTask(ctx *context.Context, targets []*model.Request, taskConf con
 	}
 
 	crawlerTask.Browser = InitSpider(taskConf.ChromiumPath, taskConf.IncognitoContext, taskConf.ExtraHeaders, taskConf.Proxy, taskConf.NoHeadless)
-	crawlerTask.RootDomain = "192.168.166.8" //targets[0].URL.RootDomain()
+	crawlerTask.RootDomain = target.URL.RootDomain()
 
 	crawlerTask.smartFilter.Init()
 

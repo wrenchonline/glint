@@ -22,6 +22,7 @@ type JsonUrl struct {
 	Headers map[string]interface{} `json:"headers"`
 	Data    string                 `json:"data"` //post数据
 	Source  string                 `json:"source"`
+	Hostid  int                    `json:"hostid"`
 }
 
 type Attribute struct {

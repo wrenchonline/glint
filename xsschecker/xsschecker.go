@@ -360,6 +360,7 @@ type xssOcc struct {
 
 func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab *brohttp.Tab, ctx context.Context) (*util.ScanResult, error) {
 	g := new(Generator)
+
 	var (
 		htmlok     bool
 		attibuteoK bool

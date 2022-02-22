@@ -96,16 +96,19 @@ func (t *Tab) ListenTarget() {
 				req := fetch.ContinueRequest(ev.RequestID)
 				// req.URL = spider.Url.String()
 				req.Headers = []*fetch.HeaderEntry{}
+
 				//设置文件头
 				for key, value := range t.Headers {
 					if value != nil {
 						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
 					}
 				}
+
 				if t.ReqMode == "POST" {
 					req.Method = "POST"
 					req.PostData = base64.StdEncoding.EncodeToString(t.PostData)
 				}
+
 				if err := req.Do(ctx); err != nil {
 					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
