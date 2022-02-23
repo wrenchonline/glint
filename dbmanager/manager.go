@@ -21,6 +21,18 @@ type DbTargetInfo struct {
 	Urls sql.NullString `db:"scan_target"`
 }
 
+type DbHostResult struct {
+	Hostid     sql.NullInt64  `db:"host_id"`
+	Taskid     sql.NullInt64  `db:"task_id"`
+	ScanTarget sql.NullString `db:"scan_target"`
+	Hostip     sql.NullString `db:"host_ip"`
+	StartTime  sql.NullTime   `db:"start_time"`
+	EndTime    sql.NullTime   `db:"end_time"`
+	ServerType sql.NullString `db:"server_type"`
+	ServerOs   sql.NullString `db:"server_os"`
+	RiskLevel  sql.NullString `db:"risk_level"`
+}
+
 type DbTaskConfig struct {
 	Configid                    sql.NullInt64 `db:"web_param_id"`
 	TaskId                      sql.NullInt64 `db:"task_id"`
