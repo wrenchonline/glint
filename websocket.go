@@ -327,7 +327,7 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	}
 	task.Init()
 	task.TaskConfig = TaskConfig
-	urls := strings.Split(DBTaskConfig.Urls.String, "|")
+	urls := strings.Split(DBTaskConfig.Urls.String, ",")
 	for _, url := range urls {
 		Err = task.UrlPackage(url)
 		if Err != nil {

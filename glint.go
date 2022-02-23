@@ -148,35 +148,27 @@ func run(c *cli.Context) error {
 	return nil
 }
 
-func (t *Task) waitquit(c *crawler.CrawlerTask) {
-	select {
-	case <-signalChan:
-		logger.Warning("Interput exit ...")
+func craw_cleanup(c *crawler.CrawlerTask) {
+	if !c.Pool.IsClosed() {
 		c.Pool.Tune(1)
 		c.Pool.Release()
 		c.Browser.Close()
-		c.PluginBrowser.Close()
-		os.Exit(-1)
-	case <-(*t.Ctx).Done():
-		logger.Success("Task exit ...")
-		if !c.Pool.IsClosed() {
-			c.Pool.Tune(1)
-			c.Pool.Release()
-			c.Browser.Close()
-			c.PluginBrowser.Close()
-		}
-		if len(t.Plugins) != 0 {
-			for _, plugin := range t.Plugins {
-				plugin.Pool.Tune(1)
-				// plugin.Pool.Release()
-				(*plugin.Cancel)()
-				if plugin.Spider != nil {
-					plugin.Spider.Close()
-				}
-			}
-		}
+		// c.PluginBrowser.Close()
 	}
+	return
 }
+
+// func (t *Task) task_cleanup() {
+// 	if len(t.Plugins) != 0 {
+// 		for _, plugin := range t.Plugins {
+// 			plugin.Pool.Tune(1)
+// 			(*plugin.Cancel)()
+// 			if plugin.Spider != nil {
+// 				plugin.Spider.Close()
+// 			}
+// 		}
+// 	}
+// }
 
 //删除数据库内容
 func (t *Task) deletedbresult() error {
@@ -191,6 +183,16 @@ func (t *Task) close() {
 	//由外部socket关闭避免重复释放
 	if _, ok := (*t.Ctx).Deadline(); !ok {
 		(*t.Cancel)()
+	}
+	//删除插件
+	if len(t.Plugins) != 0 {
+		for _, plugin := range t.Plugins {
+			plugin.Pool.Tune(1)
+			(*plugin.Cancel)()
+			if plugin.Spider != nil {
+				plugin.Spider.Close()
+			}
+		}
 	}
 }
 
@@ -224,6 +226,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 	}
 	//完成后通知上下文
 	defer t.close()
+	// defer t.task_cleanup()
 
 	StartPlugins := Plugins.Value()
 	percentage := 1 / float64(len(StartPlugins)+1)
@@ -236,16 +239,17 @@ func (t *Task) dostartTasks(installDb bool) error {
 			logger.Error(err.Error())
 			return err
 		}
-		go t.waitquit(Crawtask)
 		logger.Info("Start crawling.")
 		crawtasks = append(crawtasks, Crawtask)
 		//Crawtask.Run()是同步函数
 		go Crawtask.Run()
-
 	}
+
 	//等待爬虫结束
 	for hostid, crawtask := range crawtasks {
+		//这个是真正等待结束
 		crawtask.Waitforsingle()
+		go craw_cleanup(crawtask)
 		result := crawtask.Result
 		result.Hostid = hostid
 		Results = append(Results, result)
