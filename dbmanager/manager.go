@@ -103,6 +103,27 @@ func (Dm *DbManager) Init() error {
 	return nil
 }
 
+//GetTaskHostid
+func (Dm *DbManager) GetTaskHostid(taskid int) (DbHostResult, error) {
+	sql := `
+	SELECT
+	exweb_host_result.host_id
+	FROM
+	exweb_host_result
+	WHERE
+	exweb_host_result.task_id = ?
+	AND
+	exweb_host_result.scan_target = ?;
+	`
+	values := DbHostResult{}
+
+	err := Dm.Db.Get(&values, sql, taskid)
+	if err != nil {
+		logger.Error("get exweb_scan_param error %v", err.Error())
+	}
+	return values, err
+}
+
 //GetTaskConfig 根据任务ID获取数据库的扫描配置
 func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 	sql := `
