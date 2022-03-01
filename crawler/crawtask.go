@@ -18,7 +18,7 @@ type Result struct {
 	AllDomainList []string         // 所有域名列表
 	SubDomainList []string         // 子域名列表
 	resultLock    sync.Mutex       // 合并结果时加锁
-	Hostid        int
+	Hostid        int64
 }
 
 type CrawlerTask struct {

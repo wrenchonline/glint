@@ -31,12 +31,13 @@ type DbHostResult struct {
 	ServerType sql.NullString `db:"server_type"`
 	ServerOs   sql.NullString `db:"server_os"`
 	RiskLevel  sql.NullString `db:"risk_level"`
+	Headeruuid sql.NullString `db:"header_uuid"`
 }
 
 type DbTaskConfig struct {
-	Configid                    sql.NullInt64 `db:"web_param_id"`
-	TaskId                      sql.NullInt64 `db:"task_id"`
-	Urls                        sql.NullString
+	Configid sql.NullInt64 `db:"web_param_id"`
+	TaskId   sql.NullInt64 `db:"task_id"`
+	// Urls                        sql.NullString
 	ParamModelId                sql.NullInt64  `db:"param_model_id"`
 	FilterMode                  sql.NullString `db:"filter_mode"`
 	ExtraHeadersUuid            sql.NullString `db:"extra_headers_id"`
@@ -104,25 +105,31 @@ func (Dm *DbManager) Init() error {
 }
 
 //GetTaskHostid
-func (Dm *DbManager) GetTaskHostid(taskid int) (DbHostResult, error) {
+func (Dm *DbManager) GetTaskHostid(taskid int) ([]DbHostResult, error) {
 	sql := `
 	SELECT
-	exweb_host_result.host_id
+	exweb_host_result.host_id,
+	exweb_host_result.scan_target,
+	exweb_host_result.start_time, 
+	exweb_host_result.end_time,	
+	exweb_host_result.server_type,
+	exweb_host_result.server_os,
+	exweb_host_result.risk_level,
+	exweb_host_result.header_uuid
 	FROM
 	exweb_host_result
 	WHERE
-	exweb_host_result.task_id = ?
-	AND
-	exweb_host_result.scan_target = ?;
-	`
-	values := DbHostResult{}
+	exweb_host_result.task_id = ?`
+	values := []DbHostResult{}
 
-	err := Dm.Db.Get(&values, sql, taskid)
+	err := Dm.Db.Select(&values, sql, taskid)
 	if err != nil {
-		logger.Error("get exweb_scan_param error %v", err.Error())
+		logger.Error("get get task hostid error %v", err.Error())
 	}
 	return values, err
 }
+
+// Get
 
 //GetTaskConfig 根据任务ID获取数据库的扫描配置
 func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
@@ -140,20 +147,20 @@ func (Dm *DbManager) GetTaskConfig(taskid int) (DbTaskConfig, error) {
 		logger.Error("get exweb_scan_param error %v", err.Error())
 	}
 	//两张表
-	sql = `
-	SELECT
-	exweb_target_info.scan_target
-	FROM
-	exweb_target_info
-	WHERE
-	exweb_target_info.task_id = ?
-	`
-	val2 := DbTargetInfo{}
-	err = Dm.Db.Get(&val2, sql, taskid)
-	if err != nil {
-		logger.Error("gettaskConfig error %v", err.Error())
-	}
-	values.Urls = val2.Urls
+	// sql = `
+	// SELECT
+	// exweb_target_info.scan_target
+	// FROM
+	// exweb_target_info
+	// WHERE
+	// exweb_target_info.task_id = ?
+	// `
+	// val2 := DbTargetInfo{}
+	// err = Dm.Db.Get(&val2, sql, taskid)
+	// if err != nil {
+	// 	logger.Error("gettaskConfig error %v", err.Error())
+	// }
+	// values.Urls = val2.Urls
 	return values, err
 }
 

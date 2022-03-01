@@ -327,13 +327,21 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	}
 	task.Init()
 	task.TaskConfig = TaskConfig
-	urls := strings.Split(DBTaskConfig.Urls.String, ",")
-	for _, url := range urls {
-		Err = task.UrlPackage(url)
-		if Err != nil {
-			return task, Err
+	//获取host表
+	host_result, err := ts.Dm.GetTaskHostid(task.TaskId)
+	if err != nil {
+		logger.Error(Err.Error())
+	}
+
+	for _, hostinfo := range host_result {
+		if hostinfo.ScanTarget.Valid {
+			Err = task.UrlPackage(hostinfo.ScanTarget.String, hostinfo.Hostid.Int64)
+			if Err != nil {
+				return task, Err
+			}
 		}
 	}
+
 	go task.dostartTasks(true)
 	return task, Err
 }

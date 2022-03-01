@@ -233,6 +233,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 
 	for _, Target := range t.Targets {
 		Crawtask, err := crawler.NewCrawlerTask(t.Ctx, Target, t.TaskConfig)
+		Crawtask.Result.Hostid = Target.DomainId
 		t.XssSpider.Init(t.TaskConfig)
 		Crawtask.PluginBrowser = &t.XssSpider
 		if err != nil {
@@ -246,12 +247,12 @@ func (t *Task) dostartTasks(installDb bool) error {
 	}
 
 	//等待爬虫结束
-	for hostid, crawtask := range crawtasks {
+	for _, crawtask := range crawtasks {
 		//这个是真正等待结束
 		crawtask.Waitforsingle()
 		go craw_cleanup(crawtask)
 		result := crawtask.Result
-		result.Hostid = hostid
+		result.Hostid = crawtask.Result.Hostid
 		Results = append(Results, result)
 		logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 			len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
@@ -409,8 +410,16 @@ func (t *Task) Init() {
 	t.ScartTime = time.Now()
 }
 
-func (t *Task) UrlPackage(_url string) error {
-	var err error
+func (t *Task) UrlPackage(_url string, extra interface{}) error {
+	var (
+		err      error
+		Domainid int64
+	)
+
+	if id, ok := extra.(int64); ok {
+		Domainid = id
+	}
+
 	Headers := make(map[string]interface{})
 	if !strings.HasPrefix(_url, "http") {
 		err = errors.New(`parameter error,please "http(s)://" start with Url `)
@@ -428,6 +437,7 @@ func (t *Task) UrlPackage(_url string) error {
 		Method:        "GET",
 		FasthttpProxy: t.TaskConfig.Proxy,
 		Headers:       Headers,
+		DomainId:      Domainid,
 	})
 	return err
 }
@@ -439,7 +449,7 @@ func CmdHandler(c *cli.Context, t *Task) {
 		logger.Error("test ReadTaskConf() fail")
 	}
 	for _, _url := range c.Args().Slice() {
-		t.UrlPackage(_url)
+		t.UrlPackage(_url, nil)
 	}
 	t.dostartTasks(false)
 	t.PluginWg.Wait()

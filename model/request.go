@@ -28,6 +28,7 @@ type Options struct {
 
 type Request struct {
 	URL             *URL
+	DomainId        int64 //域名id
 	Method          string
 	Headers         map[string]interface{}
 	PostData        string
