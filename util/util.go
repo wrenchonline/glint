@@ -27,7 +27,7 @@ func Setup() {
 	// 请求限速 limiter 初始化
 	InitRate()
 	// fasthttp client 初始化
-	DownProxy := "127.0.0.1:7777"
+	DownProxy := ""
 	client := &fasthttp.Client{
 		// If InsecureSkipVerify is true, TLS accepts any certificate
 		TLSConfig:                &tls.Config{InsecureSkipVerify: true},
