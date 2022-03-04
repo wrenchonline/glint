@@ -185,29 +185,27 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 //保存漏扫结果
 func (Dm *DbManager) SaveScanResult(
 	taskid int,
-	plugin_name string,
+	plugin_name int64,
 	Vulnerable bool,
 	Target string,
-	Output string,
 	ReqMsg string,
 	RespMsg string,
-	VulnerableLevel string,
+
 ) error {
 	sql := `
 	INSERT  
 	INTO 
-	exweb_task_result (task_id,plugin_type,is_vul,url,vul_msg,request_info,response_info,risk_level) 
-	VALUES(:taskid,:name,:vul,:target,:output,:reqmsg,:respmsg,:vulnerability);
+	exweb_task_result (task_id,is_vul,url,vul_id,request_info) 
+	VALUES(:taskid,:vul,:target,:vulid,:reqmsg);
 	`
 	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
-		"taskid":        taskid,
-		"name":          plugin_name,
-		"vul":           Vulnerable,
-		"target":        Target,
-		"output":        Output,
-		"reqmsg":        ReqMsg,
-		"respmsg":       RespMsg,
-		"vulnerability": VulnerableLevel,
+		"taskid": taskid,
+		"vul":    Vulnerable,
+		"target": Target,
+		"vulid":  plugin_name,
+		"reqmsg": ReqMsg,
+		// "respmsg": RespMsg,
+		// "vulnerability": VulnerableLevel,
 	})
 	if err != nil {
 		logger.Error("save scan result error %v", err.Error())
@@ -337,4 +335,25 @@ func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (confi
 	TaskConfig.CustomFormKeywordValues = Dm.UuidToMap(dbTaskConfig.CustomFormKeywordValuesUuid.String, "CustomFormKeywordValues")
 	TaskConfig.XssPayloads = Dm.UuidToMap(dbTaskConfig.XssPayloadsUuid.String, "XssPayloads")
 	return TaskConfig, nil
+}
+
+func (Dm *DbManager) GetKeyValues(uuid string, datatype int64) (map[string]interface{}, error) {
+	var (
+		err error
+	)
+	sql := `
+	SELECT
+	exweb_header_info.header_key, 
+	exweb_header_info.header_value
+	FROM
+	exweb_header_info
+	WHERE
+	exweb_header_info.header_uuid = ?`
+	values := make(map[string]interface{})
+	err = Dm.Db.Select(&values, sql, uuid)
+	if err != nil {
+		logger.Error("get extra headers error %v", err.Error())
+	}
+
+	return nil, nil
 }

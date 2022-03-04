@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"glint/dbmanager"
+	"glint/plugin"
 	"glint/util"
 	"testing"
 	"time"
@@ -31,13 +32,11 @@ func Test_InstallScanResult(t *testing.T) {
 	}
 	err = Dm.SaveScanResult(
 		1,
-		"xss",
+		int64(plugin.Xss),
 		true,
 		"http://rongji.com",
 		"desad",
 		"sdas",
-		"dasda",
-		"high",
 	)
 	if err != nil {
 		t.Error(err)

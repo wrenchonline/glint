@@ -1,4 +1,4 @@
-package JsonPoc
+package jsonp
 
 import (
 	"errors"

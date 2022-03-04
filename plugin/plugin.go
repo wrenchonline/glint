@@ -11,9 +11,18 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
+type plugin_type int64
+
+const (
+	Xss   plugin_type = 1
+	Csrf  plugin_type = 2
+	Ssrf  plugin_type = 3
+	Jsonp plugin_type = 4
+)
+
 type Plugin struct {
 	Taskid       int                //任务id，只有插入数据库的时候使用
-	PluginName   string             //插件名
+	PluginName   plugin_type        //插件名
 	MaxPoolCount int                //协程池最大并发数
 	Callbacks    []PluginCallback   //扫描插件函数
 	Pool         *ants.PoolWithFunc //

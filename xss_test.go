@@ -46,7 +46,7 @@ func TestXSS(t *testing.T) {
 	myfunc = append(myfunc, xsschecker.CheckXss)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	pluginInternal := plugin.Plugin{
-		PluginName:   "xss",
+		PluginName:   plugin.Xss,
 		MaxPoolCount: 20,
 		// Callbacks:    myfunc,
 		Spider:  &Spider,

@@ -294,7 +294,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			myfunc := []plugin.PluginCallback{}
 			myfunc = append(myfunc, csrf.Csrfeval)
 			pluginInternal := plugin.Plugin{
-				PluginName:   PluginName,
+				PluginName:   plugin.Csrf,
 				MaxPoolCount: 20,
 				Callbacks:    myfunc,
 				InstallDB:    installDb,
@@ -323,7 +323,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 			myfunc := []plugin.PluginCallback{}
 			myfunc = append(myfunc, xsschecker.CheckXss)
 			pluginInternal := plugin.Plugin{
-				PluginName:   "xss",
+				PluginName:   plugin.Xss,
 				MaxPoolCount: 20,
 				Callbacks:    myfunc,
 				Spider:       &t.XssSpider,
@@ -375,13 +375,16 @@ func (t *Task) SaveQuitTime() {
 func (t *Task) SavePluginResult() {
 	for _, plugin := range t.Plugins {
 		funk.Map(plugin.ScanResult, func(s *util.ScanResult) bool {
-			err := t.Dm.SaveScanResult(t.TaskId, plugin.PluginName,
+			err := t.Dm.SaveScanResult(
+				t.TaskId,
+				int64(plugin.PluginName),
 				s.Vulnerable,
 				s.Target,
 				s.Output,
 				base64.StdEncoding.EncodeToString([]byte(s.ReqMsg[0])),
-				base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
-				s.VulnerableLevel)
+				// base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
+				// s.VulnerableLevel)
+			)
 			if err != nil {
 				logger.Error(err.Error())
 				return false
