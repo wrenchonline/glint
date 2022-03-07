@@ -259,7 +259,7 @@ func (Dm *DbManager) UuidToMap(uuid string, type_name string) map[string]interfa
 	converted := make(map[string]interface{})
 	switch type_name {
 	case "Headers":
-		ExtraHeaders, err := Dm.GetExtraHeaders(uuid)
+		ExtraHeaders, err := Dm.GetKeyValues(uuid, 1)
 		if err != nil {
 			logger.Error(err.Error())
 		}
@@ -341,6 +341,7 @@ func (Dm *DbManager) GetKeyValues(uuid string, datatype int64) (map[string]inter
 	var (
 		err error
 	)
+
 	sql := `
 	SELECT
 	exweb_header_info.header_key, 
@@ -348,9 +349,12 @@ func (Dm *DbManager) GetKeyValues(uuid string, datatype int64) (map[string]inter
 	FROM
 	exweb_header_info
 	WHERE
-	exweb_header_info.header_uuid = ?`
+	exweb_header_info.header_uuid = ?
+	AND
+	exweb_header_info.type = ?
+	`
 	values := make(map[string]interface{})
-	err = Dm.Db.Select(&values, sql, uuid)
+	err = Dm.Db.Select(&values, sql, uuid, datatype)
 	if err != nil {
 		logger.Error("get extra headers error %v", err.Error())
 	}
