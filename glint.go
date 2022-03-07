@@ -11,9 +11,11 @@ import (
 	"glint/crawler"
 	"glint/csrf"
 	"glint/dbmanager"
+	"glint/jsonp"
 	"glint/logger"
 	"glint/model"
 	"glint/plugin"
+	"glint/ssrfcheck"
 	"glint/util"
 	"glint/xsschecker"
 	"net"
@@ -211,6 +213,43 @@ func (t *Task) sendprog() {
 	t.PliuginsMsg <- Element
 }
 
+func (t *Task) AddPlugins(
+	PluginName plugin.Plugin_type,
+	callback plugin.PluginCallback,
+	ReqList map[string][]interface{},
+	installDb bool,
+	percentage float64) {
+	myfunc := []plugin.PluginCallback{}
+	myfunc = append(myfunc, callback)
+	pluginInternal := plugin.Plugin{
+		PluginName:   PluginName,
+		MaxPoolCount: 20,
+		Callbacks:    myfunc,
+		InstallDB:    installDb,
+		Spider:       &t.XssSpider,
+		Taskid:       t.TaskId,
+		Timeout:      time.Second * 600,
+		Progperc:     percentage,
+	}
+	pluginInternal.Init()
+	t.PluginWg.Add(1)
+	t.lock.Lock()
+	t.Plugins = append(t.Plugins, &pluginInternal)
+	t.lock.Unlock()
+	args := plugin.PluginOption{
+		PluginWg:  &t.PluginWg,
+		Progress:  &t.Progress,
+		IsSocket:  true,
+		Data:      ReqList,
+		TaskId:    t.TaskId,
+		SingelMsg: &t.PliuginsMsg,
+		Totalprog: percentage,
+	}
+	go func() {
+		pluginInternal.Run(args)
+	}()
+}
+
 func (t *Task) dostartTasks(installDb bool) error {
 	var (
 		err       error
@@ -291,67 +330,16 @@ func (t *Task) dostartTasks(installDb bool) error {
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
-			myfunc := []plugin.PluginCallback{}
-			myfunc = append(myfunc, csrf.Csrfeval)
-			pluginInternal := plugin.Plugin{
-				PluginName:   plugin.Csrf,
-				MaxPoolCount: 20,
-				Callbacks:    myfunc,
-				InstallDB:    installDb,
-				Taskid:       t.TaskId,
-				Timeout:      time.Second * 600,
-				Progperc:     percentage,
-			}
-			pluginInternal.Init()
-			t.PluginWg.Add(1)
-			t.lock.Lock()
-			t.Plugins = append(t.Plugins, &pluginInternal)
-			t.lock.Unlock()
-			args := plugin.PluginOption{
-				PluginWg:  &t.PluginWg,
-				Progress:  &t.Progress,
-				IsSocket:  true,
-				Data:      ReqList,
-				TaskId:    t.TaskId,
-				SingelMsg: &t.PliuginsMsg,
-				Totalprog: percentage,
-			}
-			go func() {
-				pluginInternal.Run(args)
-			}()
+			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, installDb, percentage)
 		case "xss":
-			myfunc := []plugin.PluginCallback{}
-			myfunc = append(myfunc, xsschecker.CheckXss)
-			pluginInternal := plugin.Plugin{
-				PluginName:   plugin.Xss,
-				MaxPoolCount: 20,
-				Callbacks:    myfunc,
-				Spider:       &t.XssSpider,
-				InstallDB:    installDb,
-				Taskid:       t.TaskId,
-				Timeout:      time.Second * 900,
-				Progperc:     percentage,
-			}
-			pluginInternal.Init()
-			t.PluginWg.Add(1)
-			t.lock.Lock()
-			t.Plugins = append(t.Plugins, &pluginInternal)
-			t.lock.Unlock()
-
-			args := plugin.PluginOption{
-				PluginWg:  &t.PluginWg,
-				Progress:  &t.Progress,
-				IsSocket:  true,
-				Data:      ReqList,
-				TaskId:    t.TaskId,
-				SingelMsg: &t.PliuginsMsg,
-				Totalprog: percentage,
-			}
-			go func() {
-				pluginInternal.Run(args)
-			}()
+			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, installDb, percentage)
+		case "ssrf":
+			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, installDb, percentage)
+		case "jsonp":
+			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, installDb, percentage)
 		}
 	}
+
 	t.PluginWg.Wait()
 	// quit:
 	Taskslock.Lock()
