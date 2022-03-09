@@ -14,10 +14,11 @@ import (
 type Plugin_type int64
 
 const (
-	Xss   Plugin_type = 1
-	Csrf  Plugin_type = 2
-	Ssrf  Plugin_type = 3
-	Jsonp Plugin_type = 4
+	Xss       Plugin_type = 1
+	Csrf      Plugin_type = 2
+	Ssrf      Plugin_type = 3
+	Jsonp     Plugin_type = 4
+	CmdInject Plugin_type = 5
 )
 
 type Plugin struct {

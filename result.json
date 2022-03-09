@@ -1,15 +1,17 @@
 {
     "Normal": [
         {
-            "url": "http://192.168.166.8/getUser.php?jsoncallback=callbackFunction",
-            "method": "GET",
+            "url": "http://192.168.166.8/vulnerabilities/exec",
+            "method": "POST",
             "headers": {
-                "Accept": "*/*",
-                "Cookie": "_ga=GA1.1.2051468168.1645423249;_gid=GA1.1.417237192.1646204388;_gat=1",
-                "Referer": "http://192.168.166.8/",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "_ga=GA1.1.2051468168.1645423249; _gid=GA1.1.463779380.1646796357; PHPSESSID=5vhc2mt3ce93dj0o1rvush2hip; security=high; _gat=1",
+                "Referer": "http://192.168.166.8/vulnerabilities/exec/",
+                "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
             },
-            "data": "",
+            "Accept-Encoding": "gzip, deflate",
+            "data": "ip=1132312&Submit=Submit",
             "source": "Script",
             "hostid": 1
         }

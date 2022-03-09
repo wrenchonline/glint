@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"glint/ast"
 	"glint/brohttp"
+	"glint/cmdinject"
 	"glint/config"
 	"glint/crawler"
 	"glint/csrf"
@@ -337,6 +338,8 @@ func (t *Task) dostartTasks(installDb bool) error {
 			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, installDb, percentage)
 		case "jsonp":
 			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, installDb, percentage)
+		case "cmdinject":
+			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, installDb, percentage)
 		}
 	}
 
