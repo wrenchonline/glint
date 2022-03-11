@@ -37,7 +37,7 @@ const (
 	DefaultSocket     string = ""
 )
 
-var DefaultPlugins = cli.NewStringSlice("xss", "csrf")
+var DefaultPlugins = cli.NewStringSlice("xss", "csrf", "ssrf", "cmdinject", "jsonp")
 var signalChan chan os.Signal
 var ConfigpPath string
 var Plugins cli.StringSlice
