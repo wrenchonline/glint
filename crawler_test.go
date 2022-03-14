@@ -25,8 +25,9 @@ func Test_Crawler(t *testing.T) {
 	TaskConfig.Proxy = ""
 	TaskConfig.NoHeadless = true
 	TaskConfig.TabRunTimeout = 20 * time.Second
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, _ := context.WithCancel(context.Background())
+	actx, acancel := context.WithTimeout(ctx, TaskConfig.TabRunTimeout)
+	defer acancel()
 	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
@@ -39,7 +40,7 @@ func Test_Crawler(t *testing.T) {
 		FasthttpProxy: TaskConfig.Proxy,
 		Headers:       Headers,
 	}
-	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
+	task, err := crawler.NewCrawlerTask(&actx, targets, TaskConfig)
 	if err != nil {
 		t.Errorf("create crawler task failed.")
 		os.Exit(-1)

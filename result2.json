@@ -1,7 +1,7 @@
 {
     "": [
         {
-            "url": "http://192.168.166.8",
+            "url": "http://192.168.166.8/vulnerabilities/xss_r",
             "method": "GET",
             "headers": {},
             "data": "",
@@ -11,13 +11,20 @@
     ],
     "CollectLink": [
         {
+            "url": "http://192.168.166.8/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 0
+        },
+        {
             "url": "http://192.168.166.8/instructions.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -27,10 +34,7 @@
             "url": "http://192.168.166.8/setup.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -40,10 +44,7 @@
             "url": "http://192.168.166.8/vulnerabilities/brute/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -53,10 +54,7 @@
             "url": "http://192.168.166.8/vulnerabilities/exec/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -66,10 +64,7 @@
             "url": "http://192.168.166.8/vulnerabilities/csrf/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -79,10 +74,7 @@
             "url": "http://192.168.166.8/vulnerabilities/fi/?page=include.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -92,10 +84,7 @@
             "url": "http://192.168.166.8/vulnerabilities/upload/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -105,10 +94,7 @@
             "url": "http://192.168.166.8/vulnerabilities/captcha/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -118,10 +104,7 @@
             "url": "http://192.168.166.8/vulnerabilities/sqli/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -131,10 +114,7 @@
             "url": "http://192.168.166.8/vulnerabilities/sqli_blind/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -144,10 +124,7 @@
             "url": "http://192.168.166.8/vulnerabilities/weak_id/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -157,23 +134,7 @@
             "url": "http://192.168.166.8/vulnerabilities/xss_d/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/vulnerabilities/xss_r/",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -183,10 +144,7 @@
             "url": "http://192.168.166.8/vulnerabilities/xss_s/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -196,10 +154,7 @@
             "url": "http://192.168.166.8/vulnerabilities/csp/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -209,10 +164,7 @@
             "url": "http://192.168.166.8/vulnerabilities/javascript/",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -222,10 +174,7 @@
             "url": "http://192.168.166.8/security.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -235,10 +184,7 @@
             "url": "http://192.168.166.8/phpinfo.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -248,10 +194,7 @@
             "url": "http://192.168.166.8/about.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -261,153 +204,27 @@
             "url": "http://192.168.166.8/logout.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/sqli/session-input.php",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=fi\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=sqli\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=fi\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "JavaScript",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=sqli\u0026security=high",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "JavaScript",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/var/run/mysqld/mysqld.sock",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "JavaScript",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/instructions.php?doc=readme",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/instructions.php?doc=PDF",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/instructions.php?doc=changelog",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/instructions.php?doc=copying",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/instructions.php?doc=PHPIDS-license",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "DOM",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=fi\u0026security=high",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "JavaScript",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=fi\u0026security=high",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
@@ -417,10 +234,7 @@
             "url": "http://192.168.166.8/vulnerabilities/fi/?page=file1.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -430,10 +244,7 @@
             "url": "http://192.168.166.8/vulnerabilities/fi/?page=file2.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -443,179 +254,137 @@
             "url": "http://192.168.166.8/vulnerabilities/fi/?page=file3.php",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=csrf\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=csrf\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=captcha\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=csrf\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=captcha\u0026security=high",
+            "url": "http://192.168.166.8/var/run/mysqld/mysqld.sock",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/sqli_blind/cookie-input.php",
+            "url": "http://192.168.166.8/instructions.php?doc=readme",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
-            "source": "JavaScript",
+            "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=sqli_blind\u0026security=high",
+            "url": "http://192.168.166.8/instructions.php?doc=PDF",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
-            "source": "JavaScript",
+            "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=sqli_blind\u0026security=high",
+            "url": "http://192.168.166.8/instructions.php?doc=changelog",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
-            "source": "JavaScript",
+            "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=brute\u0026security=high",
+            "url": "http://192.168.166.8/instructions.php?doc=copying",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
-            "source": "JavaScript",
+            "source": "DOM",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=brute\u0026security=high",
+            "url": "http://192.168.166.8/instructions.php?doc=PHPIDS-license",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
-            "source": "JavaScript",
-            "hostid": 0
-        },
-        {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=csrf\u0026security=high",
-            "method": "GET",
-            "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-            },
-            "data": "",
-            "source": "JavaScript",
+            "source": "DOM",
             "hostid": 0
         },
         {
             "url": "http://192.168.166.8/vulnerabilities/upload/multipart/form-data",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=upload\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=upload\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=upload\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=upload\u0026security=impossible",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/ids_log.php",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=xss_s\u0026security=high",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=xss_s\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
@@ -625,10 +394,7 @@
             "url": "http://192.168.166.8/security.php?phpids=on",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
@@ -638,62 +404,117 @@
             "url": "http://192.168.166.8/security.php?test=%22\u003e\u003cscript\u003eeval(window.name)\u003c/script\u003e",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "DOM",
             "hostid": 0
         },
         {
+            "url": "http://192.168.166.8/ids_log.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/sqli/session-input.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=sqli\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=sqli\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=csp\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=csp\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
             "url": "http://192.168.166.8/vulnerabilities/csp/source/jsonp.php?callback=solveSum",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=javascript\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=weak_id\u0026security=high",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=javascript\u0026security=high",
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=weak_id\u0026security=high",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
             "hostid": 0
         },
         {
-            "url": "http://192.168.166.8/DTD/xhtml1-transitional.dtd",
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=xss_d\u0026security=high",
             "method": "GET",
             "headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "Referer": null,
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=xss_d\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r"
             },
             "data": "",
             "source": "JavaScript",
@@ -702,7 +523,7 @@
     ],
     "Normal": [
         {
-            "url": "http://192.168.166.8/",
+            "url": "http://192.168.166.8/vulnerabilities/xss_r/",
             "method": "GET",
             "headers": {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -720,13 +541,183 @@
             "headers": {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                 "Content-Type": "application/x-www-form-urlencoded",
-                "Cookie": "PHPSESSID=pul3dm0c8i2ehmg6r9uuo70se0; security=high",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
                 "Origin": "http://192.168.166.8",
-                "Referer": null,
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
                 "Upgrade-Insecure-Requests": "1",
                 "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
             },
             "data": "txtName=test1234\u0026mtxMessage=test1234\u0026btnSign=Sign+Guestbook",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-04FRu": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/csrf/?password_current=test1234\u0026password_new=test1234\u0026password_conf=test1234\u0026Change=Change\u0026user_token=ebfd8fc9e6deb1ede68bd8555922d548",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "security=high; PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-5QJrm": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_r/?name=test1234\u0026user_token=eefdc5aad96b7f1a4503784660893f3e",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "security=high; PHPSESSID=p5q5smvfrscbvhl1m0slm664qq",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r/",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-8dlFl": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/javascript/",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "token=28638d855bc00d62b33f9643eab3e43d8335ab2b308039abd8fb8bef86331b14\u0026phrase=test1234\u0026send=Submit",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-Cp3Qj": [
+        {
+            "url": "http://192.168.166.8/security.php",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "security=high\u0026seclev_submit=Submit\u0026user_token=ded6a98801bf66fc35792d414a51095e",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-EbAEo": [
+        {
+            "url": "http://192.168.166.8/setup.php",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "create_db=Create+%2F+Reset+Database\u0026user_token=3490b90c7cf89bbc18d0ba9c1a0de30e",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-IzCvW": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/weak_id/",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-LAxjX": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/brute/",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "security=high; PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "username=Wrench1997\u0026password=Liujialin1997\u0026Login=Login\u0026user_token=787c05ae67f1152f7aabf5386ffcda88",
+            "source": "Document",
+            "hostid": 0
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/exec/",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "security=high; PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "ip=test1234\u0026Submit=Submit\u0026user_token=74724e8bb2fdda26e2293a77d2418c39",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-Ovnco": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_r/?name=test1234",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "security=high; PHPSESSID=p5q5smvfrscbvhl1m0slm664qq",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r/",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 0
+        }
+    ],
+    "SubmitDoM-heYzm": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_d/?default=English",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "PHPSESSID=p5q5smvfrscbvhl1m0slm664qq; security=high",
+                "Referer": "http://192.168.166.8/vulnerabilities/xss_r",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
             "source": "Document",
             "hostid": 0
         }

@@ -351,7 +351,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					} else {
 						req.GroupsId = "Normal"
 					}
-					fmt.Println(aurora.Red(req.URL.String()))
+					fmt.Println("add Url:", aurora.Red(req.URL.String()))
 					tab.AddResultRequest(req)
 				}
 				if err := chromedp.Run(ctx, a); err != nil {
@@ -438,7 +438,7 @@ func InitSpider(
 
 	spider := Spider{}
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-images", true),
 		chromedp.Flag("disable-web-security", true),
@@ -564,20 +564,19 @@ func (tab *Tab) CommitBySubmit() error {
 	ctx := tab.GetExecutor()
 
 	// 获取所有的form节点 直接执行submit
-	formNodes, err := tab.GetNodeIDs(`form`)
-	if err != nil {
-		logger.Warning("CommitBySubmit<form> %s", err.Error())
-		// return err
-	}
+	// formNodes, err := tab.GetNodeIDs(`form`)
+	// if err != nil {
+	// 	logger.Warning("CommitBySubmit<form> %s", err.Error())
+	// 	// return err
+	// }
 	// if len(formNodes) == 0 {
 	// 	// err := "CommitBySubmit not found Nodes"
 	// 	// logger.Warning(err)
 	// 	// return fmt.Errorf(err)
 	// }
-
-	tCtx1, cancel1 := context.WithTimeout(ctx, time.Second*2)
-	defer cancel1()
-	_ = chromedp.Submit(formNodes, chromedp.ByNodeID).Do(tCtx1)
+	// tCtx1, cancel1 := context.WithTimeout(ctx, time.Second*2)
+	// defer cancel1()
+	// _ = chromedp.Submit(formNodes, chromedp.ByNodeID).Do(tCtx1)
 
 	// 获取所有的input标签
 	node := []*cdp.Node{}
@@ -609,7 +608,6 @@ func (tab *Tab) CommitBySubmit() error {
 		tab.Eventchanel.SubmitCheckUrl <- false
 		<-tab.Eventchanel.SubmitRep
 		time.Sleep(time.Millisecond * 500)
-
 	}
 	return nil
 }
@@ -680,7 +678,7 @@ func (tab *Tab) fillForm() error {
 	defer acancel()
 	err = chromedp.Nodes("//textarea", &TextareaNodes, chromedp.BySearch).Do(aCtx)
 	if err != nil {
-		logger.Warning("fillForm<textarea> error: %v", err.Error())
+		logger.Debug("fillForm<textarea> error: %v", err.Error())
 	}
 
 	if len(InputNodes) == 0 {
