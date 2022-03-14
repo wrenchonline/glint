@@ -293,9 +293,11 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 
 			go func(ctx context.Context, ev *fetch.EventRequestPaused) {
 				var a chromedp.Action
+				Domain1 := tab.NavigateReq.URL.String() + "/"
 				if FilterKey(ev.Request.URL, ForbidenKey) ||
 					ev.Request.URL == tab.NavigateReq.URL.String() ||
-					ev.ResourceType == network.ResourceTypeXHR {
+					ev.ResourceType == network.ResourceTypeXHR ||
+					ev.Request.URL == Domain1 {
 					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
@@ -483,20 +485,15 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 
 	// tab.ExtraHeaders = map[string]interface{}{}
 	// host := navigateReq.URL.Host
+	// fmt.Println(navigateReq.URL.String())
 	tab.Ctx = &tCtx
 	tab.Cancel = cancel
 	tab.NavigateReq = navigateReq
 	tab.ExtraHeaders = navigateReq.Headers
-	//lens := len(tab.ExtraHeaders)
 	if _, ok := tab.ExtraHeaders["HOST"]; ok {
 		delete(tab.ExtraHeaders, "HOST")
 	}
-	// if lens > 0 {
-	// 	fmt.Println(len(tab.ExtraHeaders))
-	// 	if tab.ExtraHeaders["HOST"] == "/" {
-	// 		delete(tab.ExtraHeaders, "HOST")
-	// 	}
-	// }
+	tab.ExtraHeaders["HOST"] = "/"
 	tab.Eventchanel.EventInfo = make(map[string]bool)
 	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
 	tab.Eventchanel.SubmitCheckUrl = make(chan bool)
@@ -649,9 +646,16 @@ func (tab *Tab) fillForm() error {
 	ctx := tab.GetExecutor()
 	tCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
+	//移除input的 style 属性
+	err := chromedp.Evaluate(removeAttribute, nil).Do(tCtx)
+	if err != nil {
+		logger.Error("removeAttribute error: %s", err)
+	}
+
 	//var res string
 	//获取 input节点
-	err := chromedp.Nodes("//input", &InputNodes, chromedp.BySearch).Do(tCtx)
+	err = chromedp.Nodes("//input", &InputNodes, chromedp.BySearch).Do(tCtx)
 	if err != nil {
 		logger.Warning("fillForm error: %v", err.Error())
 	}
@@ -661,11 +665,11 @@ func (tab *Tab) fillForm() error {
 	}
 
 	ctx = tab.GetExecutor()
-	aCtx, acancel := context.WithTimeout(ctx, time.Second*5)
+	aCtx, acancel := context.WithTimeout(ctx, time.Second*2)
 	defer acancel()
 	err = chromedp.Nodes("//textarea", &TextareaNodes, chromedp.BySearch).Do(aCtx)
 	if err != nil {
-		logger.Warning("fillForm error: %v", err.Error())
+		logger.Warning("fillForm<textarea> error: %v", err.Error())
 	}
 
 	if len(InputNodes) == 0 {
@@ -675,14 +679,8 @@ func (tab *Tab) fillForm() error {
 
 	InputNodes = append(TextareaNodes, InputNodes...)
 
-	//移除input的 style 属性
-	err = chromedp.Evaluate(removeAttribute, nil).Do(tCtx)
-	if err != nil {
-		logger.Fatal("removeAttribute error: ", err)
-	}
-
 	for _, node := range InputNodes {
-		logger.Info("input node name: %s", node.Name)
+		//logger.Info("input node name: %s", node.Name)
 		var ok bool
 		chromedp.EvaluateAsDevTools(fmt.Sprintf(inViewportJS, node.FullXPath()), &ok).Do(tCtx)
 		if !(node.AttributeValue("type") == "hidden" || node.AttributeValue("display") == "none") {

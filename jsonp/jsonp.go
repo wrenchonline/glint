@@ -114,19 +114,19 @@ func CheckJsRespAst(content string, funcName string) (bool, error) {
 	var Valid_Callback bool = false
 	var Valid_Key bool = false
 
-	obj := js.Options{}
-	ast, err := js.Parse(parse.NewInputString(content), obj)
-	if err != nil {
-		return false, err
-	}
+	// obj := js.Options{}
+	// ast, err := js.Parse(parse.NewInputString(content), obj)
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	fmt.Println("Scope:", ast.Scope.String())
-	fmt.Println("JS:", ast.String())
+	//fmt.Println("Scope:", ast.Scope.String())
+	//fmt.Println("JS:", ast.String())
 	//ast.BlockStmt.String()
 	l := js.NewLexer(parse.NewInputString(content))
 	for {
 		tt, text := l.Next()
-		fmt.Println("text", string(text))
+		//fmt.Println("text", string(text))
 		switch tt {
 		case js.ErrorToken:
 			if l.Err() != io.EOF {
@@ -147,7 +147,7 @@ func CheckJsRespAst(content string, funcName string) (bool, error) {
 			}
 		case js.IdentifierToken:
 			Identifier := string(text)
-			fmt.Println("IdentifierToken", Identifier)
+			//fmt.Println("IdentifierToken", Identifier)
 			if Identifier == funcName {
 				Valid_Callback = true
 			}
