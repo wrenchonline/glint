@@ -436,7 +436,7 @@ func InitSpider(
 
 	spider := Spider{}
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-images", true),
 		chromedp.Flag("disable-web-security", true),

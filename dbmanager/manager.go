@@ -257,6 +257,9 @@ func (Dm *DbManager) ConvertToMap(value interface{}, converted map[string]interf
 
 func (Dm *DbManager) UuidToMap(uuid string, type_name string) map[string]interface{} {
 	converted := make(map[string]interface{})
+	if uuid == "" {
+		return converted
+	}
 	switch type_name {
 	case "Headers":
 		ExtraHeaders, err := Dm.GetKeyValues(uuid, 1)

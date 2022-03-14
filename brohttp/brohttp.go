@@ -49,7 +49,11 @@ type UrlOCC struct {
 
 func (spider *Spider) Close() {
 	defer (*spider.Cancel)()
-	defer chromedp.Cancel(*spider.Ctx)
+	if (*spider.Ctx).Err() == nil {
+		chromedp.Cancel(*spider.Ctx)
+	} else {
+		logger.Error("spider close call  fail error: %s", (*spider.Ctx).Err())
+	}
 }
 
 func (t *Tab) Close() {

@@ -19,6 +19,7 @@ import (
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"
+	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
@@ -243,6 +244,9 @@ func ParseUri(uri string, body []byte, method string, content_type string) (Para
 		}
 
 	} else if strings.ToUpper(method) == "GET" {
+		if !funk.Contains(string(uri), "?") {
+			return nil, fmt.Errorf("GET data is empty")
+		}
 		urlparams := strings.Split(string(uri), "?")[1]
 		strs := strings.Split(string(urlparams), "&")
 		params := Param{}

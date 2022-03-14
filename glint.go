@@ -214,20 +214,29 @@ func (t *Task) sendprog() {
 	t.PliuginsMsg <- Element
 }
 
+//bpayloadbrower 该插件是否开启浏览器方式发送payload
 func (t *Task) AddPlugins(
 	PluginName plugin.Plugin_type,
 	callback plugin.PluginCallback,
 	ReqList map[string][]interface{},
 	installDb bool,
-	percentage float64) {
+	percentage float64,
+	bpayloadbrower bool) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, callback)
+	var Payloadcarrier *brohttp.Spider
+	if bpayloadbrower {
+		Payloadcarrier = &t.XssSpider
+	} else {
+		Payloadcarrier = nil
+	}
+
 	pluginInternal := plugin.Plugin{
 		PluginName:   PluginName,
 		MaxPoolCount: 20,
 		Callbacks:    myfunc,
 		InstallDB:    installDb,
-		Spider:       &t.XssSpider,
+		Spider:       Payloadcarrier,
 		Taskid:       t.TaskId,
 		Timeout:      time.Second * 600,
 		Progperc:     percentage,
@@ -331,15 +340,15 @@ func (t *Task) dostartTasks(installDb bool) error {
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
-			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, installDb, percentage)
+			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, installDb, percentage, false)
 		case "xss":
-			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, installDb, percentage)
+			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, installDb, percentage, true)
 		case "ssrf":
-			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, installDb, percentage)
+			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, installDb, percentage, false)
 		case "jsonp":
-			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, installDb, percentage)
+			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, installDb, percentage, false)
 		case "cmdinject":
-			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, installDb, percentage)
+			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, installDb, percentage, false)
 		}
 	}
 
