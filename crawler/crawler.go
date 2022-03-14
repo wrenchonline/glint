@@ -301,7 +301,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
-					logger.Debug("FailRequest:%s", ev.Request.URL)
+					logger.Info("FailRequest:%s", ev.Request.URL)
 					c := chromedp.FromContext(ctx)
 					ctx = cdp.WithExecutor(ctx, c.Target)
 					a = fetch.FailRequest(ev.RequestID, network.ErrorReasonAborted)
@@ -438,7 +438,7 @@ func InitSpider(
 
 	spider := Spider{}
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-images", true),
 		chromedp.Flag("disable-web-security", true),
@@ -476,7 +476,7 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	var tab Tab
 
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
-	tCtx, _ := context.WithTimeout(ctx, config.TabRunTimeout)
+	tCtx, _ := context.WithTimeout(ctx, config.TabRunTimeout*time.Second)
 
 	spider.lock.Lock()
 	spider.tabs = append(spider.tabs, &tCtx)
@@ -493,7 +493,7 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	if _, ok := tab.ExtraHeaders["HOST"]; ok {
 		delete(tab.ExtraHeaders, "HOST")
 	}
-	tab.ExtraHeaders["HOST"] = "/"
+	// tab.ExtraHeaders["Host"] = navigateReq.URL.Host
 	tab.Eventchanel.EventInfo = make(map[string]bool)
 	tab.Eventchanel.ButtonCheckUrl = make(chan bool)
 	tab.Eventchanel.SubmitCheckUrl = make(chan bool)
@@ -566,32 +566,43 @@ func (tab *Tab) CommitBySubmit() error {
 	// 获取所有的form节点 直接执行submit
 	formNodes, err := tab.GetNodeIDs(`form`)
 	if err != nil {
-		logger.Warning("CommitBySubmit %s", err.Error())
-		return err
+		logger.Warning("CommitBySubmit<form> %s", err.Error())
+		// return err
 	}
-	if len(formNodes) == 0 {
-		err := "CommitBySubmit not found Nodes"
-		logger.Warning(err)
-		return fmt.Errorf(err)
-	}
+	// if len(formNodes) == 0 {
+	// 	// err := "CommitBySubmit not found Nodes"
+	// 	// logger.Warning(err)
+	// 	// return fmt.Errorf(err)
+	// }
+
 	tCtx1, cancel1 := context.WithTimeout(ctx, time.Second*2)
 	defer cancel1()
 	_ = chromedp.Submit(formNodes, chromedp.ByNodeID).Do(tCtx1)
 
 	// 获取所有的input标签
-	inputNodes, inputErr := tab.GetNodeIDs(`form input[type=submit]`)
-	if inputErr != nil || len(inputNodes) == 0 {
-		if inputErr != nil {
-			logger.Warning("CommitBySubmit %s", inputErr.Error())
-		}
-		return inputErr
+	node := []*cdp.Node{}
+	tCtx3, cancel3 := context.WithTimeout(ctx, time.Second*2)
+	defer cancel3()
+	chromedp.Nodes("input[type=submit]", &node, chromedp.BySearch).Do(tCtx3)
+	if len(node) == 0 {
+		errmsg := "CommitBySubmit<input> node is empty"
+		logger.Warning(errmsg)
+		return errors.New(errmsg)
 	}
+	// fmt.Println(node)
+	// inputNodes, inputErr := tab.GetNodeIDs(`form input[type=submit]`)
+	// if inputErr != nil || len(inputNodes) == 0 {
+	// 	if inputErr != nil {
+	// 		logger.Warning("CommitBySubmit<input> %s", inputErr.Error())
+	// 	}
+	// 	return inputErr
+	// }
 	tCtx2, cancel2 := context.WithTimeout(ctx, time.Second*2)
 	defer cancel2()
-	for _, v := range inputNodes {
+	for _, v := range node {
 		tab.Eventchanel.SubmitCheckUrl <- true
 		<-tab.Eventchanel.SubmitRep
-		Nodes := []cdp.NodeID{v}
+		Nodes := []cdp.NodeID{v.NodeID}
 		_ = chromedp.Click(Nodes, chromedp.ByNodeID).Do(tCtx2)
 		//使用sleep顺序执行
 		time.Sleep(time.Millisecond * 500)
@@ -719,7 +730,7 @@ func (tab *Tab) ClickNodeByOnClick() error {
 	// defer tab.domWG.Done()
 	var Nodes []*cdp.Node
 	ctx := tab.GetExecutor()
-	tCtx, cancel := context.WithTimeout(ctx, time.Second*6)
+	tCtx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 	err := chromedp.Nodes("//input[@onclick]", &Nodes, chromedp.BySearch).Do(tCtx)
 	if err != nil {

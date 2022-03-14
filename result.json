@@ -1,1 +1,336 @@
-{"":[{"url":"http://192.168.166.8/","method":"GET","headers":{"HOST":"/"},"data":"","source":"Target","hostid":1}]}
+{
+    "": [
+        {
+            "url": "http://192.168.166.8/",
+            "method": "GET",
+            "headers": {},
+            "data": "",
+            "source": "Target",
+            "hostid": 1
+        }
+    ],
+    "CollectLink": [
+        {
+            "url": "http://192.168.166.8/instructions.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/setup.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/brute/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/exec/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/csrf/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/fi/?page=include.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/upload/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/captcha/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/sqli/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/sqli_blind/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/weak_id/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_d/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_r/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_s/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/csp/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/javascript/",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/security.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/phpinfo.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/about.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/logout.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/sqli/session-input.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_help.php?id=sqli\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source.php?id=sqli\u0026security=high",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/sqli_blind/cookie-input.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/instructions.php?doc=PDF",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/security.php?test=%22\u003e\u003cscript\u003eeval(window.name)\u003c/script\u003e",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/ids_log.php",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/csp/source/jsonp.php?callback=solveSum",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/upload/multipart/form-data",
+            "method": "GET",
+            "headers": {
+                "Referer": "http://192.168.166.8/"
+            },
+            "data": "",
+            "source": "JavaScript",
+            "hostid": 1
+        }
+    ],
+    "Normal": [
+        {
+            "url": "http://192.168.166.8/vulnerabilities/xss_s/",
+            "method": "POST",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": "PHPSESSID=anfvdbos35tc8ae328tkkbvcrv; security=high",
+                "Origin": "http://192.168.166.8",
+                "Referer": "http://192.168.166.8/",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "txtName=test1234\u0026mtxMessage=test1234\u0026btnSign=Sign+Guestbook",
+            "source": "Document",
+            "hostid": 1
+        },
+        {
+            "url": "http://192.168.166.8/vulnerabilities/view_source_all.php?id=sqli",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "PHPSESSID=anfvdbos35tc8ae328tkkbvcrv; security=high",
+                "Referer": "http://192.168.166.8/",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 1
+        }
+    ]
+}

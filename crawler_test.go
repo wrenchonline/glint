@@ -23,7 +23,7 @@ func Test_Crawler(t *testing.T) {
 	logger.DebugEnable(true)
 	TaskConfig := config.TaskConfig{}
 	TaskConfig.Proxy = ""
-	TaskConfig.NoHeadless = false
+	TaskConfig.NoHeadless = true
 	TaskConfig.TabRunTimeout = 20 * time.Second
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -31,7 +31,7 @@ func Test_Crawler(t *testing.T) {
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("http://192.168.166.8")
+	murl, _ := url.Parse("http://192.168.166.8/vulnerabilities/xss_r")
 	Headers := make(map[string]interface{})
 	targets := &model.Request{
 		URL:           &model.URL{URL: *murl},

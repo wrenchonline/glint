@@ -179,7 +179,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	spider.Cancel = &cancel
 	spider.Ctx = &ctx
-	spider.TabTimeOut = int64(TaskConfig.TabRunTimeout)
+	spider.TabTimeOut = int64(TaskConfig.TabRunTimeout * time.Second)
 	err := chromedp.Run(
 		*spider.Ctx,
 		fetch.Enable(),
