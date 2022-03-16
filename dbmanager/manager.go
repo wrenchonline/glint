@@ -190,13 +190,13 @@ func (Dm *DbManager) SaveScanResult(
 	Target string,
 	ReqMsg string,
 	RespMsg string,
-
+	hostid int,
 ) error {
 	sql := `
 	INSERT  
 	INTO 
-	exweb_task_result (task_id,is_vul,url,vul_id,request_info) 
-	VALUES(:taskid,:vul,:target,:vulid,:reqmsg);
+	exweb_task_result (task_id,is_vul,url,vul_id,request_info,host_id) 
+	VALUES(:taskid,:vul,:target,:vulid,:reqmsg,:hostid);
 	`
 	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
 		"taskid": taskid,
@@ -204,6 +204,7 @@ func (Dm *DbManager) SaveScanResult(
 		"target": Target,
 		"vulid":  plugin_name,
 		"reqmsg": ReqMsg,
+		"hostid": hostid,
 		// "respmsg": RespMsg,
 		// "vulnerability": VulnerableLevel,
 	})

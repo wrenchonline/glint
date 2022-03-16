@@ -358,7 +358,7 @@ type xssOcc struct {
 	Htmls []string
 }
 
-func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab *brohttp.Tab, ctx context.Context) (*util.ScanResult, error) {
+func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab *brohttp.Tab, ctx context.Context, hostid int64) (*util.ScanResult, error) {
 	g := new(Generator)
 
 	var (
@@ -366,17 +366,10 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 		attibuteoK bool
 		scriptok   bool
 	)
-	// t := time.NewTimer(time.Millisecond * 200)
 	payloadsdata, err := payload.LoadPayloadData("./xss.yaml")
 	if err != nil {
 		return nil, errors.New("empty to xss payload ")
 	}
-	// for _, v := range GroupUrlsReponseInfo {
-	// 	vlen := len(v)
-	// 	for i := 0; i < vlen; i++ {
-
-	// 	}
-	// }
 	var Occs []xssOcc
 	payloadinfo := make(map[string]stf)
 
@@ -384,7 +377,6 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 	for _, v := range GroupUrlsReponseInfo {
 		select {
 		case <-ctx.Done():
-			// t.Stop()
 			return nil, ctx.Err()
 		default:
 		}
@@ -456,7 +448,8 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 						"VULNERABLE to Cross-site scripting ...",
 						[]string{string(payload)},
 						[]string{string("")},
-						"high")
+						"high",
+						hostid)
 					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
 					return Result, err
 				}
@@ -471,6 +464,9 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
 	ctx := groups.Pctx
+	session := groups.GroupUrls.(map[string]interface{})
+	hostid := session["hostid"].(int64)
+
 	var Result *util.ScanResult
 	var err error
 
@@ -502,7 +498,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx)
+		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
 		if err != nil {
 			return nil, err
 		}
@@ -522,7 +518,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss::not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx)
+		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
 		if err != nil {
 			return nil, err
 		}

@@ -98,7 +98,8 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				"csrf Origin Vulnerable",
 				[]string{string(req2.String())},
 				[]string{string(b2)},
-				"middle")
+				"middle",
+				session["hostid"].(int64))
 			return Result, errs
 		}
 
@@ -129,7 +130,8 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				"Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...",
 				[]string{string(req2.String())},
 				[]string{string(b2)},
-				"middle")
+				"middle",
+				session["hostid"].(int64))
 			return Result, errs
 		}
 		return nil, errs

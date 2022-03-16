@@ -106,6 +106,7 @@ func (p *Plugin) Run(args PluginOption) error {
 		p.threadwg.Add(len(urlinters))
 		for _, urlinter := range urlinters {
 			go func(type_name string, urlinter interface{}) {
+
 				data := GroupData{
 					GroupType: type_name,
 					GroupUrls: urlinter,

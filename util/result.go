@@ -20,6 +20,7 @@ type ScanResult struct {
 	ReqMsg          []string `json:"req_msg"`          // 请求列表
 	RespMsg         []string `json:"resp_msg"`         // 响应列表
 	VulnerableLevel string   `json:"vulnerable_level"` // 漏洞等级
+	Hostid          int64    `json:"hostid"`           //
 }
 
 // 没漏洞时返回的结果
@@ -66,7 +67,7 @@ func VulnerableHttpResult(target string, output string, respList []*proto.Respon
 }
 
 // 有漏洞时返回的结果(tcp/udp)
-func VulnerableTcpOrUdpResult(target string, output string, payload []string, resp []string, VulnerableLevel string) *ScanResult {
+func VulnerableTcpOrUdpResult(target string, output string, payload []string, resp []string, VulnerableLevel string, hostid int64) *ScanResult {
 	return &ScanResult{
 		Vulnerable:      true,
 		Target:          target,
@@ -74,6 +75,7 @@ func VulnerableTcpOrUdpResult(target string, output string, payload []string, re
 		ReqMsg:          payload,
 		RespMsg:         resp,
 		VulnerableLevel: VulnerableLevel,
+		Hostid:          hostid,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"glint/fastreq"
+	"glint/logger"
 	"glint/plugin"
 	"glint/util"
 	"io"
@@ -114,14 +115,14 @@ func CheckJsRespAst(content string, funcName string) (bool, error) {
 	var Valid_Callback bool = false
 	var Valid_Key bool = false
 
-	// obj := js.Options{}
-	// ast, err := js.Parse(parse.NewInputString(content), obj)
-	// if err != nil {
-	// 	return false, err
-	// }
+	obj := js.Options{}
+	ast, err := js.Parse(parse.NewInputString(content), obj)
+	if err != nil {
+		return false, err
+	}
 
-	//fmt.Println("Scope:", ast.Scope.String())
-	//fmt.Println("JS:", ast.String())
+	logger.Debug("Scope:%s", ast.Scope.String())
+	logger.Debug("JS:%s", ast.String())
 	//ast.BlockStmt.String()
 	l := js.NewLexer(parse.NewInputString(content))
 	for {
@@ -186,7 +187,8 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 			"jsonp vulnerability found",
 			[]string{string(info.Request.String())},
 			[]string{string(info.Response.String())},
-			"middle")
+			"middle",
+			session["hostid"].(int64))
 		return Result, err
 	}
 	return nil, errors.New("jsonp vulnerability not found")

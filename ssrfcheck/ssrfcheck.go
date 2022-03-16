@@ -58,7 +58,8 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					"ssrf Vulnerable",
 					[]string{string(req1.String())},
 					[]string{string(r1)},
-					"middle")
+					"middle",
+					session["hostid"].(int64))
 				return Result, errs
 			}
 		}
@@ -76,7 +77,8 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					"ssrf Vulnerable",
 					[]string{string(req1.String())},
 					[]string{string(r1)},
-					"middle")
+					"middle",
+					session["hostid"].(int64))
 				return Result, errs
 			}
 		}

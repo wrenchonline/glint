@@ -37,6 +37,7 @@ func Test_InstallScanResult(t *testing.T) {
 		"http://rongji.com",
 		"desad",
 		"sdas",
+		1,
 	)
 	if err != nil {
 		t.Error(err)

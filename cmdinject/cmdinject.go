@@ -133,7 +133,8 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 			"cmd inject vulnerability found",
 			[]string{string(req.String())},
 			[]string{string(resp.String())},
-			"high")
+			"high",
+			session["hostid"].(int64))
 		return Result, err
 	}
 	return nil, errors.New("jsonp vulnerability not found")

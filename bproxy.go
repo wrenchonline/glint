@@ -239,7 +239,6 @@ func (s *SProxy) Init() error {
 		tsl := trafficshape.NewListener(l)
 		tsh := trafficshape.NewHandler(tsl)
 		configure("/shape-traffic", tsh, mux)
-
 		l = tsl
 	}
 
