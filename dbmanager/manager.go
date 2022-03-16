@@ -185,7 +185,7 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 //保存漏扫结果
 func (Dm *DbManager) SaveScanResult(
 	taskid int,
-	plugin_name int64,
+	plugin_name string,
 	Vulnerable bool,
 	Target string,
 	ReqMsg string,

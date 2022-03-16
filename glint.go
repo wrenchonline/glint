@@ -377,7 +377,7 @@ func (t *Task) SavePluginResult() {
 		funk.Map(plugin.ScanResult, func(s *util.ScanResult) bool {
 			err := t.Dm.SaveScanResult(
 				t.TaskId,
-				int64(plugin.PluginName),
+				string(plugin.PluginName),
 				s.Vulnerable,
 				s.Target,
 				s.Output,

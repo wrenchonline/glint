@@ -32,7 +32,7 @@ func Test_InstallScanResult(t *testing.T) {
 	}
 	err = Dm.SaveScanResult(
 		1,
-		int64(plugin.Xss),
+		string(plugin.Xss),
 		true,
 		"http://rongji.com",
 		"desad",

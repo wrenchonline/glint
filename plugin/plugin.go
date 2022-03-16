@@ -11,14 +11,14 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
-type Plugin_type int64
+type Plugin_type string
 
 const (
-	Xss       Plugin_type = 1
-	Csrf      Plugin_type = 2
-	Ssrf      Plugin_type = 3
-	Jsonp     Plugin_type = 4
-	CmdInject Plugin_type = 5
+	Xss       Plugin_type = "rj-001-0001"
+	Csrf      Plugin_type = "rj-002-0001"
+	Ssrf      Plugin_type = "rj-003-0001"
+	Jsonp     Plugin_type = "rj-004-0001"
+	CmdInject Plugin_type = "rj-005-0001"
 )
 
 type Plugin struct {
@@ -66,7 +66,7 @@ func (p *Plugin) Init() {
 		for _, f := range p.Callbacks {
 			scanresult, err := f(data)
 			if err != nil {
-				logger.Warning("plugin::error %s", err.Error())
+				logger.Debug("plugin::error %s", err.Error())
 			} else {
 				//在这里保存,在这里抛出信息给web前端
 				if scanresult != nil {
