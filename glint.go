@@ -380,8 +380,9 @@ func (t *Task) SavePluginResult() {
 				string(plugin.PluginName),
 				s.Vulnerable,
 				s.Target,
-				s.Output,
+				// s.Output,
 				base64.StdEncoding.EncodeToString([]byte(s.ReqMsg[0])),
+				base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
 				int(s.Hostid),
 			)
 			if err != nil {
