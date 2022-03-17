@@ -356,11 +356,11 @@ func (t *Task) dostartTasks(installDb bool) error {
 	// quit:
 	Taskslock.Lock()
 	removetasks(t.TaskId)
+	Taskslock.Unlock()
 	if installDb {
 		t.SavePluginResult()
 		t.SaveQuitTime()
 	}
-	Taskslock.Unlock()
 	logger.Info("The End for task:%d", t.TaskId)
 	return err
 }
