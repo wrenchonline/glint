@@ -62,6 +62,7 @@ type Task struct {
 	Progress      float64
 	DoStartSignal chan bool
 	PliuginsMsg   chan map[string]interface{}
+	Status        util.Status
 }
 
 func main() {
@@ -380,7 +381,7 @@ func (t *Task) SavePluginResult() {
 				string(plugin.PluginName),
 				s.Vulnerable,
 				s.Target,
-				// s.Output,
+				// s.Output,1
 				base64.StdEncoding.EncodeToString([]byte(s.ReqMsg[0])),
 				base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
 				int(s.Hostid),

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"glint/dbmanager"
 	"glint/logger"
+	"glint/util"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -58,12 +59,13 @@ var Taskslock sync.Mutex
 
 var ServerType string
 
-type TaskStatus int
+// type TaskStatus int
 
 const (
-	TaskERROR        TaskStatus = -1
-	TaskHasCompleted TaskStatus = 0
-	TaskHasStart     TaskStatus = 1
+	TaskERROR        util.Status = -1
+	TaskHasCompleted util.Status = 0
+	TaskHasStart     util.Status = 1
+	TaskStop         util.Status = 2
 )
 
 func (t *Task) quitmsg() {
@@ -71,7 +73,9 @@ func (t *Task) quitmsg() {
 	logger.Info("Monitor the exit signal of the task")
 	for _, task := range Tasks {
 		<-(*task.Ctx).Done()
-		sendmsg(2, "The Task is End", t.TaskId)
+		if task.Status != TaskStop {
+			sendmsg(2, "The Task is End", t.TaskId)
+		}
 	}
 }
 
@@ -268,7 +272,12 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 	} else if strings.ToLower(Status) == "close" {
 		if len(Tasks) != 0 {
 			for _, task := range Tasks {
-				(*task.Cancel)()
+				uinttask, _ := strconv.Atoi(taskid)
+				if task.TaskId == uinttask {
+					(*task.Cancel)()
+					task.Status = TaskStop
+					sendmsg(4, "The Task is End", task.TaskId)
+				}
 			}
 			Tasks = nil
 		}
@@ -276,7 +285,7 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 	return err
 }
 
-func (ts *TaskServer) GetTaskStatus(json map[string]interface{}) (TaskStatus, error) {
+func (ts *TaskServer) GetTaskStatus(json map[string]interface{}) (util.Status, error) {
 	if len(Tasks) != 0 {
 		for _, task := range Tasks {
 			taskid, err := GetTaskId(json)

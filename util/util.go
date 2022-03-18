@@ -278,3 +278,5 @@ func FmtDuration(d time.Duration) string {
 	s := d / time.Second
 	return fmt.Sprintf("%02d小时%02d分钟%02d秒", d, m, s)
 }
+
+type Status int
