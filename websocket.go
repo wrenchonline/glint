@@ -46,7 +46,7 @@ type TaskServer struct {
 }
 
 //Tasks 进行的任务
-var Tasks []Task
+var Tasks []*Task
 
 type soketinfo struct {
 	Conn *websocket.Conn
@@ -75,6 +75,8 @@ func (t *Task) quitmsg() {
 		<-(*task.Ctx).Done()
 		if task.Status != TaskStop {
 			sendmsg(2, "The Task is End", t.TaskId)
+		} else {
+			sendmsg(4, "The Task is End", task.TaskId)
 		}
 	}
 }
@@ -264,7 +266,7 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			return err
 		}
 		Taskslock.Lock()
-		Tasks = append(Tasks, task)
+		Tasks = append(Tasks, &task)
 		Taskslock.Unlock()
 		sendmsg(0, "The Task is Starting", task.TaskId)
 		go task.PluginMsgHandler(*task.Ctx)
@@ -274,9 +276,10 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			for _, task := range Tasks {
 				uinttask, _ := strconv.Atoi(taskid)
 				if task.TaskId == uinttask {
-					(*task.Cancel)()
+					Taskslock.Lock()
 					task.Status = TaskStop
-					sendmsg(4, "The Task is End", task.TaskId)
+					Taskslock.Unlock()
+					(*task.Cancel)()
 				}
 			}
 			Tasks = nil
