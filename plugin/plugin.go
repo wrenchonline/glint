@@ -2,7 +2,9 @@ package plugin
 
 import (
 	"context"
+	"encoding/base64"
 	"glint/brohttp"
+	"glint/dbmanager"
 	"glint/logger"
 	"glint/util"
 	"sync"
@@ -36,6 +38,7 @@ type Plugin struct {
 	Ctx          *context.Context
 	Cancel       *context.CancelFunc
 	Timeout      time.Duration
+	Dm           *dbmanager.DbManager //数据库句柄
 }
 
 type PluginOption struct {
@@ -84,7 +87,18 @@ func (p *Plugin) Init() {
 					if data.IsSocket {
 						(*data.Msg) <- Element
 					}
-
+					if p.InstallDB {
+						p.Dm.SaveScanResult(
+							p.Taskid,
+							string(p.PluginName),
+							scanresult.Vulnerable,
+							scanresult.Target,
+							// s.Output,1
+							base64.StdEncoding.EncodeToString([]byte(scanresult.ReqMsg[0])),
+							base64.StdEncoding.EncodeToString([]byte(scanresult.RespMsg[0])),
+							int(scanresult.Hostid),
+						)
+					}
 				}
 			}
 		}
@@ -106,7 +120,6 @@ func (p *Plugin) Run(args PluginOption) error {
 		p.threadwg.Add(len(urlinters))
 		for _, urlinter := range urlinters {
 			go func(type_name string, urlinter interface{}) {
-
 				data := GroupData{
 					GroupType: type_name,
 					GroupUrls: urlinter,
