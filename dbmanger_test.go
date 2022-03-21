@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"glint/dbmanager"
 	"glint/plugin"
 	"glint/util"
@@ -74,8 +75,9 @@ func Test_QuitTime(t *testing.T) {
 		t.Error(err)
 	}
 	start_scan := time.Now()
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	over_time := util.FmtDuration(time.Since(start_scan))
+	fmt.Println(over_time)
 	err = Dm.SaveQuitTime(
 		1,
 		start_scan,

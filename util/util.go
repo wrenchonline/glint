@@ -19,6 +19,7 @@ import (
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"
+	"github.com/shopspring/decimal"
 	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
@@ -270,13 +271,14 @@ func Decimal(value float64) float64 {
 }
 
 func FmtDuration(d time.Duration) string {
-	d = d.Round(time.Second)
-	h := d / time.Hour
-	d -= h * time.Hour
-	m := d / time.Minute
-	d -= m * time.Minute
-	s := d / time.Second
-	return fmt.Sprintf("%02d小时%02d分钟%02d秒", d, m, s)
+
+	hour, _ := decimal.NewFromFloat(d.Hours()).Round(1).Float64()
+	hour_int := int(hour)
+	minutes, _ := decimal.NewFromFloat(d.Minutes()).Round(1).Float64()
+	minutes_int := int(minutes)
+	second, _ := decimal.NewFromFloat(d.Seconds()).Round(1).Float64()
+	second_int := int(second)
+	return fmt.Sprintf("%02d小时%02d分钟%02d秒", hour_int, minutes_int, second_int)
 }
 
 type Status int
