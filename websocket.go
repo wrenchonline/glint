@@ -71,14 +71,15 @@ const (
 func (t *Task) quitmsg() {
 	<-t.DoStartSignal
 	logger.Info("Monitor the exit signal of the task")
-	for _, task := range Tasks {
-		<-(*task.Ctx).Done()
-		if task.Status != TaskStop {
-			sendmsg(2, "The Task is End", t.TaskId)
-		} else {
-			sendmsg(4, "The Task is End", task.TaskId)
-		}
+	// for _, task := range Tasks {
+
+	<-(*t.Ctx).Done()
+	if t.Status != TaskStop {
+		sendmsg(2, "The Task is End", t.TaskId)
+	} else {
+		sendmsg(4, "The Task is End", t.TaskId)
 	}
+	// }
 }
 
 // NewTaskServer
