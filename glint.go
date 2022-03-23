@@ -425,11 +425,12 @@ func (t *Task) UrlPackage(_url string, extra interface{}) error {
 	}
 
 	Headers := make(map[string]interface{})
-	if !strings.HasPrefix(_url, "http") || !strings.HasPrefix(_url, "https") {
+	if !(strings.HasPrefix(_url, "http") || strings.HasPrefix(_url, "https")) {
 		err = errors.New(`parameter error,please "http(s)://" start with Url `)
 		logger.Error(err.Error())
 		return err
 	}
+
 	url, err := model.GetUrl(_url)
 	if err != nil {
 		logger.Error(err.Error())
