@@ -241,6 +241,16 @@ func (Dm *DbManager) DeleteScanResult(taskid int) error {
 	if err != nil {
 		logger.Error("delete scan result error %v", err.Error())
 	}
+
+	sql := `UPDATE exweb_task_info SET end_time=NULL,scan_time=NULL WHERE task_id=:task_id`
+	_, err = Dm.Db.NamedExec(sql,
+		map[string]interface{}{
+			"task_id": taskid,
+		})
+	//错误处理
+	if err != nil {
+		fmt.Println("清空退出时间失败!")
+	}
 	return err
 }
 

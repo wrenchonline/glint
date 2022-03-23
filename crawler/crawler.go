@@ -614,10 +614,10 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	logger.Success("collectLinks end")
 
 	// 识别页面编码 并编码所有URL
-	if tab.config.EncodeURLWithCharset {
-		tab.DetectCharset()
-		tab.EncodeAllURLWithCharset()
-	}
+	// if tab.config.EncodeURLWithCharset {
+	tab.DetectCharset()
+	tab.EncodeAllURLWithCharset()
+	//}
 
 	return nil
 }
