@@ -21,13 +21,13 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/panjf2000/ants/v2 v2.4.7
 	github.com/pkg/errors v0.9.1
-	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/shopspring/decimal v1.3.1
 	github.com/tdewolff/parse/v2 v2.5.27
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/valyala/fasthttp v1.33.0
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	github.com/valyala/fasthttp v1.34.0
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e
 	google.golang.org/protobuf v1.27.1
