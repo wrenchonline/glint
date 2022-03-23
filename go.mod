@@ -12,8 +12,10 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/gogf/gf v1.16.6
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.9.0
+	github.com/google/martian v2.1.0+incompatible
 	github.com/google/martian/v3 v3.2.1
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
@@ -26,8 +28,8 @@ require (
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/valyala/fasthttp v1.33.0
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	github.com/valyala/fasthttp v1.34.0
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e
 	google.golang.org/protobuf v1.27.1

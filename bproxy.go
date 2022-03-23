@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"glint/logger"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -15,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/martian/messageview"
 	"github.com/google/martian/v3"
 	mapi "github.com/google/martian/v3/api"
 	"github.com/google/martian/v3/cors"
@@ -25,6 +31,7 @@ import (
 	"github.com/google/martian/v3/martianhttp"
 	"github.com/google/martian/v3/martianlog"
 	"github.com/google/martian/v3/mitm"
+	"github.com/google/martian/v3/parse"
 	"github.com/google/martian/v3/servemux"
 	"github.com/google/martian/v3/trafficshape"
 	"github.com/google/martian/v3/verify"
@@ -256,169 +263,169 @@ func (s *SProxy) Init() error {
 	return nil
 }
 
-// // Logger is a modifier that logs requests and responses.
-// type Logger struct {
-// 	log         func(line string)
-// 	headersOnly bool
-// 	decode      bool
+// Logger is a modifier that logs requests and responses.
+type Logger struct {
+	log         func(line string)
+	headersOnly bool
+	decode      bool
+}
+
+type loggerJSON struct {
+	Scope       []parse.ModifierType `json:"scope"`
+	HeadersOnly bool                 `json:"headersOnly"`
+	Decode      bool                 `json:"decode"`
+}
+
+func init() {
+	parse.Register("log.Logger", loggerFromJSON)
+}
+
+// NewLogger returns a logger that logs requests and responses, optionally
+// logging the body. Log function defaults to martian.Infof.
+func NewLogger() *Logger {
+	return &Logger{
+		log: func(line string) {
+			logger.Info(line)
+		},
+	}
+}
+
+// SetHeadersOnly sets whether to log the request/response body in the log.
+func (l *Logger) SetHeadersOnly(headersOnly bool) {
+	l.headersOnly = headersOnly
+}
+
+// SetDecode sets whether to decode the request/response body in the log.
+func (l *Logger) SetDecode(decode bool) {
+	l.decode = decode
+}
+
+// SetLogFunc sets the logging function for the logger.
+func (l *Logger) SetLogFunc(logFunc func(line string)) {
+	l.log = logFunc
+}
+
+// ModifyRequest logs the request, optionally including the body.
+//
+// The format logged is:
+// --------------------------------------------------------------------------------
+// Request to http://www.google.com/path?querystring
+// --------------------------------------------------------------------------------
+// GET /path?querystring HTTP/1.1
+// Host: www.google.com
+// Connection: close
+// Other-Header: values
+//
+// request content
+// --------------------------------------------------------------------------------
+func (l *Logger) ModifyRequest(req *http.Request) error {
+	ctx := martian.NewContext(req)
+	if ctx.SkippingLogging() {
+		return nil
+	}
+
+	b := &bytes.Buffer{}
+
+	fmt.Fprintln(b, "")
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+	fmt.Fprintf(b, "Request to %s\n", req.URL)
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+
+	mv := messageview.New()
+	mv.SkipBody(l.headersOnly)
+	if err := mv.SnapshotRequest(req); err != nil {
+		return err
+	}
+
+	var opts []messageview.Option
+	if l.decode {
+		opts = append(opts, messageview.Decode())
+	}
+
+	r, err := mv.Reader(opts...)
+	if err != nil {
+		return err
+	}
+
+	io.Copy(b, r)
+
+	fmt.Fprintln(b, "")
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+
+	l.log(b.String())
+
+	return nil
+}
+
+// ModifyResponse logs the response, optionally including the body.
+//
+// The format logged is:
+// --------------------------------------------------------------------------------
+// Response from http://www.google.com/path?querystring
+// --------------------------------------------------------------------------------
+// HTTP/1.1 200 OK
+// Date: Tue, 15 Nov 1994 08:12:31 GMT
+// Other-Header: values
+//
+// response content
+// --------------------------------------------------------------------------------
+func (l *Logger) ModifyResponse(res *http.Response) error {
+	ctx := martian.NewContext(res.Request)
+	if ctx.SkippingLogging() {
+		return nil
+	}
+
+	b := &bytes.Buffer{}
+	fmt.Fprintln(b, "")
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+	fmt.Fprintf(b, "Response from %s\n", res.Request.URL)
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+
+	mv := messageview.New()
+	mv.SkipBody(l.headersOnly)
+	if err := mv.SnapshotResponse(res); err != nil {
+		return err
+	}
+
+	var opts []messageview.Option
+	if l.decode {
+		opts = append(opts, messageview.Decode())
+	}
+
+	r, err := mv.Reader(opts...)
+	if err != nil {
+		return err
+	}
+
+	io.Copy(b, r)
+
+	fmt.Fprintln(b, "")
+	fmt.Fprintln(b, strings.Repeat("-", 80))
+
+	l.log(b.String())
+
+	return nil
+}
+
+// loggerFromJSON builds a logger from JSON.
+//
+// Example JSON:
+// {
+//   "log.Logger": {
+//     "scope": ["request", "response"],
+//		 "headersOnly": true,
+//		 "decode": true
+//   }
 // }
+func loggerFromJSON(b []byte) (*parse.Result, error) {
+	msg := &loggerJSON{}
+	if err := json.Unmarshal(b, msg); err != nil {
+		return nil, err
+	}
 
-// type loggerJSON struct {
-// 	Scope       []parse.ModifierType `json:"scope"`
-// 	HeadersOnly bool                 `json:"headersOnly"`
-// 	Decode      bool                 `json:"decode"`
-// }
+	l := NewLogger()
+	l.SetHeadersOnly(msg.HeadersOnly)
+	l.SetDecode(msg.Decode)
 
-// func init() {
-// 	parse.Register("log.Logger", loggerFromJSON)
-// }
-
-// // NewLogger returns a logger that logs requests and responses, optionally
-// // logging the body. Log function defaults to martian.Infof.
-// func NewLogger() *Logger {
-// 	return &Logger{
-// 		log: func(line string) {
-// 			log.Infof(line)
-// 		},
-// 	}
-// }
-
-// // SetHeadersOnly sets whether to log the request/response body in the log.
-// func (l *Logger) SetHeadersOnly(headersOnly bool) {
-// 	l.headersOnly = headersOnly
-// }
-
-// // SetDecode sets whether to decode the request/response body in the log.
-// func (l *Logger) SetDecode(decode bool) {
-// 	l.decode = decode
-// }
-
-// // SetLogFunc sets the logging function for the logger.
-// func (l *Logger) SetLogFunc(logFunc func(line string)) {
-// 	l.log = logFunc
-// }
-
-// // ModifyRequest logs the request, optionally including the body.
-// //
-// // The format logged is:
-// // --------------------------------------------------------------------------------
-// // Request to http://www.google.com/path?querystring
-// // --------------------------------------------------------------------------------
-// // GET /path?querystring HTTP/1.1
-// // Host: www.google.com
-// // Connection: close
-// // Other-Header: values
-// //
-// // request content
-// // --------------------------------------------------------------------------------
-// func (l *Logger) ModifyRequest(req *http.Request) error {
-// 	ctx := martian.NewContext(req)
-// 	if ctx.SkippingLogging() {
-// 		return nil
-// 	}
-
-// 	b := &bytes.Buffer{}
-
-// 	fmt.Fprintln(b, "")
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-// 	fmt.Fprintf(b, "Request to %s\n", req.URL)
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-
-// 	mv := messageview.New()
-// 	mv.SkipBody(l.headersOnly)
-// 	if err := mv.SnapshotRequest(req); err != nil {
-// 		return err
-// 	}
-
-// 	var opts []messageview.Option
-// 	if l.decode {
-// 		opts = append(opts, messageview.Decode())
-// 	}
-
-// 	r, err := mv.Reader(opts...)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	io.Copy(b, r)
-
-// 	fmt.Fprintln(b, "")
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-
-// 	l.log(b.String())
-
-// 	return nil
-// }
-
-// // ModifyResponse logs the response, optionally including the body.
-// //
-// // The format logged is:
-// // --------------------------------------------------------------------------------
-// // Response from http://www.google.com/path?querystring
-// // --------------------------------------------------------------------------------
-// // HTTP/1.1 200 OK
-// // Date: Tue, 15 Nov 1994 08:12:31 GMT
-// // Other-Header: values
-// //
-// // response content
-// // --------------------------------------------------------------------------------
-// func (l *Logger) ModifyResponse(res *http.Response) error {
-// 	ctx := martian.NewContext(res.Request)
-// 	if ctx.SkippingLogging() {
-// 		return nil
-// 	}
-
-// 	b := &bytes.Buffer{}
-// 	fmt.Fprintln(b, "")
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-// 	fmt.Fprintf(b, "Response from %s\n", res.Request.URL)
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-
-// 	mv := messageview.New()
-// 	mv.SkipBody(l.headersOnly)
-// 	if err := mv.SnapshotResponse(res); err != nil {
-// 		return err
-// 	}
-
-// 	var opts []messageview.Option
-// 	if l.decode {
-// 		opts = append(opts, messageview.Decode())
-// 	}
-
-// 	r, err := mv.Reader(opts...)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	io.Copy(b, r)
-
-// 	fmt.Fprintln(b, "")
-// 	fmt.Fprintln(b, strings.Repeat("-", 80))
-
-// 	l.log(b.String())
-
-// 	return nil
-// }
-
-// // loggerFromJSON builds a logger from JSON.
-// //
-// // Example JSON:
-// // {
-// //   "log.Logger": {
-// //     "scope": ["request", "response"],
-// //		 "headersOnly": true,
-// //		 "decode": true
-// //   }
-// // }
-// func loggerFromJSON(b []byte) (*parse.Result, error) {
-// 	msg := &loggerJSON{}
-// 	if err := json.Unmarshal(b, msg); err != nil {
-// 		return nil, err
-// 	}
-
-// 	l := NewLogger()
-// 	l.SetHeadersOnly(msg.HeadersOnly)
-// 	l.SetDecode(msg.Decode)
-
-// 	return parse.NewResult(l, msg.Scope)
-// }
+	return parse.NewResult(l, msg.Scope)
+}

@@ -25,6 +25,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"github.com/gogf/gf/encoding/gcharset"
 	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
 )
@@ -98,6 +99,8 @@ type Tab struct {
 	ExtraHeaders map[string]interface{}
 	ResultList   []*model2.Request
 	Eventchanel  Eventchanel
+	NavNetworkID string
+	PageCharset  string
 	// TopFrameId       string
 	// LoaderID         string
 	// NavNetworkID     string
@@ -185,6 +188,22 @@ func (tab *Tab) getBodyNodeId() bool {
 	}
 	tab.DocBodyNodeId = docNodeIDs[0]
 	return true
+}
+
+func (tab *Tab) GetContentCharset(v *network.EventResponseReceived) {
+	defer tab.WG.Done()
+	var getCharsetRegex = regexp.MustCompile("charset=(.+)$")
+	for key, value := range v.Response.Headers {
+		if key == "Content-Type" {
+			value := value.(string)
+			if strings.Contains(value, "charset") {
+				value = getCharsetRegex.FindString(value)
+				value = strings.ToUpper(strings.Replace(value, "charset=", "", -1))
+				tab.PageCharset = value
+				tab.PageCharset = strings.TrimSpace(tab.PageCharset)
+			}
+		}
+	}
 }
 
 /**
@@ -393,10 +412,10 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				tab.WG.Add(1)
 				go tab.ParseResponseURL(ev)
 			}
-			// if ev.RequestID.String() == tab.NavNetworkID {
-			// 	tab.WG.Add(1)
-			// 	go tab.GetContentCharset(ev)
-			// }
+			if ev.RequestID.String() == tab.NavNetworkID {
+				tab.WG.Add(1)
+				go tab.GetContentCharset(ev)
+			}
 		case *network.EventRequestWillBeSent:
 			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
 			//重定向
@@ -516,6 +535,45 @@ func (bro *Spider) Close() {
 	(*bro.Cancel)()
 }
 
+/**
+识别页面的编码
+*/
+func (tab *Tab) DetectCharset() {
+	ctx := tab.GetExecutor()
+	tCtx, cancel := context.WithTimeout(ctx, time.Millisecond*500)
+	defer cancel()
+	var content string
+	var ok bool
+	var getCharsetRegex = regexp.MustCompile("charset=(.+)$")
+	err := chromedp.AttributeValue(`meta[http-equiv=Content-Type]`, "content", &content, &ok, chromedp.ByQuery).Do(tCtx)
+	if err != nil || ok != true {
+		return
+	}
+	if strings.Contains(content, "charset=") {
+		charset := getCharsetRegex.FindString(content)
+		if charset != "" {
+			tab.PageCharset = strings.ToUpper(strings.Replace(charset, "charset=", "", -1))
+			tab.PageCharset = strings.TrimSpace(tab.PageCharset)
+		}
+	}
+}
+
+func (tab *Tab) EncodeAllURLWithCharset() {
+	if tab.PageCharset == "" || tab.PageCharset == "UTF-8" {
+		return
+	}
+	for _, req := range tab.ResultList {
+		newRawQuery, err := gcharset.UTF8To(tab.PageCharset, req.URL.RawQuery)
+		if err == nil {
+			req.URL.RawQuery = newRawQuery
+		}
+		newRawPath, err := gcharset.UTF8To(tab.PageCharset, req.URL.RawPath)
+		if err == nil {
+			req.URL.RawPath = newRawPath
+		}
+	}
+}
+
 //Crawler 爬取链接
 func (tab *Tab) Crawler(extends interface{}) error {
 	defer tab.Cancel()
@@ -554,6 +612,13 @@ func (tab *Tab) Crawler(extends interface{}) error {
 	go tab.CollectLink()
 	tab.collectLinkWG.Wait()
 	logger.Success("collectLinks end")
+
+	// 识别页面编码 并编码所有URL
+	if tab.config.EncodeURLWithCharset {
+		tab.DetectCharset()
+		tab.EncodeAllURLWithCharset()
+	}
+
 	return nil
 }
 
