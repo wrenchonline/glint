@@ -32,7 +32,7 @@ func Test_Crawler(t *testing.T) {
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("http://192.168.166.8/vulnerabilities/xss_r")
+	murl, _ := url.Parse("http://www.jykc.com")
 	Headers := make(map[string]interface{})
 	targets := &model.Request{
 		URL:           &model.URL{URL: *murl},

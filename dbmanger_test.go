@@ -30,7 +30,7 @@ func Test_InstallScanResult(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = Dm.SaveScanResult(
+	_, err = Dm.SaveScanResult(
 		1,
 		string(plugin.Xss),
 		true,

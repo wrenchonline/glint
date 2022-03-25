@@ -64,6 +64,7 @@ type GroupData struct {
 
 func (p *Plugin) Init() {
 	p.Pool, _ = ants.NewPoolWithFunc(p.MaxPoolCount, func(args interface{}) { //新建一个带有同类方法的pool对象
+		var Result_id int64
 		defer p.threadwg.Done()
 		data := args.(GroupData)
 		for _, f := range p.Callbacks {
@@ -77,18 +78,9 @@ func (p *Plugin) Init() {
 					p.ScanResult = append(p.ScanResult, scanresult)
 					p.mu.Unlock()
 					Element := make(map[string]interface{})
-					Element["status"] = 3
-					Element["vul"] = p.PluginName
-					Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
-					Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
-					Element["deail"] = scanresult.Output
-					Element["url"] = scanresult.Target
-					Element["vul_level"] = scanresult.VulnerableLevel
-					if data.IsSocket {
-						(*data.Msg) <- Element
-					}
+
 					if p.InstallDB {
-						p.Dm.SaveScanResult(
+						Result_id, _ = p.Dm.SaveScanResult(
 							p.Taskid,
 							string(p.PluginName),
 							scanresult.Vulnerable,
@@ -98,6 +90,18 @@ func (p *Plugin) Init() {
 							base64.StdEncoding.EncodeToString([]byte(scanresult.RespMsg[0])),
 							int(scanresult.Hostid),
 						)
+					}
+
+					Element["status"] = 3
+					Element["vul"] = p.PluginName
+					Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
+					Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
+					Element["deail"] = scanresult.Output
+					Element["url"] = scanresult.Target
+					Element["vul_level"] = scanresult.VulnerableLevel
+					Element["result_id"] = Result_id
+					if data.IsSocket {
+						(*data.Msg) <- Element
 					}
 				}
 			}

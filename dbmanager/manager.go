@@ -191,14 +191,14 @@ func (Dm *DbManager) SaveScanResult(
 	ReqMsg string,
 	RespMsg string,
 	hostid int,
-) error {
+) (int64, error) {
 	sql := `
 	INSERT  
 	INTO 
 	exweb_task_result (task_id,is_vul,url,vul_id,request_info,host_id) 
 	VALUES(:taskid,:vul,:target,:vulid,:reqmsg,:hostid);
 	`
-	_, err := Dm.Db.NamedExec(sql, map[string]interface{}{
+	result, err := Dm.Db.NamedExec(sql, map[string]interface{}{
 		"taskid": taskid,
 		"vul":    Vulnerable,
 		"target": Target,
@@ -208,10 +208,13 @@ func (Dm *DbManager) SaveScanResult(
 		// "respmsg": RespMsg,
 		// "vulnerability": VulnerableLevel,
 	})
+
+	result_id, err := result.LastInsertId()
+
 	if err != nil {
 		logger.Error("save scan result error %v", err.Error())
 	}
-	return err
+	return result_id, err
 }
 
 //保存漏扫结果
