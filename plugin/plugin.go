@@ -153,6 +153,7 @@ func (p *Plugin) Run(args PluginOption) error {
 		*args.Progress = Progress + args.Totalprog
 		// lock.RUnlock()
 		// logger.Info("Plugin RUnlock")
+
 		Element["progress"] = *args.Progress
 		(*args.SingelMsg) <- Element
 	}

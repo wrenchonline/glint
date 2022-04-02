@@ -206,14 +206,6 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 			if funk.Contains(Occurence.Type, "key") {
 				g.CopyPayLoadtoXSS(payloaddata, "html", nil)
 			} else {
-				//替换'<'和'>'为 url 编码
-				// if ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "srcdoc", false); ok {
-				// 	g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
-				// 		Lstr := strings.Replace(payload, "<", "%26lt;", -1)
-				// 		Rstr := strings.Replace(Lstr, ">", "%26gt;", -1)
-				// 		return Rstr
-				// 	})
-				// }
 				//处理链接属性
 				ok, _ := CheckHtmlNodeAttributes(Occurence, "key", "href", false)
 				ok1, _ := CheckHtmlNodeAttributes(Occurence, "val", flag, false)
