@@ -176,7 +176,7 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 	if strings.ToUpper(method) != "GET" {
 		return nil, nil
 	}
-	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	isvul, info, err := CheckSenseJsonp(url, headers)
 	if err != nil {
 		return nil, fmt.Errorf("check jsonp error: %v", err)

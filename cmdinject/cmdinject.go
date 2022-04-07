@@ -118,7 +118,7 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
 	method := session["method"].(string)
-	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	if value, ok := headers["Content-Type"]; ok {
 		ContentType = value
 	}

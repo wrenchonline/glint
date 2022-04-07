@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"glint/util"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/google/martian/log"
 	"github.com/google/martian/proxyutil"
@@ -20,79 +22,7 @@ type PassiveProxy struct {
 	bodyLogging     func(*http.Response) bool
 	postDataLogging func(*http.Request) bool
 	mu              sync.Mutex
-}
-
-// Param describes an individual posted parameter.
-type Param struct {
-	// Name of the posted parameter.
-	Name string `json:"name"`
-	// Value of the posted parameter.
-	Value string `json:"value,omitempty"`
-	// Filename of a posted file.
-	Filename string `json:"fileName,omitempty"`
-	// ContentType is the content type of a posted file.
-	ContentType string `json:"contentType,omitempty"`
-}
-
-// PostData describes posted data on a request.
-type PostData struct {
-	// MimeType is the MIME type of the posted data.
-	MimeType string `json:"mimeType"`
-	// Params is a list of posted parameters (in case of URL encoded parameters).
-	Params []Param `json:"params"`
-	// Text contains the posted data. Although its type is string, it may contain
-	// binary data.
-	Text string `json:"text"`
-}
-
-// Request holds data about an individual HTTP request.
-type Request struct {
-	// Method is the request method (GET, POST, ...).
-	Method string `json:"method"`
-	// URL is the absolute URL of the request (fragments are not included).
-	URL string `json:"url"`
-	// HTTPVersion is the Request HTTP version (HTTP/1.1).
-	HTTPVersion string `json:"httpVersion"`
-	// Cookies is a list of cookies.
-	Cookies string `json:"cookies"`
-	// Headers is a list of headers.
-	Headers []Header `json:"headers"`
-	// QueryString is a list of query parameters.
-	QueryString []QueryString `json:"queryString"`
-	// PostData is the posted data information.
-	PostData *PostData `json:"postData,omitempty"`
-	// HeaderSize is the Total number of bytes from the start of the HTTP request
-	// message until (and including) the double CLRF before the body. Set to -1
-	// if the info is not available.
-	HeadersSize int64 `json:"headersSize"`
-	// BodySize is the size of the request body (POST data payload) in bytes. Set
-	// to -1 if the info is not available.
-	BodySize int64 `json:"bodySize"`
-}
-
-// Response holds data about an individual HTTP response.
-type Response struct {
-	// Status is the response status code.
-	Status int `json:"status"`
-	// StatusText is the response status description.
-	StatusText string `json:"statusText"`
-	// HTTPVersion is the Response HTTP version (HTTP/1.1).
-	HTTPVersion string `json:"httpVersion"`
-	// Cookies is a list of cookies.
-	Cookies string `json:"cookies"`
-	// Headers is a list of headers.
-	Headers []Header `json:"headers"`
-	// Content contains the details of the response body.
-	Content *Content `json:"content"`
-	// RedirectURL is the target URL from the Location response header.
-	RedirectURL string `json:"redirectURL"`
-	// HeadersSize is the total number of bytes from the start of the HTTP
-	// request message until (and including) the double CLRF before the body.
-	// Set to -1 if the info is not available.
-	HeadersSize int64 `json:"headersSize"`
-	// BodySize is the size of the request body (POST data payload) in bytes. Set
-	// to -1 if the info is not available.
-	BodySize int64 `json:"bodySize"`
+	taskid          int //发送到特定任务去扫描
 }
 
 func NewPassiveProxy() *PassiveProxy {
@@ -112,7 +42,7 @@ func (p *PassiveProxy) ModifyRequest(req *http.Request) error {
 	return p.RecordRequest(id, req)
 }
 
-func postData(req *http.Request, logBody bool) (*PostData, error) {
+func postData(req *http.Request, logBody bool) (*util.PostData, error) {
 	// If the request has no body (no Content-Length and Transfer-Encoding isn't
 	// chunked), skip the post data.
 	if req.ContentLength <= 0 && len(req.TransferEncoding) == 0 {
@@ -126,9 +56,9 @@ func postData(req *http.Request, logBody bool) (*PostData, error) {
 		mt = ct
 	}
 
-	pd := &PostData{
+	pd := &util.PostData{
 		MimeType: mt,
-		Params:   []Param{},
+		Params:   []util.Param{},
 	}
 
 	if !logBody {
@@ -164,7 +94,7 @@ func postData(req *http.Request, logBody bool) (*PostData, error) {
 				return nil, err
 			}
 
-			pd.Params = append(pd.Params, Param{
+			pd.Params = append(pd.Params, util.Param{
 				Name:        p.FormName(),
 				Filename:    p.FileName(),
 				ContentType: p.Header.Get("Content-Type"),
@@ -184,7 +114,7 @@ func postData(req *http.Request, logBody bool) (*PostData, error) {
 
 		for n, vs := range vs {
 			for _, v := range vs {
-				pd.Params = append(pd.Params, Param{
+				pd.Params = append(pd.Params, util.Param{
 					Name:  n,
 					Value: v,
 				})
@@ -202,25 +132,65 @@ func postData(req *http.Request, logBody bool) (*PostData, error) {
 	return pd, nil
 }
 
+func headers(hs http.Header) []util.Header {
+	hhs := make([]util.Header, 0, len(hs))
+
+	for n, vs := range hs {
+		for _, v := range vs {
+			hhs = append(hhs, util.Header{
+				Name:  n,
+				Value: v,
+			})
+		}
+	}
+
+	return hhs
+}
+
+func cookies(cs []*http.Cookie) []util.Cookie {
+	hcs := make([]util.Cookie, 0, len(cs))
+
+	for _, c := range cs {
+		var expires string
+		if !c.Expires.IsZero() {
+			expires = c.Expires.Format(time.RFC3339)
+		}
+
+		hcs = append(hcs, util.Cookie{
+			Name:        c.Name,
+			Value:       c.Value,
+			Path:        c.Path,
+			Domain:      c.Domain,
+			HTTPOnly:    c.HttpOnly,
+			Secure:      c.Secure,
+			Expires:     c.Expires,
+			Expires8601: expires,
+		})
+	}
+
+	return hcs
+}
+
 // NewRequest constructs and returns a Request from req. If withBody is true,
 // req.Body is read to EOF and replaced with a copy in a bytes.Buffer. An error
 // is returned (and req.Body may be in an intermediate state) if an error is
 // returned from req.Body.Read.
-func NewRequest(req *http.Request, withBody bool) (*Request, error) {
-	r := &Request{
+func NewRequest(req *http.Request, withBody bool) (*util.Request, error) {
+
+	r := &util.Request{
 		Method:      req.Method,
 		URL:         req.URL.String(),
 		HTTPVersion: req.Proto,
 		HeadersSize: -1,
 		BodySize:    req.ContentLength,
-		QueryString: []QueryString{},
+		QueryString: []util.QueryString{},
 		Headers:     headers(proxyutil.RequestHeader(req).Map()),
 		Cookies:     cookies(req.Cookies()),
 	}
 
 	for n, vs := range req.URL.Query() {
 		for _, v := range vs {
-			r.QueryString = append(r.QueryString, QueryString{
+			r.QueryString = append(r.QueryString, util.QueryString{
 				Name:  n,
 				Value: v,
 			})
@@ -243,6 +213,27 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 	if err != nil {
 		return err
 	}
+	headers, err := util.ConvertHeaders(hreq.Headers)
+	if err != nil {
+		return err
+	}
+	url := hreq.URL
+
+	postdata := []byte(hreq.PostData.Text)
+
+	//contenttype := hreq.PostData.MimeType
+
+	method := hreq.Method
+
+	ReqList := make(map[string][]interface{})
+
+	element := make(map[string]interface{})
+	element["url"] = url
+	element["method"] = method
+	element["headers"] = headers
+	element["data"] = postdata
+	element["source"] = "agent"
+	ReqList["agent"] = append(ReqList["agent"], element)
 
 	return nil
 }

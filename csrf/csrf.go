@@ -62,7 +62,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	fmt.Printf("url: %s\n", url)
 	// if url =
 	method := session["method"].(string)
-	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
 
 	var ContentType string = "None"

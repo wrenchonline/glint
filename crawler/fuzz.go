@@ -50,8 +50,8 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 
 	navReq.URL.Path = "/"
 	url := navReq.URL.NoQueryUrl() + "robots.txt"
-
-	_, resp, err := fastreq.Get(url, util.ConvertHeaders(navReq.Headers),
+	headers, _ := util.ConvertHeaders(navReq.Headers)
+	_, resp, err := fastreq.Get(url, headers,
 		&fastreq.ReqOptions{AllowRedirect: false,
 			Timeout: 5,
 			Proxy:   navReq.FasthttpProxy})
@@ -152,7 +152,8 @@ func (s singleFuzz) doRequest() {
 	default:
 	}
 	url := fmt.Sprintf(`%s://%s/%s`, s.navReq.URL.Scheme, s.navReq.URL.Host, s.path)
-	_, resp, errs := fastreq.Get(url, util.ConvertHeaders(s.navReq.Headers),
+	headers, _ := util.ConvertHeaders(s.navReq.Headers)
+	_, resp, errs := fastreq.Get(url, headers,
 		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
 	if errs != nil {
 		// logger.Info("doRequest err: %s", errs.Error())

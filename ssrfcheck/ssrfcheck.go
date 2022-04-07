@@ -27,7 +27,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
 	method := session["method"].(string)
-	headers := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
 
 	var ContentType string = "None"
