@@ -64,6 +64,12 @@ type Task struct {
 	Status        util.Status
 }
 
+type tconfig struct {
+	InstallDb     bool
+	EnableCrawler bool
+	ProxyPort     int64
+}
+
 func main() {
 
 	go func() {
@@ -261,7 +267,7 @@ func (t *Task) AddPlugins(
 	}()
 }
 
-func (t *Task) dostartTasks(installDb bool) error {
+func (t *Task) dostartTasks(config tconfig) error {
 	var (
 		err       error
 		crawtasks []*crawler.CrawlerTask
@@ -271,7 +277,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
 	t.DoStartSignal <- true
-	if installDb {
+	if config.InstallDb {
 		t.deletedbresult()
 	}
 	//完成后通知上下文
@@ -281,58 +287,65 @@ func (t *Task) dostartTasks(installDb bool) error {
 	StartPlugins := Plugins.Value()
 	percentage := 1 / float64(len(StartPlugins)+1)
 
-	for _, Target := range t.Targets {
-		Crawtask, err := crawler.NewCrawlerTask(t.Ctx, Target, t.TaskConfig)
-		Crawtask.Result.Hostid = Target.DomainId
-		t.XssSpider.Init(t.TaskConfig)
-		Crawtask.PluginBrowser = &t.XssSpider
-		if err != nil {
-			logger.Error(err.Error())
-			return err
-		}
-		logger.Info("Start crawling.")
-		crawtasks = append(crawtasks, Crawtask)
-		//Crawtask.Run()是同步函数
-		go Crawtask.Run()
-	}
+	if config.EnableCrawler {
 
-	//等待爬虫结束
-	for _, crawtask := range crawtasks {
-		//这个是真正等待结束
-		crawtask.Waitforsingle()
-		go craw_cleanup(crawtask)
-		result := crawtask.Result
-		result.Hostid = crawtask.Result.Hostid
-		Results = append(Results, result)
-		logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
-			len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
-	}
-
-	t.setprog(percentage)
-
-	t.sendprog()
-
-	for _, result := range Results {
-		funk.Map(result.ReqList, func(r *model.Request) bool {
-			element0 := ast.JsonUrl{
-				Url:     r.URL.String(),
-				MetHod:  r.Method,
-				Headers: r.Headers,
-				Data:    r.PostData,
-				Source:  r.Source,
-				Hostid:  result.Hostid,
+		for _, Target := range t.Targets {
+			Crawtask, err := crawler.NewCrawlerTask(t.Ctx, Target, t.TaskConfig)
+			Crawtask.Result.Hostid = Target.DomainId
+			t.XssSpider.Init(t.TaskConfig)
+			Crawtask.PluginBrowser = &t.XssSpider
+			if err != nil {
+				logger.Error(err.Error())
+				return err
 			}
-			element := make(map[string]interface{})
-			element["url"] = r.URL.String()
-			element["method"] = r.Method
-			element["headers"] = r.Headers
-			element["data"] = r.PostData
-			element["source"] = r.Source
-			element["hostid"] = result.Hostid
-			ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
-			List[r.GroupsId] = append(List[r.GroupsId], element0)
-			return false
-		})
+			logger.Info("Start crawling.")
+			crawtasks = append(crawtasks, Crawtask)
+			//Crawtask.Run()是同步函数
+			go Crawtask.Run()
+		}
+
+		//等待爬虫结束
+		for _, crawtask := range crawtasks {
+			//这个是真正等待结束
+			crawtask.Waitforsingle()
+			go craw_cleanup(crawtask)
+			result := crawtask.Result
+			result.Hostid = crawtask.Result.Hostid
+			Results = append(Results, result)
+			logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
+				len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
+		}
+
+		t.setprog(percentage)
+
+		t.sendprog()
+		for _, result := range Results {
+			funk.Map(result.ReqList, func(r *model.Request) bool {
+				element0 := ast.JsonUrl{
+					Url:     r.URL.String(),
+					MetHod:  r.Method,
+					Headers: r.Headers,
+					Data:    r.PostData,
+					Source:  r.Source,
+					Hostid:  result.Hostid,
+				}
+				element := make(map[string]interface{})
+				element["url"] = r.URL.String()
+				element["method"] = r.Method
+				element["headers"] = r.Headers
+				element["data"] = r.PostData
+				element["source"] = r.Source
+				element["hostid"] = result.Hostid
+				ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+				List[r.GroupsId] = append(List[r.GroupsId], element0)
+				return false
+			})
+		}
+	} else {
+		//不开启爬虫启动被动代理模式
+		s := SProxy{}
+		s.Init()
+
 	}
 
 	util.SaveCrawOutPut(List, "result.json")
@@ -341,15 +354,15 @@ func (t *Task) dostartTasks(installDb bool) error {
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
-			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, installDb, percentage, false)
+			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
 		case "xss":
-			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, installDb, percentage, true)
+			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
 		case "ssrf":
-			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, installDb, percentage, false)
+			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
 		case "jsonp":
-			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, installDb, percentage, false)
+			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
 		case "cmdinject":
-			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, installDb, percentage, false)
+			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
 		}
 	}
 
@@ -358,8 +371,7 @@ func (t *Task) dostartTasks(installDb bool) error {
 	Taskslock.Lock()
 	removetasks(t.TaskId)
 	Taskslock.Unlock()
-	if installDb {
-		// t.SavePluginResult()
+	if config.InstallDb {
 		t.SaveQuitTime()
 	}
 	logger.Info("The End for task:%d", t.TaskId)
@@ -456,7 +468,12 @@ func CmdHandler(c *cli.Context, t *Task) {
 	for _, _url := range c.Args().Slice() {
 		t.UrlPackage(_url, nil)
 	}
-	t.dostartTasks(false)
+
+	config := tconfig{}
+	config.EnableCrawler = false
+	config.InstallDb = false
+	config.ProxyPort = 1966
+	t.dostartTasks(config)
 	t.PluginWg.Wait()
 }
 

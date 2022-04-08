@@ -163,6 +163,10 @@ type TaskConfig struct {
 	CustomFormValues        map[string]interface{} `yaml:"CustomFormValues"`        // 自定义表单填充参数
 	CustomFormKeywordValues map[string]interface{} `yaml:"CustomFormKeywordValues"` // 自定义表单关键词填充内容
 	XssPayloads             map[string]interface{} `yaml:"XssPayloads"`             // 自定义xss的payload数据
+	InstallDb               bool                   `yaml:"InstallDb"`
+	EnableCrawler           bool                   `yaml:"EnableCrawler"`
+	ProxyPort               int64                  `yaml:"ProxyPort"`
+	//
 }
 
 //数据库配置203

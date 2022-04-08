@@ -355,7 +355,11 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 		}
 	}
 
-	go task.dostartTasks(true)
+	config := tconfig{}
+	config.EnableCrawler = task.TaskConfig.EnableCrawler
+	config.InstallDb = false
+	config.ProxyPort = task.TaskConfig.ProxyPort
+	go task.dostartTasks(config)
 	return task, Err
 }
 
