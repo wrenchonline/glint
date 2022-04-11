@@ -121,7 +121,7 @@ func main() {
 			&cli.StringFlag{
 				Name: "socket",
 				// Aliases:     []string{"p"},
-				Usage:       "Websocket Communication Address. Example `--socket 127.0.0.1:8081`",
+				Usage:       "socket Communication Address. Example `--socket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
 				Destination: &Socket,
 			},
@@ -164,7 +164,6 @@ func craw_cleanup(c *crawler.CrawlerTask) {
 		c.Browser.Close()
 		// c.PluginBrowser.Close()
 	}
-	return
 }
 
 // func (t *Task) task_cleanup() {
@@ -341,6 +340,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 				return false
 			})
 		}
+		util.SaveCrawOutPut(List, "result.json")
 	} else {
 		//不开启爬虫启动被动代理模式
 		s := SProxy{}
@@ -348,7 +348,6 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 	}
 
-	util.SaveCrawOutPut(List, "result.json")
 	//Crawtask.PluginBrowser = t.XssSpider
 	//爬完虫加载插件检测漏洞
 	for _, PluginName := range StartPlugins {
