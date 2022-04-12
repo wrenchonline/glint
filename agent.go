@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
+	"glint/proxy"
 	"log"
 	"net"
 	"net/http"
@@ -19,34 +20,32 @@ import (
 	mapi "github.com/google/martian/v3/api"
 	"github.com/google/martian/v3/cors"
 	"github.com/google/martian/v3/fifo"
-	"github.com/google/martian/v3/har"
 	"github.com/google/martian/v3/httpspec"
-	"github.com/google/martian/v3/marbl"
 	"github.com/google/martian/v3/martianhttp"
-	"github.com/google/martian/v3/martianlog"
 	"github.com/google/martian/v3/mitm"
 	"github.com/google/martian/v3/servemux"
-	"github.com/google/martian/v3/trafficshape"
-	"github.com/google/martian/v3/verify"
 )
 
 type SProxy struct {
-	port int
+	Port         int
+	CallbackFunc SProxyCallback
 }
 
+type SProxyCallback func(args interface{})
+
 var (
-	addr           = flag.String("addr", ":8080", "host:port of the proxy")
-	apiAddr        = flag.String("api-addr", ":8181", "host:port of the configuration API")
-	tlsAddr        = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")
-	api            = flag.String("api", "martian.proxy", "hostname for the API")
-	generateCA     = flag.Bool("generate-ca-cert", false, "generate CA certificate and private key for MITM")
-	cert           = flag.String("cert", "", "filepath to the CA certificate used to sign MITM certificates")
-	key            = flag.String("key", "", "filepath to the private key of the CA used to sign MITM certificates")
-	organization   = flag.String("organization", "Martian Proxy", "organization name for MITM certificates")
-	validity       = flag.Duration("validity", time.Hour, "window of time that MITM certificates are valid")
-	allowCORS      = flag.Bool("cors", false, "allow CORS requests to configure the proxy")
-	harLogging     = flag.Bool("har", true, "enable HAR logging API")
-	marblLogging   = flag.Bool("marbl", false, "enable MARBL logging API")
+	addr         = flag.String("addr", ":8080", "host:port of the proxy")
+	apiAddr      = flag.String("api-addr", ":8181", "host:port of the configuration API")
+	tlsAddr      = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")
+	api          = flag.String("api", "martian.proxy", "hostname for the API")
+	generateCA   = flag.Bool("generate-ca-cert", false, "generate CA certificate and private key for MITM")
+	cert         = flag.String("cert", "", "filepath to the CA certificate used to sign MITM certificates")
+	key          = flag.String("key", "", "filepath to the private key of the CA used to sign MITM certificates")
+	organization = flag.String("organization", "Martian Proxy", "organization name for MITM certificates")
+	validity     = flag.Duration("validity", time.Hour, "window of time that MITM certificates are valid")
+	allowCORS    = flag.Bool("cors", false, "allow CORS requests to configure the proxy")
+	//harLogging     = flag.Bool("har", true, "enable HAR logging API")
+	//marblLogging   = flag.Bool("marbl", false, "enable MARBL logging API")
 	trafficShaping = flag.Bool("traffic-shaping", false, "enable traffic shaping API")
 	skipTLSVerify  = flag.Bool("skip-tls-verify", false, "skip TLS server verification; insecure")
 	dsProxyURL     = flag.String("downstream-proxy-url", "", "URL of downstream proxy")
@@ -186,61 +185,18 @@ func (s *SProxy) Init() error {
 	fg.AddRequestModifier(m)
 	fg.AddResponseModifier(m)
 
-	if *harLogging {
-		hl := har.NewLogger()
-		muxf := servemux.NewFilter(mux)
-		// Only append to HAR logs when the requests are not API requests,
-		// that is, they are not matched in http.DefaultServeMux
-		muxf.RequestWhenFalse(hl)
-		muxf.ResponseWhenFalse(hl)
+	//////////////////////////////////////////////////////////////
+	PProxy := proxy.NewPassiveProxy()
 
-		stack.AddRequestModifier(muxf)
-		stack.AddResponseModifier(muxf)
+	muxf := servemux.NewFilter(mux)
 
-		configure("/logs", har.NewExportHandler(hl), mux)
-		configure("/logs/reset", har.NewResetHandler(hl), mux)
-	}
+	muxf.RequestWhenFalse(PProxy)
+	stack.AddRequestModifier(muxf)
 
-	logger := martianlog.NewLogger()
-	logger.SetDecode(true)
+	s.CallbackFunc(PProxy)
 
-	stack.AddRequestModifier(logger)
-	stack.AddResponseModifier(logger)
-
-	if *marblLogging {
-		lsh := marbl.NewHandler()
-		lsm := marbl.NewModifier(lsh)
-		muxf := servemux.NewFilter(mux)
-		muxf.RequestWhenFalse(lsm)
-		muxf.ResponseWhenFalse(lsm)
-		stack.AddRequestModifier(muxf)
-		stack.AddResponseModifier(muxf)
-
-		// retrieve binary marbl logs
-		mux.Handle("/binlogs", lsh)
-	}
-
-	// Configure modifiers.
+	//////////////////////////////////////////////////////////////
 	configure("/configure", m, mux)
-
-	// Verify assertions.
-	vh := verify.NewHandler()
-	vh.SetRequestVerifier(m)
-	vh.SetResponseVerifier(m)
-	configure("/verify", vh, mux)
-
-	// Reset verifications.
-	rh := verify.NewResetHandler()
-	rh.SetRequestVerifier(m)
-	rh.SetResponseVerifier(m)
-	configure("/verify/reset", rh, mux)
-
-	if *trafficShaping {
-		tsl := trafficshape.NewListener(l)
-		tsh := trafficshape.NewHandler(tsl)
-		configure("/shape-traffic", tsh, mux)
-		l = tsl
-	}
 
 	go p.Serve(l)
 

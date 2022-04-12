@@ -19,14 +19,16 @@ import (
 
 // PassiveProxy
 type PassiveProxy struct {
-	bodyLogging     func(*http.Response) bool
-	postDataLogging func(*http.Request) bool
-	mu              sync.Mutex
-	taskid          int //发送到特定任务去扫描
+	//bodyLogging     func(*http.Response) bool
+	postDataLogging        func(*http.Request) bool
+	mu                     sync.Mutex
+	Taskid                 int //发送到特定任务去扫描
+	CommunicationSingleton chan map[string][]interface{}
 }
 
 func NewPassiveProxy() *PassiveProxy {
 	p := &PassiveProxy{}
+	p.CommunicationSingleton = make(chan map[string][]interface{})
 	return p
 }
 
@@ -234,6 +236,6 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 	element["data"] = postdata
 	element["source"] = "agent"
 	ReqList["agent"] = append(ReqList["agent"], element)
-
+	p.CommunicationSingleton <- ReqList
 	return nil
 }

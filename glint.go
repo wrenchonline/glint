@@ -15,6 +15,7 @@ import (
 	"glint/logger"
 	"glint/model"
 	"glint/plugin"
+	"glint/proxy"
 	"glint/ssrfcheck"
 	"glint/util"
 	"glint/xsschecker"
@@ -341,6 +342,33 @@ func (t *Task) dostartTasks(config tconfig) error {
 			})
 		}
 		util.SaveCrawOutPut(List, "result.json")
+
+		//Crawtask.PluginBrowser = t.XssSpider
+		//爬完虫加载插件检测漏洞
+		for _, PluginName := range StartPlugins {
+			switch strings.ToLower(PluginName) {
+			case "csrf":
+				t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
+			case "xss":
+				t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
+			case "ssrf":
+				t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
+			case "jsonp":
+				t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
+			case "cmdinject":
+				t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
+			}
+		}
+
+		t.PluginWg.Wait()
+		// quit:
+		Taskslock.Lock()
+		removetasks(t.TaskId)
+		Taskslock.Unlock()
+		if config.InstallDb {
+			t.SaveQuitTime()
+		}
+		logger.Info("The End for task:%d", t.TaskId)
 	} else {
 		//不开启爬虫启动被动代理模式
 		s := SProxy{}
@@ -348,32 +376,6 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 	}
 
-	//Crawtask.PluginBrowser = t.XssSpider
-	//爬完虫加载插件检测漏洞
-	for _, PluginName := range StartPlugins {
-		switch strings.ToLower(PluginName) {
-		case "csrf":
-			t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
-		case "xss":
-			t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
-		case "ssrf":
-			t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
-		case "jsonp":
-			t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
-		case "cmdinject":
-			t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
-		}
-	}
-
-	t.PluginWg.Wait()
-	// quit:
-	Taskslock.Lock()
-	removetasks(t.TaskId)
-	Taskslock.Unlock()
-	if config.InstallDb {
-		t.SaveQuitTime()
-	}
-	logger.Info("The End for task:%d", t.TaskId)
 	return err
 }
 
@@ -382,6 +384,30 @@ func (t *Task) SaveQuitTime() {
 	otime := time.Since(t.ScartTime)
 	over_time := util.FmtDuration(otime)
 	t.Dm.SaveQuitTime(t.TaskId, t.EndTime, over_time)
+}
+
+func (t *Task) agentPluginRun(args interface{}) {
+	StartPlugins := Plugins.Value()
+	if p, ok := args.(*proxy.PassiveProxy); ok {
+		urlinfo := <-p.CommunicationSingleton
+		go func() {
+			for _, PluginName := range StartPlugins {
+				switch strings.ToLower(PluginName) {
+				case "csrf":
+					t.AddPlugins(plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
+				case "xss":
+					t.AddPlugins(plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
+				case "ssrf":
+					t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
+				case "jsonp":
+					t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
+				case "cmdinject":
+					t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
+				}
+			}
+			t.PluginWg.Wait()
+		}()
+	}
 }
 
 // func (t *Task) SavePluginResult() {
