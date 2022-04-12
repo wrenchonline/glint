@@ -43,6 +43,7 @@ var ConfigpPath string
 var Plugins cli.StringSlice
 var WebSocket string
 var Socket string
+var PassiveProxy bool
 
 type Task struct {
 	TaskId        int
@@ -84,6 +85,12 @@ func main() {
 		Name:  "wrench",
 		Email: "ljl260435988@gmail.com",
 	}
+
+	// PassiveProxy := cli.Author{
+	// 	Name:  "passiveproxy",
+	// 	Email: "ljl260435988@gmail.com",
+	// }
+
 	app := &cli.App{
 		// UseShortOptionHandling: true,
 		Name:      "glint",
@@ -125,6 +132,13 @@ func main() {
 				Usage:       "socket Communication Address. Example `--socket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
 				Destination: &Socket,
+			},
+			&cli.BoolFlag{
+				Name: "passiveproxy",
+				// Aliases:     []string{"p"},
+				Usage:       "start passiveproxy",
+				Value:       false,
+				Destination: &PassiveProxy,
 			},
 		},
 		Action: run,
