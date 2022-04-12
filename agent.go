@@ -65,7 +65,7 @@ func configure(pattern string, handler http.Handler, mux *http.ServeMux) {
 	mux.Handle(p, handler)
 }
 
-func (s *SProxy) Init() error {
+func (s *SProxy) Run() error {
 	martian.Init()
 
 	p := martian.NewProxy()

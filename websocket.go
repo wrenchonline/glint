@@ -357,7 +357,10 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 
 	config := tconfig{}
 	config.EnableCrawler = task.TaskConfig.EnableCrawler
+	//测试被动代理
+	config.EnableCrawler = false
 	config.InstallDb = false
+
 	config.ProxyPort = task.TaskConfig.ProxyPort
 	go task.dostartTasks(config)
 	return task, Err

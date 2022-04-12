@@ -372,8 +372,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 	} else {
 		//不开启爬虫启动被动代理模式
 		s := SProxy{}
-		s.Init()
-
+		s.CallbackFunc = t.agentPluginRun
+		s.Run()
 	}
 
 	return err
@@ -409,28 +409,6 @@ func (t *Task) agentPluginRun(args interface{}) {
 		}()
 	}
 }
-
-// func (t *Task) SavePluginResult() {
-// 	for _, plugin := range t.Plugins {
-// 		funk.Map(plugin.ScanResult, func(s *util.ScanResult) bool {
-// 			err := t.Dm.SaveScanResult(
-// 				t.TaskId,
-// 				string(plugin.PluginName),
-// 				s.Vulnerable,
-// 				s.Target,
-// 				// s.Output,1
-// 				base64.StdEncoding.EncodeToString([]byte(s.ReqMsg[0])),
-// 				base64.StdEncoding.EncodeToString([]byte(s.RespMsg[0])),
-// 				int(s.Hostid),
-// 			)
-// 			if err != nil {
-// 				logger.Error(err.Error())
-// 				return false
-// 			}
-// 			return true
-// 		})
-// 	}
-// }
 
 //removetasks 移除总任务进度的任务ID
 func removetasks(id int) {

@@ -12,5 +12,5 @@ func Test_SProxy(t *testing.T) {
 	// 	cookie.String()
 	// }
 	s := SProxy{}
-	s.Init()
+	s.Run()
 }
