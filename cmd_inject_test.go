@@ -17,7 +17,8 @@ func Test_Cmd_Inject(t *testing.T) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, cmdinject.CmdValid)
 	pluginInternal := plugin.Plugin{
-		PluginName:   plugin.Jsonp,
+		PluginName:   "JSONP",
+		PluginId:     plugin.Jsonp,
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
 		Timeout:      30 * time.Second,

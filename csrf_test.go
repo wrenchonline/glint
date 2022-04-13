@@ -17,7 +17,8 @@ func Test_CSRF(t *testing.T) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, csrf.Csrfeval)
 	pluginInternal := plugin.Plugin{
-		PluginName:   plugin.Csrf,
+		PluginName:   "Csrf",
+		PluginId:     plugin.Csrf,
 		MaxPoolCount: 20,
 		Callbacks:    myfunc,
 		Timeout:      200 * time.Second,

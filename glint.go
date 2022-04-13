@@ -244,7 +244,8 @@ func (t *Task) sendprog() {
 
 //bpayloadbrower 该插件是否开启浏览器方式发送payload
 func (t *Task) AddPlugins(
-	PluginName plugin.Plugin_type,
+	PluginName string,
+	PluginId plugin.Plugin_type,
 	callback plugin.PluginCallback,
 	ReqList map[string][]interface{},
 	installDb bool,
@@ -261,6 +262,7 @@ func (t *Task) AddPlugins(
 
 	pluginInternal := plugin.Plugin{
 		PluginName:   PluginName,
+		PluginId:     PluginId,
 		MaxPoolCount: 20,
 		Callbacks:    myfunc,
 		InstallDB:    installDb,
@@ -370,15 +372,15 @@ func (t *Task) dostartTasks(config tconfig) error {
 		for _, PluginName := range StartPlugins {
 			switch strings.ToLower(PluginName) {
 			case "csrf":
-				t.AddPlugins(plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
 			case "xss":
-				t.AddPlugins(plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
+				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
 			case "ssrf":
-				t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
 			case "jsonp":
-				t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
 			case "cmdinject":
-				t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
 			}
 		}
 
@@ -418,15 +420,15 @@ func (t *Task) agentPluginRun(args interface{}) {
 				for _, PluginName := range StartPlugins {
 					switch strings.ToLower(PluginName) {
 					case "csrf":
-						t.AddPlugins(plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
+						t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
 					case "xss":
-						t.AddPlugins(plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
+						t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
 					case "ssrf":
-						t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
+						t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
 					case "jsonp":
-						t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
+						t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
 					case "cmdinject":
-						t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
+						t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
 					}
 				}
 				//t.PluginWg.Wait()

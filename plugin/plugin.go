@@ -24,8 +24,9 @@ const (
 )
 
 type Plugin struct {
-	Taskid       int                //任务id，只有插入数据库的时候使用
-	PluginName   Plugin_type        //插件名
+	Taskid       int    //任务id，只有插入数据库的时候使用
+	PluginName   string //插件名
+	PluginId     Plugin_type
 	MaxPoolCount int                //协程池最大并发数
 	Callbacks    []PluginCallback   //扫描插件函数
 	Pool         *ants.PoolWithFunc //
@@ -93,7 +94,7 @@ func (p *Plugin) Init() {
 					}
 
 					Element["status"] = 3
-					Element["vul"] = p.PluginName
+					Element["vul"] = p.PluginId
 					Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
 					Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
 					Element["deail"] = scanresult.Output

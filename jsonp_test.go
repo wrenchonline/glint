@@ -18,7 +18,8 @@ func Test_Jsonp(t *testing.T) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, jsonp.JsonpValid)
 	pluginInternal := plugin.Plugin{
-		PluginName:   plugin.Jsonp,
+		PluginName:   "JSONP",
+		PluginId:     plugin.Jsonp,
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
 		Timeout:      30 * time.Second,
