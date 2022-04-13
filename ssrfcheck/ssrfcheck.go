@@ -38,6 +38,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
 		logger.Error(err.Error())
+		return nil, err
 	}
 
 	reverse := reverse2.NewReverse1()

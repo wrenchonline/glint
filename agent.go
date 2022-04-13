@@ -34,6 +34,7 @@ type SProxy struct {
 type SProxyCallback func(args interface{})
 
 var (
+	en           = flag.Bool("passiveproxy", true, "start proxy")
 	addr         = flag.String("addr", ":8080", "host:port of the proxy")
 	apiAddr      = flag.String("api-addr", ":8181", "host:port of the configuration API")
 	tlsAddr      = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")

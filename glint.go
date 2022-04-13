@@ -160,6 +160,14 @@ func run(c *cli.Context) error {
 		WebSocketHandler(c)
 	} else if strings.ToLower(Socket) != "" {
 		SocketHandler(c)
+	} else if PassiveProxy {
+		// if c.Args().Len() == 0 {
+		// 	logger.Error("url must be set")
+		// 	return errors.New("url must be set")
+		// }
+		t := Task{TaskId: 65535}
+		t.Init()
+		CmdHandler(c, &t)
 	} else {
 		if c.Args().Len() == 0 {
 			logger.Error("url must be set")
@@ -290,7 +298,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 	ReqList := make(map[string][]interface{})
 	List := make(map[string][]ast.JsonUrl)
-	t.DoStartSignal <- true
+
 	if config.InstallDb {
 		t.deletedbresult()
 	}
@@ -403,23 +411,27 @@ func (t *Task) SaveQuitTime() {
 func (t *Task) agentPluginRun(args interface{}) {
 	StartPlugins := Plugins.Value()
 	if p, ok := args.(*proxy.PassiveProxy); ok {
-		urlinfo := <-p.CommunicationSingleton
 		go func() {
-			for _, PluginName := range StartPlugins {
-				switch strings.ToLower(PluginName) {
-				case "csrf":
-					t.AddPlugins(plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
-				case "xss":
-					t.AddPlugins(plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
-				case "ssrf":
-					t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
-				case "jsonp":
-					t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
-				case "cmdinject":
-					t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
+			for {
+				urlinfo := <-p.CommunicationSingleton
+				logger.Info("Obtain url:%s", urlinfo["url"])
+				for _, PluginName := range StartPlugins {
+					switch strings.ToLower(PluginName) {
+					case "csrf":
+						t.AddPlugins(plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
+					case "xss":
+						t.AddPlugins(plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
+					case "ssrf":
+						t.AddPlugins(plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
+					case "jsonp":
+						t.AddPlugins(plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
+					case "cmdinject":
+						t.AddPlugins(plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
+					}
 				}
+				//t.PluginWg.Wait()
+				//logger.Info("origin url:%s has finished", urlinfo["url"])
 			}
-			t.PluginWg.Wait()
 		}()
 	}
 }
@@ -485,7 +497,8 @@ func CmdHandler(c *cli.Context, t *Task) {
 	for _, _url := range c.Args().Slice() {
 		t.UrlPackage(_url, nil)
 	}
-
+	t.XssSpider.Init(t.TaskConfig)
+	//t.PluginBrowser = &t.XssSpider
 	config := tconfig{}
 	config.EnableCrawler = false
 	config.InstallDb = false

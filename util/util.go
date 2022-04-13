@@ -96,6 +96,19 @@ func ConvertHeaders(headers interface{}) (map[string]string, error) {
 	return newheaders, err
 }
 
+func ConvertHeadersinterface(headers interface{}) (map[string]interface{}, error) {
+	newheaders := make(map[string]interface{})
+	var err error
+	if h, ok := headers.([]Header); ok {
+		for _, v := range h {
+			newheaders[v.Name] = v.Value
+		}
+	} else {
+		err = errors.New("invalid headers")
+	}
+	return newheaders, err
+}
+
 func ReadFile(filePath string) []string {
 	filePaths := []string{}
 	f, err := os.OpenFile(filePath, os.O_RDONLY, 0644)

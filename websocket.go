@@ -362,6 +362,8 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	config.InstallDb = false
 
 	config.ProxyPort = task.TaskConfig.ProxyPort
+	task.DoStartSignal <- true
+
 	go task.dostartTasks(config)
 	return task, Err
 }

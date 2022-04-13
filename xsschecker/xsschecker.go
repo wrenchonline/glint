@@ -453,14 +453,18 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 }
 
 func CheckXss(args interface{}) (*util.ScanResult, error) {
+
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
 	ctx := groups.Pctx
 	session := groups.GroupUrls.(map[string]interface{})
-	hostid := session["hostid"].(int64)
 
+	var hostid int64
 	var Result *util.ScanResult
 	var err error
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
 
 	tab, err := brohttp.NewTab(Spider)
 	if err != nil {

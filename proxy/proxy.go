@@ -26,6 +26,15 @@ type PassiveProxy struct {
 	CommunicationSingleton chan map[string][]interface{}
 }
 
+// PostDataLogging returns an option that configures request post data logging.
+// func PostDataLogging(enabled bool) Option {
+// 	return func(l *Logger) {
+// 		l.postDataLogging = func(*http.Request) bool {
+// 			return enabled
+// 		}
+// 	}
+// }
+
 func NewPassiveProxy() *PassiveProxy {
 	p := &PassiveProxy{}
 	p.CommunicationSingleton = make(chan map[string][]interface{})
@@ -211,17 +220,20 @@ func NewRequest(req *http.Request, withBody bool) (*util.Request, error) {
 // RecordRequest logs the HTTP request with the given ID. The ID should be unique
 // per request/response pair.
 func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
-	hreq, err := NewRequest(req, p.postDataLogging(req))
+	var postdata string
+	hreq, err := NewRequest(req, true)
 	if err != nil {
 		return err
 	}
-	headers, err := util.ConvertHeaders(hreq.Headers)
+	headers, err := util.ConvertHeadersinterface(hreq.Headers)
 	if err != nil {
 		return err
 	}
 	url := hreq.URL
 
-	postdata := []byte(hreq.PostData.Text)
+	if hreq.PostData != nil {
+		postdata = hreq.PostData.Text
+	}
 
 	//contenttype := hreq.PostData.MimeType
 
