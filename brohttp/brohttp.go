@@ -21,6 +21,17 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+//Headers_IMPORTMENT
+var headers_importment = []string{
+	"Accept",
+	"Content-Type",
+	"Cookie",
+	"Origin",
+	"Referer",
+	"Upgrade-Insecure-Requests",
+	"User-Agent",
+}
+
 //Spider 爬虫资源，设计目的是基于浏览器发送payload，注意使用此结构的函数在多线程中没上锁是不安全的，理想状态为一条线程使用这个结构
 type Spider struct {
 	Ctx        *context.Context //存储着浏览器的资源
@@ -104,7 +115,12 @@ func (t *Tab) ListenTarget() {
 				//设置文件头
 				for key, value := range t.Headers {
 					if value != nil {
-						req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+						//这里只填写重要的header头
+						for _, h := range headers_importment {
+							if strings.EqualFold(h, key) {
+								req.Headers = append(req.Headers, &fetch.HeaderEntry{Name: key, Value: value.(string)})
+							}
+						}
 					}
 				}
 
@@ -156,7 +172,7 @@ func (t *Tab) ListenTarget() {
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
@@ -211,6 +227,7 @@ func (t *Tab) Send() ([]string, error) {
 		case <-time.After(time.Second):
 		}
 	}
+	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)
 	return htmls, err
 }
@@ -354,6 +371,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 			params, err := util.ParseUri("", PostData, "POST", value.(string))
 			if err != nil {
 				logger.Error(err.Error())
+				return nil, err
 			}
 			payloads := params.SetPayload("", newpayload, "POST")
 			for _, v := range payloads {

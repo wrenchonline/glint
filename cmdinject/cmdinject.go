@@ -90,6 +90,7 @@ func cmd_mkdir(url string, method string, headers map[string]string, body []byte
 	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
 		logger.Error(err.Error())
+		return nil, nil, fmt.Errorf(err.Error())
 	}
 	for _, payload := range payload_page {
 		payloads := params.SetPayload(url, payload, method)

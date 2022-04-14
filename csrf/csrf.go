@@ -73,6 +73,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 		params, err := util.ParseUri(url, body, "POST", ContentType)
 		if err != nil {
 			logger.Error(err.Error())
+			return nil, fmt.Errorf(err.Error())
 		}
 		if params.Len() == 0 {
 			return nil, fmt.Errorf("post the url have no params")

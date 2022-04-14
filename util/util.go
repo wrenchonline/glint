@@ -369,6 +369,7 @@ func ParseUri(uri string, body []byte, method string, content_type string) (*Pos
 		index    int
 		Postinfo PostData
 	)
+
 	json_map := make(map[string]interface{})
 	if strings.ToUpper(method) == "POST" {
 		if len(body) > 0 {
