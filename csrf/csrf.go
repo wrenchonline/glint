@@ -15,7 +15,7 @@ import (
 var anti_csrf = []string{
 	// These are a list of known common tokens parameters
 	"CSRFName",                   // OWASP CSRF_Guard
-	"CSRFToken",                  // OWASP CSRF_Guard
+	"CSRFToken",                  // OWASP CSRF_Token
 	"csrf_token",                 // PHP NoCSRF Class
 	"anticsrf",                   // AntiCsrfParam.java
 	"__RequestVerificationToken", // ASP.NET TokenParam
