@@ -68,7 +68,7 @@ func VulnerableHttpResult(target string, output string, respList []*proto.Respon
 
 // 有漏洞时返回的结果(tcp/udp)
 func VulnerableTcpOrUdpResult(target string, output string, payload []string, resp []string, VulnerableLevel string, hostid int64) *ScanResult {
-	return &ScanResult{
+	sr := &ScanResult{
 		Vulnerable:      true,
 		Target:          target,
 		Output:          output,
@@ -77,9 +77,11 @@ func VulnerableTcpOrUdpResult(target string, output string, payload []string, re
 		VulnerableLevel: VulnerableLevel,
 		Hostid:          hostid,
 	}
+	OutputVulnerable(sr)
+	return sr
 }
 
-func OutputVulnerable(ScanResults []*ScanResult) {
+func OutputVulnerableList(ScanResults []*ScanResult) {
 	for _, s := range ScanResults {
 		if s == nil {
 			break
@@ -92,6 +94,18 @@ func OutputVulnerable(ScanResults []*ScanResult) {
 		fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("VulnerableLevel:"), aurora.Red(s.VulnerableLevel)))
 		fmt.Println(aurora.Yellow("***********************************"))
 	}
+}
+
+func OutputVulnerable(ScanResult *ScanResult) {
+
+	fmt.Println(aurora.Yellow("***********************************"))
+	fmt.Println(aurora.Sprintf("%s %v", aurora.Yellow("Vulnerable:"), aurora.Red(ScanResult.Vulnerable)))
+	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("target:"), aurora.Green(ScanResult.Target)))
+	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("Output:"), aurora.Cyan(ScanResult.Output)))
+	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("ReqMsg:"), aurora.Magenta(ScanResult.ReqMsg)))
+	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("VulnerableLevel:"), aurora.Red(ScanResult.VulnerableLevel)))
+	fmt.Println(aurora.Yellow("***********************************"))
+
 }
 
 func SaveCrawOutPut(ResultList map[string][]ast.JsonUrl, FilePath string) {

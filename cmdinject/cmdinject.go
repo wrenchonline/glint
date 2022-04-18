@@ -136,6 +136,7 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 			[]string{string(resp.String())},
 			"high",
 			session["hostid"].(int64))
+
 		return Result, err
 	}
 	return nil, errors.New("jsonp vulnerability not found")

@@ -143,7 +143,7 @@ func (p *Plugin) Run(args PluginOption) error {
 		p.threadwg.Wait()
 	}
 
-	logger.Info("Plugin %s has Finished!", p.PluginName)
+	//logger.Info("Plugin %s has Finished!", p.PluginName)
 	if args.IsSocket {
 		Element := make(map[string]interface{})
 		Element["status"] = 1
@@ -158,6 +158,6 @@ func (p *Plugin) Run(args PluginOption) error {
 		Element["progress"] = *args.Progress
 		(*args.SingelMsg) <- Element
 	}
-	util.OutputVulnerable(p.ScanResult)
+
 	return err
 }

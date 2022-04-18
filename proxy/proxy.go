@@ -86,6 +86,13 @@ func postData(req *http.Request, logBody bool) (*util.PostData, error) {
 		return nil, err
 	}
 
+	body, err := ioutil.ReadAll(br)
+	if err != nil {
+		return nil, err
+	}
+
+	pd.Text = string(body)
+
 	switch mt {
 	case "multipart/form-data":
 		mpr := multipart.NewReader(br, ps["boundary"])
@@ -131,13 +138,14 @@ func postData(req *http.Request, logBody bool) (*util.PostData, error) {
 				})
 			}
 		}
-	default:
-		body, err := ioutil.ReadAll(br)
-		if err != nil {
-			return nil, err
-		}
 
-		pd.Text = string(body)
+		// default:
+		// 	body, err := ioutil.ReadAll(br)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+
+		// 	pd.Text = string(body)
 	}
 
 	return pd, nil
@@ -247,7 +255,9 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 	element["headers"] = headers
 	element["data"] = postdata
 	element["source"] = "agent"
+	element["hostid"] = int64(122)
 	ReqList["agent"] = append(ReqList["agent"], element)
+
 	p.CommunicationSingleton <- ReqList
 	return nil
 }
