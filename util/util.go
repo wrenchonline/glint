@@ -437,3 +437,14 @@ func FmtDuration(d time.Duration) string {
 }
 
 type Status int
+
+func RepairUrl(url string) string {
+	//strings.Hasprefix(url, "https")
+	lowurl := strings.ToLower(url)
+	if strings.HasPrefix(lowurl, "http") || strings.HasPrefix(lowurl, "https") {
+		return url
+	} else {
+		url = "http://" + url
+	}
+	return url
+}

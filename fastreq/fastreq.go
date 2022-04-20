@@ -213,6 +213,13 @@ func getSessionByOptions(options *ReqOptions) *session {
 	// if options.Timeout == 0 {
 	// 	timeout = time.Duration(defaultTimeout) * time.Second
 	// }
+
+	// cer, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	// if err != nil {
+	//     log.Println(err)
+	//     return
+	// }
+
 	//设置证书
 	client.TLSConfig = &tls.Config{InsecureSkipVerify: !options.VerifySSL}
 	// //设置超时
