@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"flag"
+	"glint/logger"
 	"glint/proxy"
 	"log"
 	"net"
@@ -63,6 +66,7 @@ func configure(pattern string, handler http.Handler, mux *http.ServeMux) {
 
 	// register handler for local API server
 	p := path.Join("localhost"+*apiAddr, pattern)
+
 	mux.Handle(p, handler)
 }
 
@@ -112,11 +116,26 @@ func (s *SProxy) Run() error {
 
 	if GenerateCA {
 		var err error
-		x509c, priv, err = mitm.NewAuthority("martian.proxy", "Martian Authority", 30*24*time.Hour)
+		x509c, priv, err = mitm.NewAuthority("martian.proxy", "Martian Authority", 365*24*time.Hour)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		//保存公钥私钥到当前目录上
+		certOut, _ := os.Create("./server.pem")
+		pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: x509c.Raw})
+		certOut.Close()
+
+		keyOut, _ := os.Create("./server.key")
+		pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv.(*rsa.PrivateKey))})
+		keyOut.Close()
+
+		logger.Info("The Generating Certificat is Complete")
+
+		return nil
+
 	} else if *cert != "" && *key != "" {
+
 		tlsc, err := tls.LoadX509KeyPair(*cert, *key)
 		if err != nil {
 			log.Fatal(err)
@@ -130,6 +149,7 @@ func (s *SProxy) Run() error {
 	}
 
 	if x509c != nil && priv != nil {
+
 		mc, err := mitm.NewConfig(x509c, priv)
 		if err != nil {
 			log.Fatal(err)
