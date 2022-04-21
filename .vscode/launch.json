@@ -13,6 +13,7 @@
             "program": "${workspaceRoot}",
             "args": [
                 "--passiveproxy",
+                "--generate-ca-cert",
             ]
         }
     ]

@@ -67,6 +67,7 @@ func (m *MConn) handle(ctx context.Context, data []byte) error {
 		logger.Error(err.Error())
 		return err
 	}
+	//logger.Info("json: %v", mjson)
 	err = m.CallbackFunc(ctx, mjson)
 	return err
 }
@@ -105,5 +106,10 @@ func (m *MConn) Listen(con net.Conn) {
 		go m.handle(ctx, data[4:])
 		buffer.Reset()
 	}
+
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	// defer cancel()
+
+	// s.Shutdown(ctx)
 
 }

@@ -229,18 +229,23 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 	)
 
 	if mjson == nil {
+		logger.Error("[./websocket.go:Task() error] the json is empty")
 		return err
 	}
 
 	if value, ok := mjson["action"].(string); ok {
 		Status = value
 	} else {
+		err = fmt.Errorf("[./websocket.go:Task() error] unkown action for the json")
+		logger.Error(err.Error())
 		sendmsg(-1, "error: unkown action for the json", 65535)
 		return err
 	}
 	if value, ok := mjson["taskid"].(string); ok {
 		taskid = value
 	} else {
+		err = fmt.Errorf("[./websocket.go:Task() error] unkown taskid for the json")
+		logger.Error(err.Error())
 		sendmsg(-1, "error: unkown taskid for the json", 65535)
 		return err
 	}
@@ -251,21 +256,27 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 	}
 
 	if strings.ToLower(Status) == "start" {
+		logger.Info("开始任务")
 		status, err := ts.GetTaskStatus(mjson)
 		if err != nil {
+			//err = fmt.Errorf("[./websocket.go:Task() error] unkown taskid for the json")
+			logger.Error(err.Error())
 			sendmsg(-1, err.Error(), id)
 			return err
 		}
 		if status == TaskHasStart {
+			logger.Error(err.Error())
 			sendmsg(1, "The Task Has Started", id)
 			return err
 		}
 		//开始任务
 		task, err := ts.start(mjson)
 		if err != nil {
+			logger.Error(err.Error())
 			sendmsg(-1, err.Error(), task.TaskId)
 			return err
 		}
+		logger.Info("1111111")
 		Taskslock.Lock()
 		Tasks = append(Tasks, &task)
 		Taskslock.Unlock()
@@ -285,7 +296,10 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			}
 			Tasks = nil
 		}
+	} else {
+		logger.Info("无效指令")
 	}
+
 	return err
 }
 
@@ -322,7 +336,7 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	var Err error
 	json := v.(map[string]interface{})
 	// logger.DebugEnable(true)
-	logger.Debug("%v", json)
+	logger.Info("%v", json)
 
 	task.TaskId, Err = GetTaskId(json)
 	task.Dm = ts.Dm
@@ -356,15 +370,17 @@ func (ts *TaskServer) start(v interface{}) (Task, error) {
 	}
 
 	config := tconfig{}
-	config.EnableCrawler = task.TaskConfig.EnableCrawler
+	config.EnableCrawler = true
 	// //测试被动代理
 	// config.EnableCrawler = false
 	config.InstallDb = false
 
 	config.ProxyPort = task.TaskConfig.ProxyPort
-	task.DoStartSignal <- true
-
 	go task.dostartTasks(config)
+	go func() {
+		task.DoStartSignal <- true
+	}()
+
 	return task, Err
 }
 

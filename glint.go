@@ -44,6 +44,7 @@ var Plugins cli.StringSlice
 var WebSocket string
 var Socket string
 var PassiveProxy bool
+var GenerateCA bool
 
 type Task struct {
 	TaskId        int
@@ -139,6 +140,13 @@ func main() {
 				Usage:       "start passiveproxy",
 				Value:       false,
 				Destination: &PassiveProxy,
+			},
+			&cli.BoolFlag{
+				Name: "generate-ca-cert",
+				// Aliases:     []string{"p"},
+				Usage:       "generate CA certificate and private key for MITM",
+				Value:       false,
+				Destination: &GenerateCA,
 			},
 		},
 		Action: run,
@@ -310,7 +318,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 	StartPlugins := Plugins.Value()
 	percentage := 1 / float64(len(StartPlugins)+1)
-
+	logger.Info("config.EnableCrawler: %v", config.EnableCrawler)
 	if config.EnableCrawler {
 
 		for _, Target := range t.Targets {
@@ -551,6 +559,7 @@ func WebSocketHandler(c *cli.Context) error {
 
 func SocketHandler(c *cli.Context) error {
 	var m MConn
+	errc := make(chan error, 1)
 	m.Init()
 	server_control, err := NewTaskServer("socket")
 	m.CallbackFunc = server_control.Task
@@ -564,13 +573,27 @@ func SocketHandler(c *cli.Context) error {
 		return err
 	}
 	defer listener.Close()
-	for {
-		con, err := listener.Accept()
-		if err != nil {
-			logger.Error(err.Error())
-			continue
+	go func() {
+		for {
+			con, err := listener.Accept()
+			if err != nil {
+				logger.Error(err.Error())
+				continue
+			}
+			go m.Listen(con)
+			SOCKETCONN = append(SOCKETCONN, &con)
 		}
-		go m.Listen(con)
-		SOCKETCONN = append(SOCKETCONN, &con)
+	}()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+
+	select {
+	case err := <-errc:
+		logger.Error("failed to serve: %v", err)
+	case sig := <-sigs:
+		logger.Error("terminating: %v", sig)
 	}
+
+	return err
 }

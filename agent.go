@@ -110,7 +110,7 @@ func (s *SProxy) Run() error {
 	var x509c *x509.Certificate
 	var priv interface{}
 
-	if *generateCA {
+	if GenerateCA {
 		var err error
 		x509c, priv, err = mitm.NewAuthority("martian.proxy", "Martian Authority", 30*24*time.Hour)
 		if err != nil {
