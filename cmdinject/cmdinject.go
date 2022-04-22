@@ -17,6 +17,9 @@ import (
 // 	phpinject = "phpinjectds"
 // )
 
+var cert string
+var mkey string
+
 type CallbackCheck func(args ...interface{}) (bool, error)
 
 var DefaultProxy = ""
@@ -55,10 +58,17 @@ func fast_send_poc(payloads []string,
 	req1 *fasthttp.Request,
 	resp1 *fastreq.Response,
 	err error) {
+	sess := fastreq.GetSessionByOptions(
+		&fastreq.ReqOptions{
+			Timeout:       2,
+			AllowRedirect: true,
+			Proxy:         DefaultProxy,
+			Cert:          cert,
+			PrivateKey:    mkey,
+		})
 	if strings.ToUpper(method) == "POST" {
 		for _, body := range payloads {
-			req1, resp1, errs := fastreq.Post(url, headers,
-				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, []byte(body))
+			req1, resp1, errs := sess.Post(url, headers, []byte(body))
 			if errs != nil {
 				continue
 				// return nil, nil, errs
@@ -70,8 +80,7 @@ func fast_send_poc(payloads []string,
 		}
 	} else {
 		for _, payload_url := range payloads {
-			req1, resp1, errs := fastreq.Get(payload_url, headers,
-				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			req1, resp1, errs := sess.Get(payload_url, headers)
 			if errs != nil {
 				continue
 			}
@@ -124,6 +133,8 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 		ContentType = value
 	}
 	body := []byte(session["data"].(string))
+	cert = session["cert"].(string)
+	mkey = session["key"].(string)
 
 	req, resp, err := cmd_mkdir(url, method, headers, body, ContentType)
 	if err != nil {

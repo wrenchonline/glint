@@ -22,6 +22,8 @@ type ReqOptions struct {
 	VerifySSL     bool   // default false
 	AllowRedirect bool   // default false
 	Proxy         string // proxy settings, support http/https proxy only, e.g. http://127.0.0.1:8080
+	Cert          string // 证书
+	PrivateKey    string //	私钥
 }
 
 // 自定义一些函数
@@ -185,24 +187,24 @@ func (sess *session) Request(verb string, url string, headers map[string]string,
 
 // Get GET请求
 func Get(url string, headers map[string]string, options *ReqOptions) (*fasthttp.Request, *Response, error) {
-	sess := getSessionByOptions(options)
+	sess := GetSessionByOptions(options)
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // POST POST请求
 func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*fasthttp.Request, *Response, error) {
-	sess := getSessionByOptions(options)
+	sess := GetSessionByOptions(options)
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request 自定义请求类型
 func Request(verb string, url string, headers map[string]string, body []byte, options *ReqOptions) (*fasthttp.Request, *Response, error) {
-	sess := getSessionByOptions(options)
+	sess := GetSessionByOptions(options)
 	return sess.doRequest(verb, url, headers, body)
 }
 
 // getSessionByOptions 根据配置获取一个session
-func getSessionByOptions(options *ReqOptions) *session {
+func GetSessionByOptions(options *ReqOptions) *session {
 	client := &fasthttp.Client{}
 
 	if options == nil {
@@ -214,14 +216,17 @@ func getSessionByOptions(options *ReqOptions) *session {
 	// 	timeout = time.Duration(defaultTimeout) * time.Second
 	// }
 
-	// cer, err := tls.LoadX509KeyPair("server.crt", "server.key")
-	// if err != nil {
-	//     log.Println(err)
-	//     return
-	// }
+	if options.Cert != "" && options.PrivateKey != "" {
+		cer, err := tls.LoadX509KeyPair(options.Cert, options.PrivateKey)
+		if err != nil {
+			panic(err)
+		}
+		//设置证书
+		client.TLSConfig = &tls.Config{InsecureSkipVerify: !options.VerifySSL, Certificates: []tls.Certificate{cer}}
+	} else {
+		client.TLSConfig = &tls.Config{InsecureSkipVerify: !options.VerifySSL}
+	}
 
-	//设置证书
-	client.TLSConfig = &tls.Config{InsecureSkipVerify: !options.VerifySSL}
 	// //设置超时
 	// client.MaxConnWaitTimeout = timeout
 	//设置代理
@@ -244,11 +249,13 @@ func getSessionByOptions(options *ReqOptions) *session {
 	// options内容同步到session中
 	return &session{
 		ReqOptions: ReqOptions{
-			options.Timeout,
-			options.Retry,
-			options.VerifySSL,
-			options.AllowRedirect,
-			options.Proxy,
+			Timeout:       options.Timeout,
+			Retry:         options.Retry,
+			VerifySSL:     options.VerifySSL,
+			AllowRedirect: options.AllowRedirect,
+			Proxy:         options.Proxy,
+			Cert:          options.Cert,
+			PrivateKey:    options.PrivateKey,
 		},
 		client: client,
 	}

@@ -36,13 +36,16 @@ type SProxy struct {
 
 type SProxyCallback func(args interface{})
 
+var Cert string
+var PrivateKey string
+
 var (
-	en           = flag.Bool("passiveproxy", true, "start proxy")
-	addr         = flag.String("addr", ":8080", "host:port of the proxy")
-	apiAddr      = flag.String("api-addr", ":8181", "host:port of the configuration API")
-	tlsAddr      = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")
-	api          = flag.String("api", "martian.proxy", "hostname for the API")
-	generateCA   = flag.Bool("generate-ca-cert", false, "generate CA certificate and private key for MITM")
+	//en           = flag.Bool("passiveproxy", true, "start proxy")
+	addr    = flag.String("addr", ":8080", "host:port of the proxy")
+	apiAddr = flag.String("api-addr", ":8181", "host:port of the configuration API")
+	tlsAddr = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")
+	api     = flag.String("api", "martian.proxy", "hostname for the API")
+	//generateCA   = flag.Bool("generate-ca-cert", false, "generate CA certificate and private key for MITM")
 	cert         = flag.String("cert", "", "filepath to the CA certificate used to sign MITM certificates")
 	key          = flag.String("key", "", "filepath to the private key of the CA used to sign MITM certificates")
 	organization = flag.String("organization", "Martian Proxy", "organization name for MITM certificates")
@@ -50,9 +53,9 @@ var (
 	allowCORS    = flag.Bool("cors", false, "allow CORS requests to configure the proxy")
 	//harLogging     = flag.Bool("har", true, "enable HAR logging API")
 	//marblLogging   = flag.Bool("marbl", false, "enable MARBL logging API")
-	trafficShaping = flag.Bool("traffic-shaping", false, "enable traffic shaping API")
-	skipTLSVerify  = flag.Bool("skip-tls-verify", false, "skip TLS server verification; insecure")
-	dsProxyURL     = flag.String("downstream-proxy-url", "", "URL of downstream proxy")
+	//trafficShaping = flag.Bool("traffic-shaping", false, "enable traffic shaping API")
+	skipTLSVerify = flag.Bool("skip-tls-verify", false, "skip TLS server verification; insecure")
+	dsProxyURL    = flag.String("downstream-proxy-url", "", "URL of downstream proxy")
 )
 
 func configure(pattern string, handler http.Handler, mux *http.ServeMux) {
@@ -116,7 +119,7 @@ func (s *SProxy) Run() error {
 
 	if GenerateCA {
 		var err error
-		x509c, priv, err = mitm.NewAuthority("martian.proxy", "Martian Authority", 365*24*time.Hour)
+		x509c, priv, err = mitm.NewAuthority("rsf.proxy", "Martian Authority", 365*24*time.Hour)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -130,11 +133,11 @@ func (s *SProxy) Run() error {
 		pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv.(*rsa.PrivateKey))})
 		keyOut.Close()
 
-		logger.Info("The Generating Certificat is Complete")
+		logger.Info("The Complete from Generating Certificat ")
 
 		return nil
 
-	} else if *cert != "" && *key != "" {
+	} else if Cert != "" && PrivateKey != "" {
 
 		tlsc, err := tls.LoadX509KeyPair(*cert, *key)
 		if err != nil {

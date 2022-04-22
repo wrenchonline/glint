@@ -17,6 +17,9 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+var cert string
+var mkey string
+
 type Jsonpinfo struct {
 	Request  *fasthttp.Request
 	Response *fasthttp.Response
@@ -91,8 +94,17 @@ func CheckIsSensitiveKey(key string) (bool, error) {
 }
 
 func GetJsResponse(jsUrl string, headers map[string]string) (string, *Jsonpinfo, error) {
-	req1, resp1, err := fastreq.Get(jsUrl, headers,
-		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: false, Proxy: DefaultProxy})
+
+	sess := fastreq.GetSessionByOptions(
+		&fastreq.ReqOptions{
+			Timeout:       2,
+			AllowRedirect: true,
+			Proxy:         DefaultProxy,
+			Cert:          cert,
+			PrivateKey:    mkey,
+		})
+
+	req1, resp1, err := sess.Get(jsUrl, headers)
 	if err != nil {
 		return "", nil, nil
 	}
@@ -173,6 +185,9 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
 	method := session["method"].(string)
+	cert = session["cert"].(string)
+	mkey = session["key"].(string)
+
 	if strings.ToUpper(method) != "GET" {
 		return nil, nil
 	}

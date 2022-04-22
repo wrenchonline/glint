@@ -45,6 +45,8 @@ var anti_csrf = []string{
 // var DefaultProxy string = "127.0.0.1:7777"
 
 var DefaultProxy string = ""
+var cert string = ""
+var mkey string = ""
 
 func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	group := args.(plugin.GroupData)
@@ -57,18 +59,30 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 		return nil, ctx.Err()
 	default:
 	}
+
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
-	fmt.Printf("url: %s\n", url)
-	// if url =
+	// fmt.Printf("url: %s\n", url)
 	method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
+	cert = session["cert"].(string)
+	mkey = session["key"].(string)
 
 	var ContentType string = "None"
 	if value, ok := headers["Content-Type"]; ok {
 		ContentType = value
 	}
+
+	sess := fastreq.GetSessionByOptions(
+		&fastreq.ReqOptions{
+			Timeout:       2,
+			AllowRedirect: true,
+			Proxy:         DefaultProxy,
+			Cert:          cert,
+			PrivateKey:    mkey,
+		})
+
 	if strings.ToUpper(method) == "POST" {
 		params, err := util.ParseUri(url, body, "POST", ContentType)
 		if err != nil {
@@ -79,8 +93,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 			return nil, fmt.Errorf("post the url have no params")
 		}
 
-		_, resp1, errs := fastreq.Post(url, headers,
-			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+		_, resp1, errs := sess.Post(url, headers, []byte(body))
 		if errs != nil {
 			return nil, errs
 		}
@@ -90,8 +103,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 			return nil, errors.New(errstr)
 		}
 		headers["Origin"] = ORIGIN_URL
-		req2, resp2, errs := fastreq.Post(url, headers,
-			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+		req2, resp2, errs := sess.Post(url, headers, []byte(body))
 		b2 := resp2.Body()
 		if len(b1) == len(b2) {
 			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs..."))
@@ -111,8 +123,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 			return nil, ctx.Err()
 		default:
 		}
-		_, resp1, errs = fastreq.Post(url, headers,
-			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+		_, resp1, errs = sess.Post(url, headers, []byte(body))
 		if errs != nil {
 			return nil, errs
 		}
@@ -122,8 +133,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 			return nil, errors.New(errstr)
 		}
 		headers["Referer"] = REFERER_URL
-		req2, resp2, errs = fastreq.Post(url, headers,
-			&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, body)
+		req2, resp2, errs = sess.Post(url, headers, []byte(body))
 		b2 = resp2.Body()
 		if len(b1) == len(b2) {
 			logger.Debug("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")

@@ -11,6 +11,8 @@ import (
 )
 
 var DefaultProxy = ""
+var cert string
+var mkey string
 
 func Ssrf(args interface{}) (*util.ScanResult, error) {
 	util.Setup()
@@ -29,6 +31,16 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
+	cert = session["cert"].(string)
+	mkey = session["key"].(string)
+	sess := fastreq.GetSessionByOptions(
+		&fastreq.ReqOptions{
+			Timeout:       2,
+			AllowRedirect: true,
+			Proxy:         DefaultProxy,
+			Cert:          cert,
+			PrivateKey:    mkey,
+		})
 
 	var ContentType string = "None"
 	if value, ok := headers["Content-Type"]; ok {
@@ -48,8 +60,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 
 	if strings.ToUpper(method) == "POST" {
 		for _, body := range payloads {
-			req1, resp1, errs := fastreq.Post(url, headers,
-				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy}, []byte(body))
+			req1, resp1, errs := sess.Post(url, headers, []byte(body))
 			if errs != nil {
 				return nil, errs
 			}
@@ -67,8 +78,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 		return nil, errors.New("params errors")
 	} else {
 		for _, uri := range payloads {
-			req1, resp1, errs := fastreq.Get(uri, headers,
-				&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: DefaultProxy})
+			req1, resp1, errs := sess.Get(uri, headers)
 			if errs != nil {
 				return nil, errs
 			}

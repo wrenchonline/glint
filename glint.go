@@ -148,6 +148,20 @@ func main() {
 				Value:       false,
 				Destination: &GenerateCA,
 			},
+			&cli.StringFlag{
+				Name: "cert",
+				// Aliases:     []string{"p"},
+				Usage:       "import certificate path",
+				Value:       "",
+				Destination: &Cert,
+			},
+			&cli.StringFlag{
+				Name: "key",
+				// Aliases:     []string{"p"},
+				Usage:       "import certificate private key path",
+				Value:       "",
+				Destination: &PrivateKey,
+			},
 		},
 		Action: run,
 	}
