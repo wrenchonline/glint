@@ -66,8 +66,8 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
-	cert = session["cert"].(string)
-	mkey = session["key"].(string)
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
 
 	var ContentType string = "None"
 	if value, ok := headers["Content-Type"]; ok {

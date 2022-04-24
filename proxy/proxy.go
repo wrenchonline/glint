@@ -24,6 +24,8 @@ type PassiveProxy struct {
 	mu                     sync.Mutex
 	Taskid                 int //发送到特定任务去扫描
 	CommunicationSingleton chan map[string][]interface{}
+	HttpsCert              string
+	HttpsCertKey           string
 }
 
 // PostDataLogging returns an option that configures request post data logging.

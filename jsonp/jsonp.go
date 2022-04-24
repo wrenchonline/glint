@@ -185,8 +185,8 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
 	method := session["method"].(string)
-	cert = session["cert"].(string)
-	mkey = session["key"].(string)
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
 
 	if strings.ToUpper(method) != "GET" {
 		return nil, nil

@@ -43,24 +43,28 @@ type Plugin struct {
 }
 
 type PluginOption struct {
-	PluginWg  *sync.WaitGroup
-	Progress  *float64 //此任务进度
-	Totalprog float64  //此插件占有的总进度
-	IsSocket  bool
-	Data      map[string][]interface{}
-	SingelMsg *chan map[string]interface{}
-	TaskId    int  //该插件所属的taskid
-	Bstripurl bool //是否分开groupurl
+	PluginWg     *sync.WaitGroup
+	Progress     *float64 //此任务进度
+	Totalprog    float64  //此插件占有的总进度
+	IsSocket     bool
+	Data         map[string][]interface{}
+	SingelMsg    *chan map[string]interface{}
+	TaskId       int    //该插件所属的taskid
+	Bstripurl    bool   //是否分开groupurl
+	HttpsCert    string //
+	HttpsCertKey string //
 }
 
 type GroupData struct {
-	GroupType string
-	GroupUrls interface{}
-	Spider    *brohttp.Spider
-	Pctx      *context.Context
-	Pcancel   *context.CancelFunc
-	IsSocket  bool
-	Msg       *chan map[string]interface{}
+	GroupType    string
+	GroupUrls    interface{}
+	Spider       *brohttp.Spider
+	Pctx         *context.Context
+	Pcancel      *context.CancelFunc
+	IsSocket     bool
+	Msg          *chan map[string]interface{}
+	HttpsCert    string //
+	HttpsCertKey string //
 }
 
 func (p *Plugin) Init() {
@@ -126,13 +130,15 @@ func (p *Plugin) Run(args PluginOption) error {
 		for _, urlinter := range urlinters {
 			go func(type_name string, urlinter interface{}) {
 				data := GroupData{
-					GroupType: type_name,
-					GroupUrls: urlinter,
-					Spider:    p.Spider,
-					Pctx:      p.Ctx,
-					Pcancel:   p.Cancel,
-					IsSocket:  IsSocket,
-					Msg:       args.SingelMsg,
+					GroupType:    type_name,
+					GroupUrls:    urlinter,
+					Spider:       p.Spider,
+					Pctx:         p.Ctx,
+					Pcancel:      p.Cancel,
+					IsSocket:     IsSocket,
+					Msg:          args.SingelMsg,
+					HttpsCert:    "server.pem",
+					HttpsCertKey: "server.key",
 				}
 				err = p.Pool.Invoke(data)
 				if err != nil {

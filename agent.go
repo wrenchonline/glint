@@ -24,6 +24,7 @@ import (
 	"github.com/google/martian/v3/cors"
 	"github.com/google/martian/v3/fifo"
 	"github.com/google/martian/v3/httpspec"
+	mlog "github.com/google/martian/v3/log"
 	"github.com/google/martian/v3/martianhttp"
 	"github.com/google/martian/v3/mitm"
 	"github.com/google/martian/v3/servemux"
@@ -40,14 +41,14 @@ var Cert string
 var PrivateKey string
 
 var (
-	//en           = flag.Bool("passiveproxy", true, "start proxy")
+	en      = flag.Bool("passiveproxy", true, "start proxy")
 	addr    = flag.String("addr", ":8080", "host:port of the proxy")
 	apiAddr = flag.String("api-addr", ":8181", "host:port of the configuration API")
 	tlsAddr = flag.String("tls-addr", ":4443", "host:port of the proxy over TLS")
 	api     = flag.String("api", "martian.proxy", "hostname for the API")
 	//generateCA   = flag.Bool("generate-ca-cert", false, "generate CA certificate and private key for MITM")
-	cert         = flag.String("cert", "", "filepath to the CA certificate used to sign MITM certificates")
-	key          = flag.String("key", "", "filepath to the private key of the CA used to sign MITM certificates")
+	//cert         = flag.String("cert", "", "filepath to the CA certificate used to sign MITM certificates")
+	//key          = flag.String("key", "", "filepath to the private key of the CA used to sign MITM certificates")
 	organization = flag.String("organization", "Martian Proxy", "organization name for MITM certificates")
 	validity     = flag.Duration("validity", time.Hour, "window of time that MITM certificates are valid")
 	allowCORS    = flag.Bool("cors", false, "allow CORS requests to configure the proxy")
@@ -74,8 +75,8 @@ func configure(pattern string, handler http.Handler, mux *http.ServeMux) {
 }
 
 func (s *SProxy) Run() error {
-	martian.Init()
-
+	//martian.Init()
+	mlog.SetLevel(0)
 	p := martian.NewProxy()
 	defer p.Close()
 
@@ -139,7 +140,7 @@ func (s *SProxy) Run() error {
 
 	} else if Cert != "" && PrivateKey != "" {
 
-		tlsc, err := tls.LoadX509KeyPair(*cert, *key)
+		tlsc, err := tls.LoadX509KeyPair(Cert, PrivateKey)
 		if err != nil {
 			log.Fatal(err)
 		}

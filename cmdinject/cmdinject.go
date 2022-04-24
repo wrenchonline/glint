@@ -133,8 +133,8 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 		ContentType = value
 	}
 	body := []byte(session["data"].(string))
-	cert = session["cert"].(string)
-	mkey = session["key"].(string)
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
 
 	req, resp, err := cmd_mkdir(url, method, headers, body, ContentType)
 	if err != nil {

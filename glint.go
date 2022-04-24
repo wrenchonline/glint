@@ -71,6 +71,8 @@ type tconfig struct {
 	InstallDb     bool
 	EnableCrawler bool
 	ProxyPort     int64
+	HttpsCert     string
+	HttpsCertKey  string
 }
 
 func main() {
@@ -272,7 +274,9 @@ func (t *Task) AddPlugins(
 	ReqList map[string][]interface{},
 	installDb bool,
 	percentage float64,
-	bpayloadbrower bool) {
+	bpayloadbrower bool,
+	HttpsCert string,
+	HttpsCertKey string) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, callback)
 	var Payloadcarrier *brohttp.Spider
@@ -300,13 +304,15 @@ func (t *Task) AddPlugins(
 	t.Plugins = append(t.Plugins, &pluginInternal)
 	t.lock.Unlock()
 	args := plugin.PluginOption{
-		PluginWg:  &t.PluginWg,
-		Progress:  &t.Progress,
-		IsSocket:  true,
-		Data:      ReqList,
-		TaskId:    t.TaskId,
-		SingelMsg: &t.PliuginsMsg,
-		Totalprog: percentage,
+		PluginWg:     &t.PluginWg,
+		Progress:     &t.Progress,
+		IsSocket:     true,
+		Data:         ReqList,
+		TaskId:       t.TaskId,
+		SingelMsg:    &t.PliuginsMsg,
+		Totalprog:    percentage,
+		HttpsCert:    HttpsCert,
+		HttpsCertKey: HttpsCertKey,
 	}
 	go func() {
 		pluginInternal.Run(args)
@@ -394,15 +400,15 @@ func (t *Task) dostartTasks(config tconfig) error {
 		for _, PluginName := range StartPlugins {
 			switch strings.ToLower(PluginName) {
 			case "csrf":
-				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "xss":
-				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true)
+				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true, config.HttpsCert, config.HttpsCertKey)
 			case "ssrf":
-				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "jsonp":
-				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "cmdinject":
-				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false)
+				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			}
 		}
 
@@ -442,15 +448,15 @@ func (t *Task) agentPluginRun(args interface{}) {
 				for _, PluginName := range StartPlugins {
 					switch strings.ToLower(PluginName) {
 					case "csrf":
-						t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false)
+						t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "xss":
-						t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true)
+						t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true, p.HttpsCert, p.HttpsCertKey)
 					case "ssrf":
-						t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false)
+						t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "jsonp":
-						t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false)
+						t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "cmdinject":
-						t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false)
+						t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					}
 				}
 				//t.PluginWg.Wait()

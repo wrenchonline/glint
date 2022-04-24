@@ -31,8 +31,8 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
-	cert = session["cert"].(string)
-	mkey = session["key"].(string)
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
 			Timeout:       2,
