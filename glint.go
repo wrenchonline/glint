@@ -45,6 +45,7 @@ var WebSocket string
 var Socket string
 var PassiveProxy bool
 var GenerateCA bool
+var Dbconect bool
 
 type Task struct {
 	TaskId        int
@@ -163,6 +164,14 @@ func main() {
 				Usage:       "import certificate private key path",
 				Value:       "",
 				Destination: &PrivateKey,
+			},
+
+			&cli.BoolFlag{
+				Name: "dbconnect",
+				// Aliases:     []string{"c"},
+				Usage:       "Wherever Database Connect",
+				Value:       false,
+				Destination: &Dbconect,
 			},
 		},
 		Action: run,

@@ -95,15 +95,16 @@ func NewTaskServer(server_type string) (*TaskServer, error) {
 		ts.serveMux.HandleFunc("/publish", ts.PublishHandler)
 	}
 
-	ts.Dm = &dbmanager.DbManager{}
+	if Dbconect {
+		ts.Dm = &dbmanager.DbManager{}
+		err := ts.Dm.Init()
+		if err != nil {
+			return nil, err
+		}
+	}
 	ts.server_type = server_type
 	ServerType = ts.server_type
-	err := ts.Dm.Init()
-	if err != nil {
-		return nil, err
-	}
 	return ts, nil
-
 }
 
 func (ts *TaskServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -220,6 +221,36 @@ func sendmsg(status int, message interface{}, taskid int) error {
 	return err
 }
 
+func (ts *TaskServer) AgentHandler(ctx context.Context, mjson map[string]interface{}) error {
+	var err error
+	if v, ok := mjson["action"].(string); ok {
+		if v != "runagnet" {
+			return nil
+		}
+	}
+	if v, ok := mjson["enable_plugin"].(string); ok {
+		if v != "runagnet" {
+			return nil
+		}
+	} else {
+		task, err := ts.start(mjson, false)
+		if err != nil {
+			logger.Error(err.Error())
+			sendmsg(-1, err.Error(), task.TaskId)
+			return err
+		}
+		logger.Info("1111111")
+		Taskslock.Lock()
+		Tasks = append(Tasks, &task)
+		Taskslock.Unlock()
+		sendmsg(0, "The Task is Starting", task.TaskId)
+		go task.PluginMsgHandler(*task.Ctx)
+		go task.quitmsg()
+	}
+
+	return err
+}
+
 func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) error {
 
 	var (
@@ -232,6 +263,8 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 		logger.Error("[./websocket.go:Task() error] the json is empty")
 		return err
 	}
+
+	ts.AgentHandler(ctx, mjson)
 
 	if value, ok := mjson["action"].(string); ok {
 		Status = value
@@ -270,7 +303,7 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			return err
 		}
 		//开始任务
-		task, err := ts.start(mjson)
+		task, err := ts.start(mjson, false)
 		if err != nil {
 			logger.Error(err.Error())
 			sendmsg(-1, err.Error(), task.TaskId)
@@ -331,50 +364,56 @@ func GetTaskId(json map[string]interface{}) (int, error) {
 	return taskid, nil
 }
 
-func (ts *TaskServer) start(v interface{}) (Task, error) {
+func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, error) {
 	var task Task
 	var Err error
+	var config tconfig
 	json := v.(map[string]interface{})
 	// logger.DebugEnable(true)
 	logger.Info("%v", json)
 
-	task.TaskId, Err = GetTaskId(json)
-	task.Dm = ts.Dm
+	if IsGetDatabydatabase {
+		task.TaskId = -1
+		config.EnableCrawler = false
+		// //测试被动代理
+		// config.EnableCrawler = false
+		config.InstallDb = false
+	} else {
+		task.TaskId, Err = GetTaskId(json)
+		task.Dm = ts.Dm
+		if Err != nil {
+			logger.Error(Err.Error())
+		}
+		DBTaskConfig, Err := ts.Dm.GetTaskConfig(task.TaskId)
+		if Err != nil {
+			logger.Error(Err.Error())
+		}
+		TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
+		if Err != nil {
+			logger.Error(Err.Error())
+		}
+		task.Init()
 
-	if Err != nil {
-		logger.Error(Err.Error())
-	}
-	DBTaskConfig, Err := ts.Dm.GetTaskConfig(task.TaskId)
-	if Err != nil {
-		logger.Error(Err.Error())
-	}
-	TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
-	if Err != nil {
-		logger.Error(Err.Error())
-	}
-	task.Init()
-	task.TaskConfig = TaskConfig
-	//获取host表
-	host_result, err := ts.Dm.GetTaskHostid(task.TaskId)
-	if err != nil {
-		logger.Error(Err.Error())
-	}
+		task.TaskConfig = TaskConfig
+		//获取host表
+		host_result, err := ts.Dm.GetTaskHostid(task.TaskId)
+		if err != nil {
+			logger.Error(Err.Error())
+		}
 
-	for _, hostinfo := range host_result {
-		if hostinfo.ScanTarget.Valid {
-			Err = task.UrlPackage(hostinfo.ScanTarget.String, hostinfo.Hostid.Int64)
-			if Err != nil {
-				return task, Err
+		for _, hostinfo := range host_result {
+			if hostinfo.ScanTarget.Valid {
+				Err = task.UrlPackage(hostinfo.ScanTarget.String, hostinfo.Hostid.Int64)
+				if Err != nil {
+					return task, Err
+				}
 			}
 		}
+		config.EnableCrawler = true
+		// //测试被动代理
+		// config.EnableCrawler = false
+		config.InstallDb = true
 	}
-
-	config := tconfig{}
-	config.EnableCrawler = true
-	// //测试被动代理
-	// config.EnableCrawler = false
-	config.InstallDb = false
-
 	config.ProxyPort = task.TaskConfig.ProxyPort
 	go task.dostartTasks(config)
 	go func() {

@@ -12,7 +12,8 @@
             // "console": "integratedTerminal", // 新的vscode版本换“internalConsole”
             "program": "${workspaceRoot}",
             "args": [
-                "--passiveproxy",
+                "--websocket",
+                "127.0.0.1:3009",
                 "--cert",
                 "server.pem",
                 "--key",
