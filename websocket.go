@@ -221,23 +221,24 @@ func sendmsg(status int, message interface{}, taskid int) error {
 	return err
 }
 
-func (ts *TaskServer) AgentHandler(ctx context.Context, mjson map[string]interface{}) error {
+func (ts *TaskServer) AgentHandler(ctx context.Context, mjson map[string]interface{}) (bool, error) {
 	var err error
 	if v, ok := mjson["action"].(string); ok {
 		if v != "runagnet" {
-			return nil
+			return false, nil
 		}
 	}
 	if v, ok := mjson["enable_plugin"].(string); ok {
 		if v != "runagnet" {
-			return nil
+			return false, nil
 		}
 	} else {
-		task, err := ts.start(mjson, false)
+		task, err := ts.start(mjson, true)
+		task.Init()
 		if err != nil {
 			logger.Error(err.Error())
 			sendmsg(-1, err.Error(), task.TaskId)
-			return err
+			return false, err
 		}
 		logger.Info("1111111")
 		Taskslock.Lock()
@@ -248,7 +249,7 @@ func (ts *TaskServer) AgentHandler(ctx context.Context, mjson map[string]interfa
 		go task.quitmsg()
 	}
 
-	return err
+	return true, err
 }
 
 func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) error {
@@ -264,7 +265,10 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 		return err
 	}
 
-	ts.AgentHandler(ctx, mjson)
+	b, err := ts.AgentHandler(ctx, mjson)
+	if b || err != nil {
+		return err
+	}
 
 	if value, ok := mjson["action"].(string); ok {
 		Status = value
