@@ -183,7 +183,7 @@ func sendmsg(status int, message interface{}, taskid int) error {
 	reponse["status"] = status
 	reponse["msg"] = message
 	reponse["taskid"] = strconv.Itoa(taskid)
-	// logger.Info("%v", reponse)
+	logger.Info("%v", reponse)
 	if ServerType == "websocket" {
 	restart:
 		for idx, info := range Socketinfo {
@@ -200,7 +200,7 @@ func sendmsg(status int, message interface{}, taskid int) error {
 		//大端通讯
 		binary.BigEndian.PutUint32(bs, uint32(len(data)))
 		copy(bs[4:], data)
-		logger.Info("sendmsg: %v", reponse)
+		// logger.Info("sendmsg: %v", reponse)
 	restart1:
 		for idx, conn := range SOCKETCONN {
 			if err != nil {
@@ -234,7 +234,6 @@ func (ts *TaskServer) AgentHandler(ctx context.Context, mjson map[string]interfa
 		}
 	} else {
 		task, err := ts.start(mjson, true)
-		task.Init()
 		if err != nil {
 			logger.Error(err.Error())
 			sendmsg(-1, err.Error(), task.TaskId)
@@ -379,9 +378,12 @@ func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, erro
 	if IsGetDatabydatabase {
 		task.TaskId = -1
 		config.EnableCrawler = false
+		task.ScanType = -1
 		// //测试被动代理
 		// config.EnableCrawler = false
 		config.InstallDb = false
+		task.Init()
+		task.XssSpider.Init(task.TaskConfig)
 	} else {
 		task.TaskId, Err = GetTaskId(json)
 		task.Dm = ts.Dm
@@ -472,13 +474,22 @@ func (t *Task) PluginMsgHandler(ctx context.Context) {
 	for {
 		select {
 		case msg := <-t.PliuginsMsg:
-			fmt.Printf("msg: %v\n", msg)
+			//fmt.Printf("msg: %v\n", msg)
 			// reponse := make(map[string]interface{})
 			// reponse["status"] = msg["status"].(int)
 			// reponse["msg"] = msg
 			// reponse["taskid"] = strconv.Itoa(t.TaskId)
 			status := msg["status"].(int)
-			sendmsg(status, msg, t.TaskId)
+			if _, ok := msg["progress"]; ok {
+				if t.ScanType == -1 {
+
+				} else {
+					sendmsg(status, msg, t.TaskId)
+				}
+			}
+			if _, ok := msg["vul"]; ok {
+				sendmsg(status, msg, t.TaskId)
+			}
 
 		// restart:
 		// 	for idx, info := range Socketinfo {

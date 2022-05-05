@@ -66,6 +66,7 @@ type Task struct {
 	DoStartSignal chan bool
 	PliuginsMsg   chan map[string]interface{}
 	Status        util.Status
+	ScanType      int //扫描模式
 }
 
 type tconfig struct {
@@ -453,7 +454,7 @@ func (t *Task) agentPluginRun(args interface{}) {
 		go func() {
 			for {
 				urlinfo := <-p.CommunicationSingleton
-				logger.Info("Obtain url:%s", urlinfo["url"])
+				//logger.Info("Obtain url:%s", urlinfo["agent"]["url"])
 				for _, PluginName := range StartPlugins {
 					switch strings.ToLower(PluginName) {
 					case "csrf":
