@@ -21,6 +21,7 @@ const (
 	Ssrf      Plugin_type = "rj-003-0001"
 	Jsonp     Plugin_type = "rj-004-0001"
 	CmdInject Plugin_type = "rj-005-0001"
+	Xxe       Plugin_type = "rj-006-0001"
 )
 
 type Plugin struct {

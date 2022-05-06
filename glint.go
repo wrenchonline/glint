@@ -19,6 +19,7 @@ import (
 	"glint/ssrfcheck"
 	"glint/util"
 	"glint/xsschecker"
+	"glint/xxe"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -37,7 +38,7 @@ const (
 	DefaultSocket     string = ""
 )
 
-var DefaultPlugins = cli.NewStringSlice("xss", "csrf", "cmdinject", "jsonp") //"ssrf",
+var DefaultPlugins = cli.NewStringSlice("xss", "csrf", "cmdinject", "jsonp", "xxe") //"ssrf",
 var signalChan chan os.Signal
 var ConfigpPath string
 var Plugins cli.StringSlice
@@ -419,6 +420,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "cmdinject":
 				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
+			case "xxe":
+				t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, ReqList, false, 0., false, config.HttpsCert, config.HttpsCertKey)
 			}
 		}
 
@@ -467,7 +470,10 @@ func (t *Task) agentPluginRun(args interface{}) {
 						t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "cmdinject":
 						t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
+					case "xxe":
+						t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					}
+
 				}
 				//t.PluginWg.Wait()
 				//logger.Info("origin url:%s has finished", urlinfo["url"])

