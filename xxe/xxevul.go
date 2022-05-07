@@ -11,7 +11,7 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-var DefaultProxy = "127.0.0.1:7777"
+var DefaultProxy = ""
 var cert string
 var mkey string
 
@@ -165,6 +165,9 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 			}
 		}
 	}
+
+	//如果都没有报出漏洞的话，尝试Blind测试
+	//首先，开启两个
 
 	return nil, err
 }
