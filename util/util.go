@@ -20,6 +20,7 @@ import (
 
 	// conf2 "github.com/jweny/pocassist/pkg/conf"
 	// log "github.com/jweny/pocassist/pkg/logging"
+	"github.com/beevik/etree"
 	"github.com/shopspring/decimal"
 	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
@@ -459,4 +460,38 @@ func Exists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func ParseXMl(xmlData []byte) (*etree.Document, error) {
+	var err error
+	var rootElement *etree.Element
+	doc := etree.NewDocument()
+	if err = doc.ReadFromBytes(xmlData); err != nil {
+		return nil, err
+	}
+	// bufs.Reset()
+	doc.Indent(2)
+	doc.WriteTo(os.Stdout)
+
+	rootElement = doc.Copy().Root()
+
+	for _, t := range rootElement.Child {
+		if c, ok := t.(*etree.Element); ok {
+			tag := c.Tag
+			c.SetText(c.Text() + `;&content`)
+			logger.Info("tag := %s", tag)
+		}
+	}
+
+	doc.SetRoot(rootElement)
+	// Child := etree.NewDocument()
+	// Target := Child.CreateElement("a")
+	// Target.SetText("&content")
+	// rootElement.AddChild(Target)
+	// rootElement.Indent(2)
+	// rootElement.WriteTo(os.Stdout)
+	doc.Indent(2)
+	doc.WriteTo(os.Stdout)
+
+	return doc, nil
 }

