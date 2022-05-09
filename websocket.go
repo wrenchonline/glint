@@ -474,7 +474,7 @@ func (t *Task) PluginMsgHandler(ctx context.Context) {
 	for {
 		select {
 		case msg := <-t.PliuginsMsg:
-			//fmt.Printf("msg: %v\n", msg)
+			// fmt.Printf("msg: %v\n", msg)
 			// reponse := make(map[string]interface{})
 			// reponse["status"] = msg["status"].(int)
 			// reponse["msg"] = msg
