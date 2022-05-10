@@ -385,6 +385,7 @@ func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, erro
 		task.Init()
 		task.XssSpider.Init(task.TaskConfig)
 	} else {
+		config.InstallDb = true
 		task.TaskId, Err = GetTaskId(json)
 		task.Dm = ts.Dm
 		if Err != nil {

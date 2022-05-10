@@ -338,7 +338,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 		Results   []*crawler.Result
 	)
 
-	ReqList := make(map[string]interface{})
+	ReqList := make(map[string][]interface{})
+	ReqList1 := make(map[string]interface{})
 	List := make(map[string][]ast.JsonUrl)
 
 	if config.InstallDb {
@@ -400,31 +401,36 @@ func (t *Task) dostartTasks(config tconfig) error {
 				element["data"] = r.PostData
 				element["source"] = r.Source
 				element["hostid"] = result.Hostid
-				ReqList[r.GroupsId] = append(ReqList[r.GroupsId].([]interface{}), element)
+
+				ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
 				List[r.GroupsId] = append(List[r.GroupsId], element0)
 				return false
 			})
 		}
 		util.SaveCrawOutPut(List, "result.json")
 
+		for s, v := range ReqList {
+			ReqList1[s] = v
+		}
+
 		//Crawtask.PluginBrowser = t.XssSpider
 		//爬完虫加载插件检测漏洞
 		for _, PluginName := range StartPlugins {
 			switch strings.ToLower(PluginName) {
 			case "csrf":
-				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList1, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "xss":
-				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList, config.InstallDb, percentage, true, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList1, config.InstallDb, percentage, true, config.HttpsCert, config.HttpsCertKey)
 			case "ssrf":
-				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList1, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "jsonp":
-				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList1, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "cmdinject":
-				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList1, config.InstallDb, percentage, false, config.HttpsCert, config.HttpsCertKey)
 			case "xxe":
-				t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, ReqList, false, 0., false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, ReqList1, false, 0., false, config.HttpsCert, config.HttpsCertKey)
 			case "crlf":
-				t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, ReqList, false, 0., false, config.HttpsCert, config.HttpsCertKey)
+				t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, ReqList1, false, 0., false, config.HttpsCert, config.HttpsCertKey)
 			}
 		}
 

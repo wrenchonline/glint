@@ -87,7 +87,7 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			body := string(resp1.Body())
 			Text := resp1.String()
 			//logger.Inf("%s", Text)
-			println(Text)
+			// println(Text)
 			r, err := regexp.Compile(RegexRule)
 			if err != nil {
 				logger.Error("%s", err.Error())
