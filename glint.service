@@ -7,7 +7,7 @@ Type=simple
 User=root
 Group=root
 PIDFile=/run/glint.pid
-ExecStart=/usr/local/863/bin/glint --webscoket 127.0.0.1:3009 --cert server.pem --key server.key
+ExecStart=/usr/local/863/bin/glint --websocket 127.0.0.1:3009 --cert /usr/local/863/certific/server.pem --key /usr/local/863/certific/server.key
 RemainAfterExit=yes
 
 [Install]
