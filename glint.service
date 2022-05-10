@@ -1,0 +1,14 @@
+[Unit]
+Description=Control the glint service
+After=mysql.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+PIDFile=/run/glint.pid
+ExecStart=/usr/local/863/bin/glint --webscoket 127.0.0.1:3009 --cert server.pem --key server.key
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
