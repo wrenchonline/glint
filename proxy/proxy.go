@@ -23,7 +23,7 @@ type PassiveProxy struct {
 	postDataLogging        func(*http.Request) bool
 	mu                     sync.Mutex
 	Taskid                 int //发送到特定任务去扫描
-	CommunicationSingleton chan map[string][]interface{}
+	CommunicationSingleton chan map[string]interface{}
 	HttpsCert              string
 	HttpsCertKey           string
 }
@@ -39,7 +39,7 @@ type PassiveProxy struct {
 
 func NewPassiveProxy() *PassiveProxy {
 	p := &PassiveProxy{}
-	p.CommunicationSingleton = make(chan map[string][]interface{})
+	p.CommunicationSingleton = make(chan map[string]interface{})
 	return p
 }
 
@@ -249,7 +249,7 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 
 	method := hreq.Method
 
-	ReqList := make(map[string][]interface{})
+	ReqList := make(map[string]interface{})
 
 	element := make(map[string]interface{})
 	element["url"] = url
@@ -258,7 +258,7 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 	element["data"] = postdata
 	element["source"] = "agent"
 	element["hostid"] = int64(122)
-	ReqList["agent"] = append(ReqList["agent"], element)
+	ReqList["agent"] = append(ReqList["agent"].([]interface{}), element)
 
 	p.CommunicationSingleton <- ReqList
 	return nil

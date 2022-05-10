@@ -3,6 +3,7 @@ package xsschecker
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/ast"
@@ -464,6 +465,9 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	var err error
 	if value, ok := session["hostid"].(int64); ok {
 		hostid = value
+	}
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
 	}
 
 	tab, err := brohttp.NewTab(Spider)

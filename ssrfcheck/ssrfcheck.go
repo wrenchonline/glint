@@ -1,6 +1,7 @@
 package ssrfcheck
 
 import (
+	"encoding/json"
 	"errors"
 	"glint/fastreq"
 	"glint/logger"
@@ -42,6 +43,15 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 			PrivateKey:    mkey,
 		})
 
+	var hostid int64
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
+
 	var ContentType string = "None"
 	if value, ok := headers["Content-Type"]; ok {
 		ContentType = value
@@ -71,7 +81,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					[]string{string(req1.String())},
 					[]string{string(r1)},
 					"middle",
-					session["hostid"].(int64))
+					hostid)
 				return Result, errs
 			}
 		}
@@ -89,7 +99,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					[]string{string(req1.String())},
 					[]string{string(r1)},
 					"middle",
-					session["hostid"].(int64))
+					hostid)
 				return Result, errs
 			}
 		}

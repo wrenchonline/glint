@@ -12,9 +12,9 @@ import (
 )
 
 func Test_Jsonp(t *testing.T) {
-	data := make(map[string][]interface{})
+
 	var PluginWg sync.WaitGroup
-	config.ReadResultConf("result.json", &data)
+	data, _ := config.ReadResultConf("result.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, jsonp.JsonpValid)
 	pluginInternal := plugin.Plugin{

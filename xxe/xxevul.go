@@ -1,6 +1,7 @@
 package xxe
 
 import (
+	"encoding/json"
 	"glint/fastreq"
 	"glint/logger"
 	"glint/plugin"
@@ -59,11 +60,14 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 		ContentType = value
 	}
 
-	// params, err := util.ParseUri(url, body, method, ContentType)
-	// if err != nil {
-	// 	logger.Error(err.Error())
-	// 	return nil, err
-	// }
+	var hostid int64
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
 
 	var xmlversion bool
 	reg := `^\s*<\?xml`
@@ -96,7 +100,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 						[]string{string(req1.String())},
 						[]string{string(body)},
 						"high",
-						session["hostid"].(int64))
+						hostid)
 					return Result, errs
 				}
 			}

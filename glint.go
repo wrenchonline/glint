@@ -282,7 +282,7 @@ func (t *Task) AddPlugins(
 	PluginName string,
 	PluginId plugin.Plugin_type,
 	callback plugin.PluginCallback,
-	ReqList map[string][]interface{},
+	ReqList map[string]interface{},
 	installDb bool,
 	percentage float64,
 	bpayloadbrower bool,
@@ -337,7 +337,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 		Results   []*crawler.Result
 	)
 
-	ReqList := make(map[string][]interface{})
+	ReqList := make(map[string]interface{})
 	List := make(map[string][]ast.JsonUrl)
 
 	if config.InstallDb {
@@ -399,7 +399,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 				element["data"] = r.PostData
 				element["source"] = r.Source
 				element["hostid"] = result.Hostid
-				ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+				ReqList[r.GroupsId] = append(ReqList[r.GroupsId].([]interface{}), element)
 				List[r.GroupsId] = append(List[r.GroupsId], element0)
 				return false
 			})

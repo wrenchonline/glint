@@ -49,7 +49,7 @@ type PluginOption struct {
 	Progress     *float64 //此任务进度
 	Totalprog    float64  //此插件占有的总进度
 	IsSocket     bool
-	Data         map[string][]interface{}
+	Data         map[string]interface{}
 	SingelMsg    *chan map[string]interface{}
 	TaskId       int    //该插件所属的taskid
 	Bstripurl    bool   //是否分开groupurl
@@ -127,9 +127,10 @@ func (p *Plugin) Run(args PluginOption) error {
 	var err error
 	IsSocket := args.IsSocket
 	for type_name, urlinters := range args.Data {
+		ur := urlinters.([]interface{})
 		// fmt.Println(len(urlinters))
-		p.threadwg.Add(len(urlinters))
-		for _, urlinter := range urlinters {
+		p.threadwg.Add(len(ur))
+		for _, urlinter := range ur {
 			go func(type_name string, urlinter interface{}) {
 				data := GroupData{
 					GroupType:    type_name,

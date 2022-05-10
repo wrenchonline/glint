@@ -1,6 +1,7 @@
 package csrf
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/fastreq"
@@ -49,6 +50,7 @@ var cert string = ""
 var mkey string = ""
 
 func Csrfeval(args interface{}) (*util.ScanResult, error) {
+
 	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://192.168.166.8/vulnerabilities/csrf`
 	// t := time.NewTimer(time.Millisecond * 200)
@@ -68,6 +70,15 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 	body := []byte(session["data"].(string))
 	cert = group.HttpsCert
 	mkey = group.HttpsCertKey
+
+	var hostid int64
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
 
 	var ContentType string = "None"
 	if value, ok := headers["Content-Type"]; ok {
@@ -112,7 +123,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				[]string{string(req2.String())},
 				[]string{string(b2)},
 				"middle",
-				session["hostid"].(int64))
+				hostid)
 			return Result, errs
 		}
 
@@ -142,7 +153,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				[]string{string(req2.String())},
 				[]string{string(b2)},
 				"middle",
-				session["hostid"].(int64))
+				hostid)
 			return Result, errs
 		}
 		return nil, errs

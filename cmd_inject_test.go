@@ -11,9 +11,8 @@ import (
 )
 
 func Test_Cmd_Inject(t *testing.T) {
-	data := make(map[string][]interface{})
 	var PluginWg sync.WaitGroup
-	config.ReadResultConf("result.json", &data)
+	data, _ := config.ReadResultConf("result.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, cmdinject.CmdValid)
 	pluginInternal := plugin.Plugin{

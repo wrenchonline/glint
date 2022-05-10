@@ -1,6 +1,7 @@
 package jsonp
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/fastreq"
@@ -188,6 +189,15 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 	cert = group.HttpsCert
 	mkey = group.HttpsCertKey
 
+	var hostid int64
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
+
 	if strings.ToUpper(method) != "GET" {
 		return nil, nil
 	}
@@ -203,7 +213,7 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 			[]string{string(info.Request.String())},
 			[]string{string(info.Response.String())},
 			"middle",
-			session["hostid"].(int64))
+			hostid)
 		return Result, err
 	}
 	return nil, errors.New("jsonp vulnerability not found")

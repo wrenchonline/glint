@@ -1,6 +1,7 @@
 package crlf
 
 import (
+	"encoding/json"
 	"glint/fastreq"
 	"glint/logger"
 	"glint/plugin"
@@ -9,7 +10,7 @@ import (
 	"strings"
 )
 
-var DefaultProxy = "127.0.0.1:7777"
+var DefaultProxy = ""
 var cert string
 var mkey string
 
@@ -33,7 +34,7 @@ var payload_template = []string{
 
 func Crlf(args interface{}) (*util.ScanResult, error) {
 	var err error
-
+	var hostid int64
 	// var buf bufio{}
 	// var blastIters interface{}
 	util.Setup()
@@ -63,6 +64,14 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			PrivateKey:    mkey,
 		})
 
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
+
 	// var ContentType string = "None"
 	// if value, ok := headers["Content-Type"]; ok {
 	// 	ContentType = value
@@ -87,17 +96,13 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 
 			C := r.FindAllStringSubmatch(Text, -1)
 			if len(C) != 0 {
-				println("sdasd")
 				r := req1.String()
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"CRLF Vulnerable",
 					[]string{string(r)},
 					[]string{body},
 					"high",
-					0)
-				// var ScanResults []*util.ScanResult
-				// ScanResults = append(ScanResults, Result)
-				// util.OutputVulnerableList(ScanResults)
+					hostid)
 				return Result, err
 			}
 

@@ -11,9 +11,8 @@ import (
 )
 
 func Test_Crlf(t *testing.T) {
-	data := make(map[string][]interface{})
 	var PluginWg sync.WaitGroup
-	config.ReadResultConf("result2.json", &data)
+	data, _ := config.ReadResultConf("result2.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, crlf.Crlf)
 	pluginInternal := plugin.Plugin{

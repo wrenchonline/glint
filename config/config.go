@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -183,7 +184,7 @@ type SqlInject struct {
 	Attackpayloads []string `yaml:"attackpayloads"`
 }
 
-func ReadResultConf(file string, data *map[string][]interface{}) error {
+func ReadResultConf(file string) (map[string]interface{}, error) {
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		fmt.Println(err)
@@ -192,11 +193,20 @@ func ReadResultConf(file string, data *map[string][]interface{}) error {
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	// FileJsonUrls := make(map[string]interface{})
-	err = json.Unmarshal([]byte(byteValue), data)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return err
+	// err = json.Unmarshal([]byte(byteValue), data)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	var personFromJSON interface{}
+
+	decoder := json.NewDecoder(bytes.NewReader(byteValue))
+	decoder.UseNumber()
+	decoder.Decode(&personFromJSON)
+
+	r := personFromJSON.(map[string]interface{})
+
+	return r, err
 }
 
 func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
