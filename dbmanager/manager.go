@@ -185,7 +185,7 @@ func (Dm *DbManager) GetExtraHeaders(uuid string) ([]ExtraHeaders, error) {
 //保存漏扫结果
 func (Dm *DbManager) SaveScanResult(
 	taskid int,
-	plugin_name string,
+	plugin_id string,
 	Vulnerable bool,
 	Target string,
 	ReqMsg string,
@@ -202,17 +202,21 @@ func (Dm *DbManager) SaveScanResult(
 		"taskid": taskid,
 		"vul":    Vulnerable,
 		"target": Target,
-		"vulid":  plugin_name,
+		"vulid":  plugin_id,
 		"reqmsg": ReqMsg,
 		"hostid": hostid,
 		// "respmsg": RespMsg,
 		// "vulnerability": VulnerableLevel,
 	})
 
+	if err != nil {
+		logger.Error("NamedExec() save scan result error %v", err.Error())
+	}
+
 	result_id, err := result.LastInsertId()
 
 	if err != nil {
-		logger.Error("save scan result error %v", err.Error())
+		logger.Error("LastInsertId() save scan result error %v", err.Error())
 	}
 	return result_id, err
 }

@@ -89,7 +89,7 @@ func (p *Plugin) Init() {
 					if p.InstallDB {
 						Result_id, _ = p.Dm.SaveScanResult(
 							p.Taskid,
-							string(p.PluginName),
+							string(p.PluginId),
 							scanresult.Vulnerable,
 							scanresult.Target,
 							// s.Output,1
