@@ -23,6 +23,7 @@ const (
 	CmdInject Plugin_type = "rj-005-0001"
 	Xxe       Plugin_type = "rj-006-0001"
 	Crlf      Plugin_type = "rj-007-0001"
+	CORS      Plugin_type = "rj-008-0001"
 )
 
 type Plugin struct {

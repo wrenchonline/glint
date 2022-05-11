@@ -8,6 +8,7 @@ import (
 	"glint/brohttp"
 	"glint/cmdinject"
 	"glint/config"
+	"glint/cors"
 	"glint/crawler"
 	"glint/crlf"
 	"glint/csrf"
@@ -431,6 +432,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 				t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
 			case "crlf":
 				t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
+			case "cors":
+				t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
 			}
 		}
 
@@ -483,6 +486,8 @@ func (t *Task) agentPluginRun(args interface{}) {
 						t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "crlf":
 						t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
+					case "cors":
+						t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					}
 
 				}
