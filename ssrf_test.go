@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"glint/config"
+	"glint/pkg/pocs/ssrfcheck"
 	"glint/plugin"
-	"glint/ssrfcheck"
 	"sync"
 	"testing"
 	"time"

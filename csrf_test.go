@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"glint/config"
-	"glint/csrf"
+	"glint/pkg/pocs/csrf"
 	"glint/plugin"
 	"sync"
 	"testing"

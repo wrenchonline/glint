@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"glint/cmdinject"
 	"glint/config"
+	"glint/pkg/pocs/cmdinject"
 	"glint/plugin"
 	"sync"
 	"testing"
