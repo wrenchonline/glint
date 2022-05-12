@@ -1,5 +1,11 @@
 package apperror
 
+import (
+	"regexp"
+
+	"github.com/thoas/go-funk"
+)
+
 var plainArray = []string{
 	`Microsoft OLE DB Provider for ODBC Drivers`,
 	`java.io.FileNotFoundException:`,
@@ -238,5 +244,18 @@ var regexArray = []string{
 }
 
 //这个就在主要插件中调用回调会好点。
-
-func Test_Application_error()
+func Test_Application_error(body string) bool {
+	for _, plain := range plainArray {
+		if funk.Contains(body, plain) {
+			return true
+		}
+	}
+	for _, regex := range regexArray {
+		r, _ := regexp.Compile(regex)
+		C := r.FindAllStringSubmatch(body, -1)
+		if len(C) != 0 {
+			return true
+		}
+	}
+	return false
+}
