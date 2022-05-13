@@ -182,6 +182,7 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 			"plnkr.co",
 			"s3.amazonaws.com",
 		}
+
 		for _, domain := range known_domains {
 			CorsPayloads = append(CorsPayloads,
 				cors_payload{

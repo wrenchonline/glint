@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"glint/config"
-	"glint/jsonp"
+	"glint/pkg/pocs/jsonp"
 	"glint/plugin"
 	"sync"
 	"testing"
