@@ -340,13 +340,19 @@ func (p PostData) Set(key string, value string) error {
 	return fmt.Errorf("not found: %s", key)
 }
 
+const MIN_SEND_COUNT = 5
+
 func (p *PostData) SetPayload(uri string, payload string, method string) []string {
 	var result []string
 	if strings.ToUpper(method) == "POST" {
-		for _, kv := range p.Params {
-			p.Set(kv.Name, payload)
-			result = append(result, p.Release())
-			p.Set(kv.Name, kv.Value)
+		for idx, kv := range p.Params {
+			//小于5一个链接参数不能超过5
+			if idx <= MIN_SEND_COUNT {
+				p.Set(kv.Name, payload)
+				result = append(result, p.Release())
+				p.Set(kv.Name, kv.Value)
+			}
+
 		}
 	} else if strings.ToUpper(method) == "GET" {
 		u, err := url.Parse(uri)
@@ -355,10 +361,12 @@ func (p *PostData) SetPayload(uri string, payload string, method string) []strin
 			return nil
 		}
 		v := u.Query()
-		for _, kv := range p.Params {
-			v.Set(kv.Name, payload)
-			result = append(result, strings.Split(string(uri), "?")[0]+"?"+v.Encode())
-			v.Set(kv.Name, kv.Value)
+		for idx, kv := range p.Params {
+			if idx <= MIN_SEND_COUNT {
+				v.Set(kv.Name, payload)
+				result = append(result, strings.Split(string(uri), "?")[0]+"?"+v.Encode())
+				v.Set(kv.Name, kv.Value)
+			}
 		}
 	}
 	return result
