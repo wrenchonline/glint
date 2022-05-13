@@ -422,6 +422,8 @@ func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, erro
 		config.InstallDb = true
 	}
 	config.ProxyPort = task.TaskConfig.ProxyPort
+	config.HttpsCert = Cert
+	config.HttpsCertKey = PrivateKey
 	go task.dostartTasks(config)
 	go func() {
 		task.DoStartSignal <- true

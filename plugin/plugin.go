@@ -141,8 +141,8 @@ func (p *Plugin) Run(args PluginOption) error {
 					Pcancel:      p.Cancel,
 					IsSocket:     IsSocket,
 					Msg:          args.SingelMsg,
-					HttpsCert:    "server.pem",
-					HttpsCertKey: "server.key",
+					HttpsCert:    args.HttpsCert,
+					HttpsCertKey: args.HttpsCertKey,
 				}
 				err = p.Pool.Invoke(data)
 				if err != nil {
