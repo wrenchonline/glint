@@ -36,10 +36,10 @@ func cors_header_in_response(headers map[string]string) bool {
 }
 
 // make http request, return true if origin accepted
-func origin_accepted(url string, orginal string) (bool, *fasthttp.Request, *fastreq.Response, error) {
+func origin_accepted(url string, orginal string, certs string, certkey string) (bool, *fasthttp.Request, *fastreq.Response, error) {
 	util.Setup()
-	cert = "server.pem"
-	mkey = "server.key"
+	cert = certs
+	mkey = certkey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
 			Timeout:       2,
@@ -90,6 +90,8 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 
 	session := group.GroupUrls.(map[string]interface{})
 	Url := session["url"].(string)
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
 	// method := session["method"].(string)
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 
@@ -118,7 +120,7 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 	baseOrigin := u.Scheme + "://" + u.Hostname()
 	hostname := u.Hostname()
 	baseHost := u.Host
-	if ok, _, _, _ := origin_accepted(Url, baseOrigin); ok ||
+	if ok, _, _, _ := origin_accepted(Url, baseOrigin, cert, mkey); ok ||
 		cors_header_in_response(headers) {
 		CorsPayloads := []cors_payload{
 			// reflected origin
@@ -193,7 +195,7 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 		}
 
 		for _, v := range CorsPayloads {
-			if ok, req1, resp1, _ := origin_accepted(Url, v.origin); ok {
+			if ok, req1, resp1, _ := origin_accepted(Url, v.origin, cert, mkey); ok {
 				body := resp1.String()
 				Result := util.VulnerableTcpOrUdpResult(Url,
 					v.msg,
