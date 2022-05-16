@@ -22,6 +22,10 @@ func Test_layers(t *testing.T) {
 	pl.ContentType = headers["Content-Type"]
 	pl.Init("", "server.pem", "server.key")
 	Features1, _ := pl.Request(data["url"].(string), "dsasd")
-	Features2, _ := pl.Request(data["url"].(string), "dsasd")
-	layers.CompareFeatures(&Features1, &Features2)
+	pl.Method = "GET"
+	Features2, _ := pl.Request("http://www.jykc.com/jobshow.asp?classname=", "2112")
+	if !layers.CompareFeatures(&Features1, &Features2) {
+		println("false")
+	}
+
 }
