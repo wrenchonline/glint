@@ -1,9 +1,11 @@
 package layers
 
 import (
+	"glint/ast"
 	"glint/fastreq"
 	"glint/logger"
 	"glint/util"
+	"reflect"
 	"strings"
 
 	"github.com/valyala/fasthttp"
@@ -57,6 +59,46 @@ func (P *Plreq) Request(originUrl string, paramValue string) ([]MFeatures, error
 			f.Response = resp
 			features = append(features, *f)
 		}
+	} else if strings.ToUpper(P.Method) == "GET" {
+		for i, v := range originpayloads {
+			req, resp, err := P.Sess.Get(v, P.Headers)
+			if err != nil {
+				logger.Error("Plreq request error: %v", err)
+				return nil, err
+			}
+			f := new(MFeatures)
+			f.Index = i
+			f.Request = req
+			f.Response = resp
+			features = append(features, *f)
+		}
 	}
 	return features, nil
+}
+
+func CompareFeatures(body string, src *[]MFeatures, dst *[]MFeatures) bool {
+	parse := ast.Parser{}
+	var isEquivalent bool
+	if len(*src) != len(*dst) {
+		return false
+	}
+	isEquivalent = true
+	for _, s := range *src {
+		for _, d := range *dst {
+			if s.Index == d.Index {
+				parse.HttpParser(s.Response.String())
+				s_tokens := parse.GetTokenizer()
+				parse.HttpParser(d.Response.String())
+				d_tokens := parse.GetTokenizer()
+				if len(s_tokens) == 0 || len(d_tokens) == 0 {
+					// logger.Error("SearchInputInResponse tokens 没有发现节点")
+					return false
+				}
+				if !reflect.DeepEqual(s_tokens, d_tokens) {
+					isEquivalent = false
+				}
+			}
+		}
+	}
+	return isEquivalent
 }
