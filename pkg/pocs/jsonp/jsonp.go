@@ -117,7 +117,7 @@ func GetJsResponse(jsUrl string, headers map[string]string) (string, *Jsonpinfo,
 	r1 := resp1.Body()
 	info := Jsonpinfo{
 		Request:  req1,
-		Response: &resp1.Response,
+		Response: resp1,
 	}
 	return string(r1), &info, nil
 }

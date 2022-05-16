@@ -12,11 +12,11 @@ import (
 )
 
 type Plreq struct {
-	Sess         *fastreq.Session
-	Method       string
-	Headers      map[string]string
-	Body         []byte
-	content_type string
+	Sess        *fastreq.Session
+	Method      string
+	Headers     map[string]string
+	Body        []byte
+	ContentType string
 }
 
 type MFeatures struct {
@@ -41,7 +41,7 @@ func (P *Plreq) Init(Proxy string, Cert string, PrivateKey string) {
 
 func (P *Plreq) Request(originUrl string, paramValue string) ([]MFeatures, error) {
 	var features []MFeatures
-	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.content_type)
+	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func (P *Plreq) Request(originUrl string, paramValue string) ([]MFeatures, error
 	return features, nil
 }
 
-func CompareFeatures(body string, src *[]MFeatures, dst *[]MFeatures) bool {
+func CompareFeatures(src *[]MFeatures, dst *[]MFeatures) bool {
 	parse := ast.Parser{}
 	var isEquivalent bool
 	if len(*src) != len(*dst) {

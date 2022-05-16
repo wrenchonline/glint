@@ -56,7 +56,7 @@ func fast_send_poc(payloads []string,
 	callback CallbackCheck,
 ) (
 	req1 *fasthttp.Request,
-	resp1 *fastreq.Response,
+	resp1 *fasthttp.Response,
 	err error) {
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
@@ -95,7 +95,7 @@ func fast_send_poc(payloads []string,
 
 // 检测是否执行echo "xxxx" > rfi.php 此命令
 func cmd_mkdir(url string, method string, headers map[string]string, body []byte, ContentType string) (*fasthttp.Request,
-	*fastreq.Response, error) {
+	*fasthttp.Response, error) {
 	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
 		logger.Error(err.Error())

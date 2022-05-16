@@ -64,7 +64,7 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return result
 	}
-	urlList := urlFindRegex.FindAllString(resp.Text, -1)
+	urlList := urlFindRegex.FindAllString(resp.String(), -1)
 	for _, _url := range urlList {
 		_url = strings.TrimSpace(_url)
 		_url = urlRegex.FindString(_url)

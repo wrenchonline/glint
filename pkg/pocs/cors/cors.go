@@ -36,7 +36,7 @@ func cors_header_in_response(headers map[string]string) bool {
 }
 
 // make http request, return true if origin accepted
-func origin_accepted(url string, orginal string, certs string, certkey string) (bool, *fasthttp.Request, *fastreq.Response, error) {
+func origin_accepted(url string, orginal string, certs string, certkey string) (bool, *fasthttp.Request, *fasthttp.Response, error) {
 	util.Setup()
 	cert = certs
 	mkey = certkey
@@ -55,7 +55,7 @@ func origin_accepted(url string, orginal string, certs string, certkey string) (
 		return false, nil, nil, errs
 	}
 
-	response, err := http.ReadResponse(bufio.NewReader(strings.NewReader(resp1.Text)), nil)
+	response, err := http.ReadResponse(bufio.NewReader(strings.NewReader(resp1.String())), nil)
 	if err != nil {
 		return false, nil, nil, errs
 	}
