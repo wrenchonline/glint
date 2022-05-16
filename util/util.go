@@ -503,9 +503,3 @@ func ParseXMl(xmlData []byte) (*etree.Document, error) {
 
 	return doc, nil
 }
-
-// type Plreq struct {
-// 	sess    *fastreq.Session
-// 	method  string
-// 	Headers map[string]string
-// }

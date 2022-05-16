@@ -90,7 +90,7 @@ func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
 	return err
 }
 
-func (sess *Session) doRequest(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) doRequest(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *fasthttp.Response, error) {
 	var err error
 	verb = strings.ToUpper(verb)
 	//bodyReader := bytes.NewReader(body)
@@ -167,38 +167,38 @@ func (sess *Session) doRequest(verb string, url string, headers map[string]strin
 		resp.SetStatusCode(200)
 	}
 
-	return req, NewResponse(resp), nil
+	return req, resp, nil
 }
 
 // Get Session的GET请求
-func (sess *Session) Get(url string, headers map[string]string) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Get(url string, headers map[string]string) (*fasthttp.Request, *fasthttp.Response, error) {
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // Post Session的POST请求
-func (sess *Session) Post(url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Post(url string, headers map[string]string, body []byte) (*fasthttp.Request, *fasthttp.Response, error) {
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request Session的自定义请求类型
-func (sess *Session) Request(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Request(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *fasthttp.Response, error) {
 	return sess.doRequest(verb, url, headers, body)
 }
 
 // Get GET请求
-func Get(url string, headers map[string]string, options *ReqOptions) (*fasthttp.Request, *Response, error) {
+func Get(url string, headers map[string]string, options *ReqOptions) (*fasthttp.Request, *fasthttp.Response, error) {
 	sess := GetSessionByOptions(options)
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // POST POST请求
-func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*fasthttp.Request, *Response, error) {
+func Post(url string, headers map[string]string, options *ReqOptions, body []byte) (*fasthttp.Request, *fasthttp.Response, error) {
 	sess := GetSessionByOptions(options)
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request 自定义请求类型
-func Request(verb string, url string, headers map[string]string, body []byte, options *ReqOptions) (*fasthttp.Request, *Response, error) {
+func Request(verb string, url string, headers map[string]string, body []byte, options *ReqOptions) (*fasthttp.Request, *fasthttp.Response, error) {
 	sess := GetSessionByOptions(options)
 	return sess.doRequest(verb, url, headers, body)
 }
