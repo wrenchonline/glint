@@ -94,6 +94,21 @@ func CompareFeatures(src *[]MFeatures, dst *[]MFeatures) bool {
 					// logger.Error("SearchInputInResponse tokens 没有发现节点")
 					return false
 				}
+
+				if len(s_tokens) != len(d_tokens) {
+					// logger.Error("SearchInputInResponse tokens 没有发现节点")
+					return false
+				}
+
+				// for _, st := range s_tokens {
+				// 	for _, dt := range d_tokens {
+				// 		if st.Idx == dt.Idx {
+				// 			if st.Tagname != dt.Tagname {
+				// 				isEquivalent = false
+				// 			}
+				// 		}
+				// 	}
+				// }
 				if !reflect.DeepEqual(s_tokens, d_tokens) {
 					isEquivalent = false
 				}
