@@ -33,7 +33,7 @@ type Response struct {
 	Text string
 }
 
-type session struct {
+type Session struct {
 	ReqOptions
 	client *fasthttp.Client
 }
@@ -90,7 +90,7 @@ func CopyConfReq(data interface{}, dstRequest *fasthttp.Request) error {
 	return err
 }
 
-func (sess *session) doRequest(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) doRequest(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	var err error
 	verb = strings.ToUpper(verb)
 	//bodyReader := bytes.NewReader(body)
@@ -171,17 +171,17 @@ func (sess *session) doRequest(verb string, url string, headers map[string]strin
 }
 
 // Get Session的GET请求
-func (sess *session) Get(url string, headers map[string]string) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Get(url string, headers map[string]string) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest("GET", url, headers, nil)
 }
 
 // Post Session的POST请求
-func (sess *session) Post(url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Post(url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest("POST", url, headers, body)
 }
 
 // Request Session的自定义请求类型
-func (sess *session) Request(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
+func (sess *Session) Request(verb string, url string, headers map[string]string, body []byte) (*fasthttp.Request, *Response, error) {
 	return sess.doRequest(verb, url, headers, body)
 }
 
@@ -204,7 +204,7 @@ func Request(verb string, url string, headers map[string]string, body []byte, op
 }
 
 // getSessionByOptions 根据配置获取一个session
-func GetSessionByOptions(options *ReqOptions) *session {
+func GetSessionByOptions(options *ReqOptions) *Session {
 	client := &fasthttp.Client{}
 
 	if options == nil {
@@ -247,7 +247,7 @@ func GetSessionByOptions(options *ReqOptions) *session {
 	// 	}
 	// }
 	// options内容同步到session中
-	return &session{
+	return &Session{
 		ReqOptions: ReqOptions{
 			Timeout:       options.Timeout,
 			Retry:         options.Retry,

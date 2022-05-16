@@ -3,7 +3,7 @@ module glint
 go 1.16
 
 require (
-	github.com/beevik/etree v1.1.0 // indirect
+	github.com/beevik/etree v1.1.0
 	github.com/chromedp/cdproto v0.0.0-20220131204822-e6abebe7b8cd
 	github.com/chromedp/chromedp v0.7.7
 	github.com/chzyer/logex v1.2.0 // indirect
@@ -24,7 +24,7 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/panjf2000/ants/v2 v2.4.7
 	github.com/pkg/errors v0.9.1
-	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/shopspring/decimal v1.3.1
 	github.com/tdewolff/parse/v2 v2.5.27
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
