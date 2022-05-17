@@ -172,8 +172,8 @@ type TaskConfig struct {
 
 //数据库配置203
 const (
-	UserName = "itop"
-	Password = "rjjsoft"
+	UserName = "newitop"
+	Password = "rjjsoft+0591"
 	Ip       = "127.0.0.1"
 	Port     = "3306"
 	DbName   = "itop"
