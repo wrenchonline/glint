@@ -229,8 +229,23 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex interface{}, quote
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
-	if layers.CompareFeatures(&testbody4, &truebody) {
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+	truebody = testbody4
+
+	// test 6 false -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 2+1-1+1=1 AND " + randString + "=" + randString + " -- "
+	if dontCommentRestOfQuery {
+		paramValue = paramValue[:len(paramValue)-4]
+	}
+	logger.Debug("paramValue:%s", paramValue)
+
+	testbody5, err := bsql.layer.Request(bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&testbody5, &truebody) {
 		bsql.addToConfirmInjectionHistory(paramValue, true)
 	}
 
+	
 }
