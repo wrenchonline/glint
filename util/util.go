@@ -542,3 +542,9 @@ func ParseXMl(xmlData []byte) (*etree.Document, error) {
 
 	return doc, nil
 }
+
+func RandStr(length int) string {
+	strRange := "0123456789"
+	ret := `'` + funk.RandomString(length, []rune(strRange)) + `'`
+	return ret
+}
