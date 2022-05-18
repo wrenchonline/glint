@@ -17,6 +17,7 @@ type Plreq struct {
 	Headers     map[string]string
 	Body        []byte
 	ContentType string
+	Index       int
 }
 
 type MFeatures struct {
@@ -39,7 +40,7 @@ func (P *Plreq) Init(Proxy string, Cert string, PrivateKey string) {
 	P.Headers = make(map[string]string)
 }
 
-func (P *Plreq) Request(originUrl string, paramValue string) ([]MFeatures, error) {
+func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, error) {
 	var features []MFeatures
 	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
 	if err != nil {
@@ -76,6 +77,42 @@ func (P *Plreq) Request(originUrl string, paramValue string) ([]MFeatures, error
 	return features, nil
 }
 
+func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string) (MFeatures, error) {
+	var feature MFeatures
+	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
+	if err != nil {
+		panic(err)
+	}
+
+	originpayload := origin.SetPayloadByindex(idx, originUrl, paramValue, P.Method)
+	if strings.ToUpper(P.Method) == "POST" {
+
+		req, resp, err := P.Sess.Post(originUrl, P.Headers, []byte(originpayload))
+		if err != nil {
+			logger.Error("Plreq request error: %v", err)
+			return feature, err
+		}
+
+		feature.Index = idx
+		feature.Request = req
+		feature.Response = resp
+
+	} else if strings.ToUpper(P.Method) == "GET" {
+
+		req, resp, err := P.Sess.Get(originpayload, P.Headers)
+		if err != nil {
+			logger.Error("Plreq request error: %v", err)
+			return feature, err
+		}
+		feature.Index = idx
+		feature.Request = req
+		feature.Response = resp
+	}
+
+	return feature, nil
+}
+
+//*[]MFeatures
 func CompareFeatures(src *[]MFeatures, dst *[]MFeatures) bool {
 	parse := ast.Parser{}
 	var isEquivalent bool
@@ -83,6 +120,7 @@ func CompareFeatures(src *[]MFeatures, dst *[]MFeatures) bool {
 		return false
 	}
 	isEquivalent = true
+
 	for _, s := range *src {
 		for _, d := range *dst {
 			if s.Index == d.Index {

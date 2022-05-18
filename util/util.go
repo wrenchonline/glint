@@ -372,6 +372,45 @@ func (p *PostData) SetPayload(uri string, payload string, method string) []strin
 	return result
 }
 
+func (p *PostData) SetPayloadByindex(index int, uri string, payload string, method string) string {
+	var result string
+	if strings.ToUpper(method) == "POST" {
+		for idx, kv := range p.Params {
+			//小于5一个链接参数不能超过5
+			if idx <= MIN_SEND_COUNT {
+				if idx == index {
+					p.Set(kv.Name, payload)
+					str := p.Release()
+					p.Set(kv.Name, kv.Value)
+					return str
+				}
+				// p.Set(kv.Name, payload)
+				// result = append(result, p.Release())
+				// p.Set(kv.Name, kv.Value)
+			}
+
+		}
+	} else if strings.ToUpper(method) == "GET" {
+		u, err := url.Parse(uri)
+		if err != nil {
+			logger.Error(err.Error())
+			return ""
+		}
+		v := u.Query()
+		for idx, kv := range p.Params {
+			if idx <= MIN_SEND_COUNT {
+				if idx == index {
+					p.Set(kv.Name, payload)
+					str := strings.Split(string(uri), "?")[0] + "?" + v.Encode()
+					v.Set(kv.Name, kv.Value)
+					return str
+				}
+			}
+		}
+	}
+	return result
+}
+
 func ParseUri(uri string, body []byte, method string, content_type string) (*PostData, error) {
 	var (
 		err      error
