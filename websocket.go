@@ -324,9 +324,9 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			for _, task := range Tasks {
 				uinttask, _ := strconv.Atoi(taskid)
 				if task.TaskId == uinttask {
-					Taskslock.Lock()
+					// Taskslock.Lock()
 					task.Status = TaskStop
-					Taskslock.Unlock()
+					// Taskslock.Unlock()
 					(*task.Cancel)()
 				}
 			}

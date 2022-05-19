@@ -129,9 +129,14 @@ func (bsql *classBlindSQLInj) filterBody(body string, testValue string) string {
 	return body2
 }
 
-func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex interface{}) bool {
+func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	var Time1 time.Duration
 	var Time2 time.Duration
+
+	body1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
 	// send original value
 	body1 := bsql.filterBody(bsql.lastJob.response.String(), bsql.origValue)
 	bsql.origBody = body1
