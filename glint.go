@@ -219,6 +219,7 @@ func run(c *cli.Context) error {
 
 func craw_cleanup(c *crawler.CrawlerTask) {
 	if !c.Pool.IsClosed() {
+
 		c.Pool.Tune(1)
 		c.Pool.Release()
 		c.Browser.Close()
@@ -374,7 +375,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 		for _, crawtask := range crawtasks {
 			//这个是真正等待结束
 			crawtask.Waitforsingle()
-			go craw_cleanup(crawtask)
+			craw_cleanup(crawtask)
 			result := crawtask.Result
 			result.Hostid = crawtask.Result.Hostid
 			Results = append(Results, result)

@@ -321,16 +321,17 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 		go task.quitmsg()
 	} else if strings.ToLower(Status) == "close" {
 		if len(Tasks) != 0 {
-			for _, task := range Tasks {
+			for i, task := range Tasks {
 				uinttask, _ := strconv.Atoi(taskid)
 				if task.TaskId == uinttask {
-					// Taskslock.Lock()
+					Taskslock.Lock()
 					task.Status = TaskStop
-					// Taskslock.Unlock()
+					Taskslock.Unlock()
 					(*task.Cancel)()
+					Tasks = append(Tasks[:i], Tasks[i+1:]...)
 				}
 			}
-			Tasks = nil
+			// Tasks = nil
 		}
 	} else {
 		logger.Info("无效指令")

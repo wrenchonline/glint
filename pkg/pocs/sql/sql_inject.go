@@ -143,6 +143,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	bsql.origFeatures = bsql.lastJob.response.String()
 	Time1 = bsql.lastJob.responseDuration
 	// send same value (to see if the response is different)
+
 	var body2 string
 
 	return false
@@ -176,7 +177,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
-	if !layers.CompareFeatures(&[]layers.MFeatures{testbody}, &bsql.origFeatures) {
+	if !layers.CompareFeatures(&[]layers.MFeatures{testbody}, &[]layers.MFeatures{bsql.origFeatures}) {
 		bsql.addToConfirmInjectionHistory(paramValue, true)
 	}
 	truebody := testbody

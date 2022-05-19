@@ -140,6 +140,11 @@ func (c *CrawlerTask) Waitforsingle() {
 	select {
 	case <-(*c.TaskCtx).Done():
 		logger.Warning("%s 此网站受到当前任务现场回收原因,爬虫结束", c.RootDomain)
+
+		// c.Pool.Tune(1)
+		// c.Pool.Release()
+		// c.Browser.Close()
+		// (*c.Ctx).Close()
 	case <-(*c.Ctx).Done():
 		logger.Info("%s 此网站爬虫正常结束", c.RootDomain)
 	}
@@ -162,6 +167,7 @@ func (t *tabTask) Task() {
 		CustomFormKeywordValues: t.crawlerTask.Config.CustomFormKeywordValues,
 	}
 	tab, _ := NewTab(t.browser, *t.req, config)
+
 	tab.Crawler(nil)
 
 	// 收集结果
