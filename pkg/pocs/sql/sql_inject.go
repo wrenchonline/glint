@@ -711,3 +711,17 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 
 	return true
 }
+
+func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
+	quoteChar string, confirmed bool) bool {
+	bsql.origValue = "-1"
+	origValue := bsql.origValue
+	randnum := rand.Intn(1000)
+	paramValue := bsql.origValue
+	randString := string(randnum)
+	if confirmed {
+		randString = `000` + randString
+	}
+	randStrLong := util.RandStr(8)
+	return true
+}

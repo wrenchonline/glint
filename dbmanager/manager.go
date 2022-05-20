@@ -92,7 +92,7 @@ func (Dm *DbManager) Init() error {
 	if err != nil {
 		return err
 	}
-	DB.SetMaxOpenConns(20)
+	DB.SetMaxOpenConns(50)
 	DB.SetMaxIdleConns(10)
 	DB.SetConnMaxLifetime(59 * time.Second)
 	if err != nil {
