@@ -1,7 +1,6 @@
 package sql
 
 import (
-	"glint/fastreq"
 	"glint/logger"
 	"glint/pkg/layers"
 	"glint/util"
@@ -76,8 +75,8 @@ type classBlindSQLInj struct {
 	foundVulnOnVariation    bool
 	scanningAnInternalIP    bool
 	scanningATestWebsite    bool
-	longDuration            int
-	shortDuration           int
+	longDuration            float64
+	shortDuration           float64
 	isNumeric               bool
 	isBase64                bool
 	responseIsStable        bool
@@ -95,6 +94,8 @@ type classBlindSQLInj struct {
 	disableSensorBased      bool
 	layer                   layers.Plreq
 	origStatusCode          int
+	responseTimingIsStable  bool
+	inputIsStable           bool
 	// sess                    *fastreq.Session
 	// method                  string
 }
@@ -106,15 +107,15 @@ type LastJob struct {
 }
 
 func (bsql *classBlindSQLInj) Init() {
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
-			Timeout:       5,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
-		})
-	bsql.sess = sess
+	// sess := fastreq.GetSessionByOptions(
+	// 	&fastreq.ReqOptions{
+	// 		Timeout:       5,
+	// 		AllowRedirect: true,
+	// 		Proxy:         DefaultProxy,
+	// 		Cert:          cert,
+	// 		PrivateKey:    mkey,
+	// 	})
+	// bsql.sess = sess
 }
 
 func (bsql *classBlindSQLInj) filterBody(body string, testValue string) string {
@@ -133,21 +134,88 @@ func (bsql *classBlindSQLInj) filterBody(body string, testValue string) string {
 func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	var Time1 time.Duration
 	var Time2 time.Duration
-
+	var Time3 time.Duration
+	s := time.Now()
 	Feature, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
-	// send original value
+	Time1 = time.Since(s)
+	//发送目标值
 	body1 := bsql.filterBody(Feature.Response.String(), bsql.origValue)
+	body1Features := Feature
 	bsql.origBody = body1
 	bsql.origFeatures = Feature
-	Time1 = bsql.lastJob.responseDuration
-	// send same value (to see if the response is different)
+	bsql.lastJob.responseDuration = Time1
+	// 发送一些值 (查看回复是否不同)
 	// bsql.origMessage = bsql.Response.msg3
 	bsql.origStatusCode = Feature.Response.StatusCode()
+	s2 := time.Now()
+	Feature2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
+	Time2 = time.Since(s2)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	body2 := bsql.filterBody(Feature2.Response.String(), bsql.origValue)
+	body2Features := Feature2
 
-	var body2 string
+	min := math.Min(Time1.Seconds(), Time2.Seconds())
+	max := math.Max(Time1.Seconds(), Time2.Seconds())
+
+	bsql.shortDuration = math.Max(bsql.shortDuration, Time2.Seconds())
+	bsql.longDuration = bsql.shortDuration * 2
+	if max-min > bsql.shortDuration {
+		bsql.responseTimingIsStable = false
+	} else {
+		bsql.responseTimingIsStable = true
+	}
+	if body2 != body1 {
+		bsql.responseIsStable = false
+		return true
+	} else {
+		bsql.responseIsStable = true
+	}
+	//检测是否为空响应
+	if len(body1) == 0 {
+		logger.Debug("input is not stable, the body length is zero.")
+		bsql.inputIsStable = false
+		return true
+	}
+	//发送错误的值
+	s3 := time.Now()
+	newValue := util.RandStr(8)
+	Feature3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, newValue)
+	Time3 = time.Since(s3)
+	if err != nil {
+		logger.Error("%s", err.Error())
+		return false
+	}
+	body3Features := Feature3
+
+	min = math.Min(min, Time3.Seconds())
+	max = math.Max(max, Time3.Seconds())
+	if max-min > bsql.shortDuration {
+		bsql.responseTimingIsStable = false
+	} else {
+		bsql.responseTimingIsStable = true
+	}
+	bsql.shortDuration = math.Floor(bsql.shortDuration)
+	bsql.longDuration = math.Floor(bsql.longDuration)
+
+	if bsql.longDuration > 10 {
+		bsql.responseTimingIsStable = false
+	}
+
+	logger.Debug("adjusted shortDuration: %.2f", bsql.shortDuration)
+	logger.Debug("adjusted longDuration: %.2f", bsql.longDuration)
+	// check if the input is stable
+	if layers.CompareFeatures(&[]layers.MFeatures{body1Features}, &[]layers.MFeatures{body2Features}) &&
+		layers.CompareFeatures(&[]layers.MFeatures{body1Features}, &[]layers.MFeatures{body3Features}) {
+		bsql.inputIsStable = true
+		logger.Debug("input is stable. good")
+	} else {
+		bsql.inputIsStable = false
+	}
 
 	return false
 
@@ -429,6 +497,10 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		bsql.proofExploitExploitType = 0 // 0=boolean, 1=timing
 		bsql.trueFeatures = origFeatures
 	} else {
+		// some tests for strings
+		// test 1 TRUE  -------------------------------------------------------------
+		paramValue := origValue + likeStr + quoteChar + " AND 2*3*8=6*8 AND " +
+			quoteChar + randString + quoteChar + equalitySign + quoteChar + randString + likeStr
 
 	}
 }
