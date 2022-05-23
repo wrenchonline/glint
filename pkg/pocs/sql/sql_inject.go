@@ -719,9 +719,27 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
 	randString := string(randnum)
+	origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
 	}
 	randStrLong := util.RandStr(8)
+
+	randNum := string(randnum)
+	equalitySign := "="
+	// test 1 TRUE  -------------------------------------------------------------
+	paramValue = origValue + quoteChar + " OR 2+" + randNum + "-" + randNum +
+		"-1=0+0+0+1 or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
+	logger.Debug("%s", paramValue)
+	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed Like test 1")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
 	return true
 }
