@@ -260,6 +260,7 @@ func (t *Task) close() {
 			(*plugin.Cancel)()
 			if plugin.Spider != nil {
 				plugin.Spider.Close()
+				plugin.Spider = nil
 			}
 		}
 	}
