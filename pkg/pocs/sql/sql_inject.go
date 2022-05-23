@@ -871,17 +871,17 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 
 func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bool) bool {
 	bsql.origValue = "-1"
-	origValue := bsql.origValue
+	// origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
 	randString := string(rune(randnum))
-	origFeatures := bsql.origFeatures
+	// origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
 	}
-	randStrLong := util.RandStr(8)
+	// randStrLong := util.RandStr(8)
 
-	randNum := string(rune(randnum))
+	// randNum := string(rune(randnum))
 
 	equalitySign := "="
 
@@ -954,10 +954,92 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 		logger.Error("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody5}, &[]layers.MFeatures{origBody}) {
-		logger.Debug("failed string test 5")
+		logger.Debug("failed common test 5")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+	// test 6 FALSE	  -------------------------------------------------------------
+	paramValue = strings.Replace(baseline, "${comparison}", "3+1-1-1=1)", 1)
+	logger.Debug("%s", paramValue)
+	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{origBody}) {
+		logger.Debug("failed common test 6")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+	// test 7 FALSE	  -------------------------------------------------------------
+	paramValue = strings.Replace(baseline, "${comparison}", "3*2=5 AND "+randString+equalitySign+randString, 1)
+	logger.Debug("%s", paramValue)
+	testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody7}, &[]layers.MFeatures{origBody}) {
+		logger.Debug("failed common test 7")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	// test 8 TRUE	  -------------------------------------------------------------
+	paramValue = strings.Replace(baseline, "${comparison}", "3*2=6 AND "+randString+equalitySign+randString, 1)
+	logger.Debug("%s", paramValue)
+	testBody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if !layers.CompareFeatures(&[]layers.MFeatures{testBody8}, &[]layers.MFeatures{origBody}) {
+		logger.Debug("failed common test 8")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
+	// test 9 False	  -------------------------------------------------------------
+	paramValue = strings.Replace(baseline, "${comparison}", "3*2*0=6 AND "+randString+equalitySign+randString, 1)
+	logger.Debug("%s", paramValue)
+	testBody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody9}, &[]layers.MFeatures{origBody}) {
+		logger.Debug("failed common test 9")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	// test 10 true	  -------------------------------------------------------------
+	paramValue = strings.Replace(baseline, "${comparison}", "3*2*1=6 AND "+randString+equalitySign+randString, 1)
+	logger.Debug("%s", paramValue)
+	testBody10, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody10}, &[]layers.MFeatures{origBody}) {
+		logger.Debug("failed common test 10")
 		return false
 	}
 	bsql.addToConfirmInjectionHistory(paramValue, true)
 
 	return true
+}
+
+/*****************************************************************/
+/* timing tests */
+/*****************************************************************/
+func (bsql *classBlindSQLInj) genSleepString(sleepType string) string {
+	switch sleepType {
+	case "long":
+		return strconv.FormatFloat(bsql.longDuration, 'f', 0, 64)
+	case "verylong":
+		return "15"
+	case "mid":
+		return strconv.FormatFloat(bsql.shortDuration, 'f', 0, 64)
+	case "2xmid":
+		return strconv.FormatFloat(bsql.shortDuration*2+1, 'f', 0, 64)
+	case "none":
+		return "0"
+	}
+	return ""
 }
