@@ -334,6 +334,9 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 				if err != nil {
 					logger.Error(err.Error())
 				}
+				if u == nil {
+					return
+				}
 				req.URL = &model2.URL{*u}
 				req.Method = ev.Request.Method
 				req.Headers = map[string]interface{}{}
