@@ -80,12 +80,17 @@ type PublishState struct {
 
 //Init 初始化mysql数据库
 func (Dm *DbManager) Init() error {
+	TaskConfig := config.TaskConfig{}
+	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
+	if err != nil {
+		panic(err)
+	}
 	//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
-	path := strings.Join([]string{config.UserName,
-		":", config.Password,
+	path := strings.Join([]string{TaskConfig.DBUser,
+		":", TaskConfig.DBPassWord,
 		"@tcp(", config.Ip,
 		":", config.Port,
-		")/", config.DbName,
+		")/", TaskConfig.DBName,
 		"?charset=utf8&parseTime=true&loc=Local"}, "")
 	//打开数据库,前者是驱动名，所以要导入： _ "github.com/go-sql-driver/mysql"
 	DB, err := sqlx.Connect("mysql", path)

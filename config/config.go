@@ -142,6 +142,9 @@ var InputTextMap = map[string]map[string]interface{}{
 type TaskConfig struct {
 	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
 	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict
+	DBName                  string                 `yaml:"DBName"`        //数据库名
+	DBUser                  string                 `yaml:"DBUser"`        //数据库用户名
+	DBPassWord              string                 `yaml:"DBPassWord"`    //数据库密码
 	ExtraHeaders            map[string]interface{} `yaml:"ExtraHeaders"`
 	ExtraHeadersString      string                 `yaml:"ExtraHeadersString"`
 	AllDomainReturn         bool                   `yaml:"AllDomainReturn"`  // 全部域名收集

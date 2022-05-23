@@ -1,20 +1,12 @@
 MaxCrawlCount: 20
 
+DBUser: "iot"
+DBName: "iot"
+DBPassWord: "iot95976"
+
 FilterMode: "simple"
 
 ExtraHeaders:
-    {
-    Referer: "http://www.rongji.com/dfish_sso/login.sp?act=index",
-    Cache-Control: "max-age=0",
-    Upgrade-Insecure-Requests: "1",
-    Content-Type: "application/x-www-form-urlencoded",
-    DNT: "1",
-    Cookie: "JSESSIONID=65EDE1C0D22029D647613E2759B2E88A; JSESSIONID=18DDAC56BAEA231D324209626359AF9B",
-    Origin: "http://www.rongji.com",
-    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    Accept-Encoding: "gzip, deflate",
-    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
-    }
  
 ExtraHeadersString:
 
