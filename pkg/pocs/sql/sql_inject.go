@@ -1043,3 +1043,18 @@ func (bsql *classBlindSQLInj) genSleepString(sleepType string) string {
 	}
 	return ""
 }
+func (bsql *classBlindSQLInj) genBenchmarkSleepString(sleepType string) string {
+	switch sleepType {
+	case "long":
+		return "70000000"
+	case "verylong":
+		return "110000000"
+	case "mid":
+		return "50000000"
+	case "2xmid":
+		return "50000000"
+	case "none":
+		return "0"
+	}
+	return ""
+}
