@@ -68,35 +68,41 @@ type InjectionResult struct {
 	Result bool
 }
 
+type TimeoutResult struct {
+	Value  string
+	Output string
+}
+
 type classBlindSQLInj struct {
-	scheme                  string
-	TargetUrl               string
-	inputIndex              int
-	variations              []string
-	foundVulnOnVariation    bool
-	scanningAnInternalIP    bool
-	scanningATestWebsite    bool
-	longDuration            float64
-	shortDuration           float64
-	isNumeric               bool
-	isBase64                bool
-	responseIsStable        bool
-	origValue               string
-	confirmInjectionHistory []InjectionResult
-	lastJob                 LastJob
-	origBody                interface{}
-	origFeatures            layers.MFeatures //原始特征
-	lastJobProof            interface{}
-	proofExploitTemplate    string
-	proofExploitVarIndex    int
-	proofExploitExploitType int
-	trueFeatures            layers.MFeatures
-	originalFullResponse    bool
-	disableSensorBased      bool
-	layer                   layers.Plreq
-	origStatusCode          int
-	responseTimingIsStable  bool
-	inputIsStable           bool
+	scheme                        string
+	TargetUrl                     string
+	inputIndex                    int
+	variations                    []string
+	foundVulnOnVariation          bool
+	scanningAnInternalIP          bool
+	scanningATestWebsite          bool
+	longDuration                  float64
+	shortDuration                 float64
+	isNumeric                     bool
+	isBase64                      bool
+	responseIsStable              bool
+	origValue                     string
+	confirmInjectionHistory       []InjectionResult
+	ConfirmInjectionHistoryTiming []TimeoutResult
+	lastJob                       LastJob
+	origBody                      interface{}
+	origFeatures                  layers.MFeatures //原始特征
+	lastJobProof                  interface{}
+	proofExploitTemplate          string
+	proofExploitVarIndex          int
+	proofExploitExploitType       int
+	trueFeatures                  layers.MFeatures
+	originalFullResponse          bool
+	disableSensorBased            bool
+	layer                         layers.Plreq
+	origStatusCode                int
+	responseTimingIsStable        bool
+	inputIsStable                 bool
 	// sess                    *fastreq.Session
 	// method                  string
 }
@@ -216,6 +222,10 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 
 func (bsql *classBlindSQLInj) addToConfirmInjectionHistory(Value string, result bool) {
 	bsql.confirmInjectionHistory = append(bsql.confirmInjectionHistory, InjectionResult{Value: Value, Result: result})
+}
+
+func (bsql *classBlindSQLInj) addToConfirmInjectionHistoryTiming(Value string, result string) {
+	bsql.ConfirmInjectionHistoryTiming = append(bsql.ConfirmInjectionHistoryTiming, TimeoutResult{Value: Value, Output: result})
 }
 
 func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
@@ -1060,14 +1070,14 @@ func (bsql *classBlindSQLInj) genBenchmarkSleepString(sleepType string) string {
 	return ""
 }
 
-func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEncode bool) string {
+func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEncode bool) bool {
 	// load scheme variation
 	origParamValue := paramValue
-	confirmed := false
-	var Time1 = 0 // long
-	var Time2 = 0 // no
-	var Time3 = 0 // mid
-	var Time4 = 0 // very long
+	var confirmed = false
+	var Time1 = 0. // long
+	var Time2 = 0. // no
+	var Time3 = 0. // mid
+	var Time4 = 0. // very long
 
 	var timeOutSecs = 20
 	var zeroTimeOut = bsql.shortDuration - 1
@@ -1084,9 +1094,10 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 	bsql.proofExploitVarIndex = varIndex
 	bsql.proofExploitExploitType = 1 // 0=boolean, 1=timing
 
-	stepLongDelay := func() {
+	stepLongDelay := func() bool {
 		paramValue = strings.ReplaceAll(origParamValue, "{SLEEP}", bsql.genSleepString("long"))
 		paramValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+		paramValue = strings.ReplaceAll(paramValue, "{RANDSTR}", util.RandStr(8))
 		paramValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
 		logger.Debug("paramValue:%s", paramValue)
 		timeout := make(map[string]string)
@@ -1094,10 +1105,95 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
 			logger.Error("%s", err.Error())
+			return false
 		}
-		Time2 = int(bsql.lastJob.responseDuration.Seconds())
-
+		Time1 = float64(bsql.lastJob.responseDuration.Seconds())
+		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time1)))
+		logger.Debug("Time1:", Time1)
+		if Time1 < bsql.longDuration*99/100 {
+			return false
+		}
+		return true
 	}
 
-	return paramValue
+	stepZeroDelay := func() bool {
+		paramValue = strings.ReplaceAll(origParamValue, "{SLEEP}", bsql.genSleepString("none"))
+		paramValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+		paramValue = strings.ReplaceAll(paramValue, "{RANDSTR}", util.RandStr(8))
+		paramValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
+		logger.Debug("paramValue:%s", paramValue)
+		timeout := make(map[string]string)
+		timeout["timeout"] = string(timeOutSecs)
+		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		if err != nil {
+			logger.Error("%s", err.Error())
+			return false
+		}
+		Time2 = float64(bsql.lastJob.responseDuration.Seconds())
+		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time2)))
+		logger.Debug("Time2:", Time2)
+		if Time2 > zeroTimeOut {
+			return false
+		}
+		return true
+	}
+
+	stepMidDelay := func() bool {
+		paramValue = strings.ReplaceAll(origParamValue, "{SLEEP}", bsql.genSleepString("mid"))
+		paramValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+		paramValue = strings.ReplaceAll(paramValue, "{RANDSTR}", util.RandStr(8))
+		paramValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
+		logger.Debug("paramValue:%s", paramValue)
+		timeout := make(map[string]string)
+		timeout["timeout"] = string(timeOutSecs)
+		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		if err != nil {
+			logger.Error("%s", err.Error())
+			return false
+		}
+		Time3 = float64(bsql.lastJob.responseDuration.Seconds())
+		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time3)))
+		logger.Debug("Time3:", Time3)
+		if Time3 < bsql.longDuration*99/100 {
+			return false
+		}
+		return true
+	}
+
+	stepVeryLongDelay := func() bool {
+		var veryLongDuration = 15.
+		paramValue = strings.ReplaceAll(origParamValue, "{SLEEP}", bsql.genSleepString("verylong"))
+		paramValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+		paramValue = strings.ReplaceAll(paramValue, "{RANDSTR}", util.RandStr(8))
+		paramValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
+		logger.Debug("paramValue:%s", paramValue)
+		timeout := make(map[string]string)
+		timeout["timeout"] = string(timeOutSecs)
+		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+
+		Time4 = float64(bsql.lastJob.responseDuration.Seconds())
+		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time4)))
+		logger.Debug("Time4:", Time4)
+		if err != nil {
+			// logger.Error("%s", err.Error())
+			return true
+		}
+		if Time4 < veryLongDuration*99/100 {
+			return false
+		}
+		return true
+	}
+
+	var permutations = []string{
+		"lzvm", "lzmv", "lvzm", "lvmz",
+		"lmzv", "lmvz", "vzlm", "vzml",
+		"vlzm", "vlmz", "vmzl", "vmlz",
+		"mzlv", "mzvl", "mlzv", "mlvz",
+		"mvzl", "mvlz",
+	}
+
+	for i := 0; i < count; i++ {
+
+	}
+	return true
 }
