@@ -1043,6 +1043,7 @@ func (bsql *classBlindSQLInj) genSleepString(sleepType string) string {
 	}
 	return ""
 }
+
 func (bsql *classBlindSQLInj) genBenchmarkSleepString(sleepType string) string {
 	switch sleepType {
 	case "long":
@@ -1057,4 +1058,35 @@ func (bsql *classBlindSQLInj) genBenchmarkSleepString(sleepType string) string {
 		return "0"
 	}
 	return ""
+}
+
+func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEncode bool) string {
+	// load scheme variation
+	origParamValue := paramValue
+	confirmed := false
+	var Time1 = 0 // long
+	var Time2 = 0 // no
+	var Time3 = 0 // mid
+	var Time4 = 0 // very long
+
+	var timeOutSecs = 20
+	var zeroTimeOut = bsql.shortDuration - 1
+	if zeroTimeOut > 3 {
+		zeroTimeOut = 3
+	}
+	var timeOutCounter = 0
+
+	var tempParamValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+	tempParamValue = strings.ReplaceAll(paramValue, "{RANDSTR}", util.RandStr(8))
+	tempParamValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
+	// prepare proof of exploit / confirmation template
+	bsql.proofExploitTemplate = tempParamValue
+	bsql.proofExploitVarIndex = varIndex
+	bsql.proofExploitExploitType = 1 // 0=boolean, 1=timing
+
+	stepLongDelay := func() {
+
+	}
+
+	return paramValue
 }
