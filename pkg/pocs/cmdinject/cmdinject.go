@@ -9,6 +9,7 @@ import (
 	"glint/util"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -60,7 +61,7 @@ func fast_send_poc(payloads []string,
 	err error) {
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          cert,

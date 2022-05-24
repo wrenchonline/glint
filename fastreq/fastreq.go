@@ -148,7 +148,7 @@ func (sess *Session) doRequest(verb string, url string, headers map[string]strin
 			err = sess.client.DoRedirects(req, resp, 5)
 		} else {
 			//sess.ReqOptions.Timeout
-			err = sess.client.DoTimeout(req, resp, 2*time.Second)
+			err = sess.client.DoTimeout(req, resp, sess.Timeout)
 		}
 		if err != nil {
 			time.Sleep(100 * time.Microsecond)

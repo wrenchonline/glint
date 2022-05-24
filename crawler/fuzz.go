@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/logrusorgru/aurora"
@@ -53,7 +54,7 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 	headers, _ := util.ConvertHeaders(navReq.Headers)
 	_, resp, err := fastreq.Get(url, headers,
 		&fastreq.ReqOptions{AllowRedirect: false,
-			Timeout: 5,
+			Timeout: 5 * time.Second,
 			Proxy:   navReq.FasthttpProxy})
 	if err != nil {
 		//for
@@ -154,7 +155,7 @@ func (s singleFuzz) doRequest() {
 	url := fmt.Sprintf(`%s://%s/%s`, s.navReq.URL.Scheme, s.navReq.URL.Host, s.path)
 	headers, _ := util.ConvertHeaders(s.navReq.Headers)
 	_, resp, errs := fastreq.Get(url, headers,
-		&fastreq.ReqOptions{Timeout: 2, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
+		&fastreq.ReqOptions{Timeout: 2 * time.Second, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
 	if errs != nil {
 		// logger.Info("doRequest err: %s", errs.Error())
 		return

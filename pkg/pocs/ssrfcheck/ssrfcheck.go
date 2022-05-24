@@ -9,6 +9,7 @@ import (
 	reverse2 "glint/reverse"
 	"glint/util"
 	"strings"
+	"time"
 )
 
 var DefaultProxy = ""
@@ -36,7 +37,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          cert,

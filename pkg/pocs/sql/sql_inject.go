@@ -1085,6 +1085,17 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 	bsql.proofExploitExploitType = 1 // 0=boolean, 1=timing
 
 	stepLongDelay := func() {
+		paramValue = strings.ReplaceAll(origParamValue, "{SLEEP}", bsql.genSleepString("long"))
+		paramValue = strings.ReplaceAll(paramValue, "{ORIGVALUE}", bsql.origValue)
+		paramValue = strings.ReplaceAll(paramValue, "{RANDNUMBER}", string(rand.Intn(1000)))
+		logger.Debug("paramValue:%s", paramValue)
+		timeout := make(map[string]string)
+		timeout["timeout"] = string(timeOutSecs)
+		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		if err != nil {
+			logger.Error("%s", err.Error())
+		}
+		Time2 = int(bsql.lastJob.responseDuration.Seconds())
 
 	}
 

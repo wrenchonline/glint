@@ -9,6 +9,7 @@ import (
 	"glint/plugin"
 	"glint/util"
 	"strings"
+	"time"
 
 	"github.com/logrusorgru/aurora"
 )
@@ -87,7 +88,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          cert,

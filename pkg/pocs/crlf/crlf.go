@@ -8,6 +8,7 @@ import (
 	"glint/util"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var DefaultProxy = ""
@@ -57,7 +58,7 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 	mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: false,
 			Proxy:         DefaultProxy,
 			Cert:          cert,

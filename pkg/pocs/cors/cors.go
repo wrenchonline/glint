@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -42,7 +43,7 @@ func origin_accepted(url string, orginal string, certs string, certkey string) (
 	mkey = certkey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          cert,

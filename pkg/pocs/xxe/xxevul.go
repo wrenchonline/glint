@@ -8,6 +8,7 @@ import (
 	"glint/util"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/thoas/go-funk"
 )
@@ -48,7 +49,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	Mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2,
+			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          Cert,

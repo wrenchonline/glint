@@ -6,7 +6,9 @@ import (
 	"glint/logger"
 	"glint/util"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -30,7 +32,7 @@ func (P *Plreq) Init(Proxy string, Cert string, PrivateKey string) {
 	util.Setup()
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       5,
+			Timeout:       5 * time.Second,
 			AllowRedirect: true,
 			Proxy:         Proxy,
 			Cert:          Cert,
@@ -77,8 +79,20 @@ func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, er
 	return features, nil
 }
 
-func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string) (MFeatures, error) {
+func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string, o ...map[string]string) (MFeatures, error) {
 	var feature MFeatures
+	var Timeout int
+	var err error
+	for _, option := range o {
+		if value, ok := option["timeout"]; ok {
+			Timeout, err = strconv.Atoi(value)
+			if err != nil {
+				panic(err.Error())
+			}
+			P.Sess.Timeout = time.Duration(Timeout) * time.Second
+		}
+	}
+
 	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
 	if err != nil {
 		panic(err)
