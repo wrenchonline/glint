@@ -162,12 +162,13 @@ func main() {
 func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
-		Response := make(map[string]string)
-		Responses := []map[string]string{}
+		var RequestID network.RequestID
 		logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
+			Response := make(map[string]string)
+			Responses := []map[string]string{}
 			logger.Debug("* console.%s call:\n", ev.Type)
 			for _, arg := range ev.Args {
 				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
@@ -216,7 +217,9 @@ func (t *Tab) ListenTarget() {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
-			go func(ev *network.EventLoadingFinished) {
+
+			RequestID = ev.RequestID
+			go func(id network.RequestID) {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
@@ -228,19 +231,19 @@ func (t *Tab) ListenTarget() {
 				if len(data) > 0 {
 					t.Source <- string(data)
 				}
-			}(ev)
+			}(RequestID)
 		case *network.EventResponseReceived:
 
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
-			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
-			Responses = append(Responses, Response)
+			// Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
+			// Responses = append(Responses, Response)
 			go func() {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				//关闭弹窗
 				page.HandleJavaScriptDialog(false).Do(ctx)
-				t.Responses <- Responses
+				// t.Responses <- Responses
 			}()
 		}
 	})
