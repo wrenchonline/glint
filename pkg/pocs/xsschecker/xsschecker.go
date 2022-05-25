@@ -528,7 +528,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		tab.CopyRequest(groups.GroupUrls)
+		// tab.CopyRequest(groups.GroupUrls)
 		MFeatures, err := layer.RequestAll(url, flag)
 		if err != nil {
 			logger.Error("%s", err.Error())
