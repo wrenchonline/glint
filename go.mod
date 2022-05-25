@@ -4,8 +4,8 @@ go 1.16
 
 require (
 	github.com/beevik/etree v1.1.0
-	github.com/chromedp/cdproto v0.0.0-20220131204822-e6abebe7b8cd
-	github.com/chromedp/chromedp v0.7.7
+	github.com/chromedp/cdproto v0.0.0-20220428002153-285dfb42699c
+	github.com/chromedp/chromedp v0.8.1
 	github.com/chzyer/logex v1.2.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
