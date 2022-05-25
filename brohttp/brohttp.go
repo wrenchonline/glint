@@ -145,13 +145,15 @@ func (t *Tab) ListenTarget() {
 		case *network.EventLoadingFinished:
 
 		case *network.EventResponseReceived:
+
 			go func(ev *network.EventResponseReceived) {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
 				// }
 				if e != nil {
-					fmt.Printf("network.EventLoadingFinished error: %v", e)
+					fmt.Printf("network.EventResponseReceived error: %v", e)
+					return
 				}
 				if len(data) > 0 {
 					t.Source <- string(data)
