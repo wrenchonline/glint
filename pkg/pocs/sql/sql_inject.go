@@ -1194,10 +1194,35 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 
 	//因为执行sql超时插件时候有众多其他插件也在执行，这会影响目标服务器收发包的时间。
 	//所以它定制一个策略，就是身处在某种环境下执行函数的序列指定策略
-	//因为我的插件没有这种情况
+	//因为我的插件没有这种结构我才去第一种方案
 	var permutation = "v" + permutations[0] + "zlz"
-	for i := 0; i < len(permutation); i++ {
 
+	for _, v := range permutation {
+		switch v {
+		case 'z':
+			if !stepZeroDelay() {
+				return false
+			}
+		case 'l':
+			if !stepLongDelay() {
+				return false
+			}
+		case 'v':
+			if !stepVeryLongDelay() {
+				return false
+			}
+		case 'm':
+			if !stepMidDelay() {
+				return false
+			}
+		}
 	}
+	/*
+	   var Time1 => // long  		(4)
+	   var Time2 => // no 			(0)
+	   var Time3 => // mid 		(3)
+	   var Time4 => // very long 	(6)
+	*/
+
 	return true
 }

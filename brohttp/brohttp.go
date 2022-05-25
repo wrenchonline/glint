@@ -143,7 +143,9 @@ func (t *Tab) ListenTarget() {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 		case *network.EventLoadingFinished:
-			go func(ev *network.EventLoadingFinished) {
+
+		case *network.EventResponseReceived:
+			go func(ev *network.EventResponseReceived) {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
@@ -155,8 +157,6 @@ func (t *Tab) ListenTarget() {
 					t.Source <- string(data)
 				}
 			}(ev)
-		case *network.EventResponseReceived:
-
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
 			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
