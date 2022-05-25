@@ -1,10 +1,24 @@
 {
     "": [
         {
-            "url": "http://192.168.166.94:8080/",
-            "method": "GET",
-            "headers": {},
-            "data": "",
+            "url": "https://www.zdfans.com/api/access_statistics/28759",
+            "method": "POST",
+            "headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36",
+                "Host": "www.zdfans.com",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "Content-Length": "57",
+                "X-Requested-With": "XMLHttpRequest",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Ch-Ua-Platform": "",
+                "Sec-Ch-Ua": "",
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Range": "bytes=0-10240",
+                "Cookie": "Hm_lvt_a44cbc78dad721d209642b15442cad4c=1653444857; Hm_lpvt_a44cbc78dad721d209642b15442cad4c=1653444884",
+                "Connection": "close"
+            },
+            "data": "softid=28759",
             "source": "",
             "hostid": 1
         }
