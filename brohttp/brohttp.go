@@ -9,7 +9,6 @@ import (
 	"glint/logger"
 	"glint/util"
 	"net/url"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -163,7 +162,7 @@ func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
 		var RequestID network.RequestID
-		logger.Info("%v", reflect.TypeOf(ev))
+		// logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
