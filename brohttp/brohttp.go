@@ -191,6 +191,12 @@ func (t *Tab) ListenTarget() {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				// var req *fetch.ContinueRequestParams
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
 				req := fetch.ContinueRequest(ev.RequestID)
 				// req.URL = spider.Url.String()
 				req.Headers = []*fetch.HeaderEntry{}
