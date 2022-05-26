@@ -51,6 +51,13 @@ type Tab struct {
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
 	Source        chan string //当前爬虫的html的源码
+	RespDone      chan bool
+	Reports       []ReportMsg
+}
+
+type ReportMsg struct {
+	RequestID network.RequestID
+	Count     int
 }
 
 type UrlOCC struct {
@@ -83,27 +90,101 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
 	tab.Source = make(chan string)
+	tab.RespDone = make(chan bool)
 	tab.ListenTarget()
 	return &tab, nil
 }
 
+/*
+
+
+func main() {
+	// create context
+	ctx, cancel := chromedp.NewContext(
+		context.Background(),
+		chromedp.WithLogf(log.Printf),
+	)
+	defer cancel()
+
+	// create a timeout as a safety net to prevent any infinite wait loops
+	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
+	// set up a channel so we can block later while we monitor the download
+	// progress
+	done := make(chan bool)
+
+	// set the download url as the chromedp github user avatar
+	urlstr := "https://avatars.githubusercontent.com/u/33149672"
+
+	// this will be used to capture the request id for matching network events
+	var requestID network.RequestID
+
+	// set up a listener to watch the network events and close the channel when
+	// complete the request id matching is important both to filter out
+	// unwanted network events and to reference the downloaded file later
+	chromedp.ListenTarget(ctx, func(v interface{}) {
+		switch ev := v.(type) {
+		case *network.EventRequestWillBeSent:
+			log.Printf("EventRequestWillBeSent: %v: %v", ev.RequestID, ev.Request.URL)
+			if ev.Request.URL == urlstr {
+				requestID = ev.RequestID
+			}
+		case *network.EventLoadingFinished:
+			log.Printf("EventLoadingFinished: %v", ev.RequestID)
+			if ev.RequestID == requestID {
+				close(done)
+			}
+		}
+	})
+
+	// all we need to do here is navigate to the download url
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(urlstr),
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	// This will block until the chromedp listener closes the channel
+	<-done
+	// get the downloaded bytes for the request id
+	var buf []byte
+	if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+		var err error
+		buf, err = network.GetResponseBody(requestID).Do(ctx)
+		return err
+	})); err != nil {
+		log.Fatal(err)
+	}
+
+	// write the file to disk - since we hold the bytes we dictate the name and
+	// location
+	if err := ioutil.WriteFile("download.png", buf, 0644); err != nil {
+		log.Fatal(err)
+	}
+	log.Print("wrote download.png")
+}
+*/
+
 func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
-		Response := make(map[string]string)
-		Responses := []map[string]string{}
+		// var RequestID network.RequestID
+		// logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
-			logger.Debug("* console.%s call:\n", ev.Type)
-			for _, arg := range ev.Args {
-				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
-				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
-				Responses = append(Responses, Response)
-			}
-			go func() {
-				t.Responses <- Responses
-			}()
+			// Response := make(map[string]string)
+			// Responses := []map[string]string{}
+			// logger.Debug("* console.%s call:\n", ev.Type)
+			// for _, arg := range ev.Args {
+			// 	fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
+			// 	Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
+			// 	Responses = append(Responses, Response)
+			// }
+			// go func() {
+			// 	t.Responses <- Responses
+			// }()
 		case *runtime.EventExceptionThrown:
 		case *fetch.EventRequestPaused:
 			go func() {
@@ -142,33 +223,41 @@ func (t *Tab) ListenTarget() {
 			if ev.RedirectResponse != nil {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
+
+			// t.Report.RequestID = ev.RequestID
+
+			// if ev.Request.URL == urlstr {
+			// 	RequestID = ev.RequestID
+			// }
+
 		case *network.EventLoadingFinished:
+
+			// go func(RequestID network.RequestID) {
+			// 	c := chromedp.FromContext(*t.Ctx)
+			// 	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+			// 	data, e := network.GetResponseBody(RequestID).Do(ctx)
+			// 	// }
+			// 	if e != nil {
+			// 		fmt.Printf("network.EventResponseReceived error: %v", e)
+			// 		return
+			// 	}
+			// 	if len(data) > 0 {
+			// 		t.Source <- string(data)
+			// 	}
+			// }(RequestID)
 
 		case *network.EventResponseReceived:
 
-			go func(ev *network.EventResponseReceived) {
-				c := chromedp.FromContext(*t.Ctx)
-				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
-				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
-				// }
-				if e != nil {
-					fmt.Printf("network.EventResponseReceived error: %v", e)
-					return
-				}
-				if len(data) > 0 {
-					t.Source <- string(data)
-				}
-			}(ev)
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
-			Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
-			Responses = append(Responses, Response)
+			// Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
+			// Responses = append(Responses, Response)
 			go func() {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				//关闭弹窗
 				page.HandleJavaScriptDialog(false).Do(ctx)
-				t.Responses <- Responses
+				// t.Responses <- Responses
 			}()
 		}
 	})
@@ -224,13 +313,13 @@ func (t *Tab) Send() ([]string, error) {
 
 	htmls = append(htmls, res)
 	//循环两次获取,不会获取过多内容
-	for i := 0; i < 2; i++ {
-		select {
-		case html := <-t.Source:
-			htmls = append(htmls, html)
-		case <-time.After(time.Second):
-		}
-	}
+	// for i := 0; i < 2; i++ {
+	// 	select {
+	// 	case html := <-t.Source:
+	// 		htmls = append(htmls, html)
+	// 	case <-time.After(time.Second):
+	// 	}
+	// }
 	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)
 	return htmls, err
