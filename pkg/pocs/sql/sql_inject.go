@@ -1223,6 +1223,24 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 	   var Time3 => // mid 		(3)
 	   var Time4 => // very long 	(6)
 	*/
+	if Time3 > Time4 || Time3 > Time1 || Time2 > Time4 || Time2 > Time1 {
+		return false
+	}
+	if Time3 >= Time1 {
+		return false
+	}
+
+	if Time1 >= Time4 {
+		return false
+	}
+
+	if timeOutCounter >= 0 {
+		return false
+	}
 
 	return true
+}
+
+func (bsql *classBlindSQLInj) responseIsInternalServerError() {
+	bsql.lastJob.response.
 }
