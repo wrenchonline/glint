@@ -10,6 +10,7 @@ import (
 	"glint/brohttp"
 	"glint/logger"
 	"glint/payload"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"math/rand"
@@ -326,20 +327,21 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	}
 	//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
 	if methods == CheckConsoleLog {
-		ev := extension.(*brohttp.Tab)
-		select {
-		case responseS := <-ev.Responses:
-			for _, response := range responseS {
-				if v, ok := response["log"]; ok {
-					if v == g.flag {
-						return true
-					}
-				}
-			}
-		case <-time.After(2 * time.Second):
-			return false
-		}
-		return false
+
+		// ev := extension.(*brohttp.Tab)
+		// select {
+		// case responseS := <-ev.Responses:
+		// 	for _, response := range responseS {
+		// 		if v, ok := response["log"]; ok {
+		// 			if v == g.flag {
+		// 				return true
+		// 			}
+		// 		}
+		// 	}
+		// case <-time.After(2 * time.Second):
+		// 	return false
+		// }
+		// return false
 
 	}
 
@@ -347,11 +349,14 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 }
 
 type xssOcc struct {
-	Url   string
-	Htmls []string
+	Url       string
+	Responses []string
+	Requests  []string
 }
 
-func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab *brohttp.Tab, ctx context.Context, hostid int64) (*util.ScanResult, error) {
+func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{},
+	playload string, layer *layers.Plreq,
+	ctx context.Context, hostid int64) (*util.ScanResult, error) {
 	g := new(Generator)
 
 	var (
@@ -413,9 +418,16 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 				urlocc := v[i].(brohttp.UrlOCC)
 				if len(urlocc.OCC) > 0 {
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
-					tab.CopyRequest(urlocc.Request)
-					response, _ := tab.CheckPayloadLocation(payload)
-					occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
+					MFeatures, _ := layer.RequestAll(urlocc.Request.Url, payload)
+					var responses []string
+					var reqMsg []string
+					for _, v := range MFeatures {
+						responses = append(responses, v.Response.String())
+						reqMsg = append(reqMsg, v.Request.String())
+					}
+					// tab.CopyRequest(urlocc.Request)
+					// response, _ := tab.CheckPayloadLocation(payload)
+					occ := xssOcc{Url: urlocc.Request.Url, Responses: responses, Requests: reqMsg}
 					Occs = append(Occs, occ)
 				}
 			}
@@ -423,7 +435,7 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 	}
 
 	for _, occ := range Occs {
-		for _, html := range occ.Htmls {
+		for i, html := range occ.Responses {
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
@@ -436,10 +448,10 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 				if len(Node) == 0 {
 					break
 				}
-				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
+				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, nil) {
 					Result := util.VulnerableTcpOrUdpResult(occ.Url,
 						"VULNERABLE to Cross-site scripting ...",
-						[]string{string(payload)},
+						[]string{string(occ.Requests[i])},
 						[]string{string("")},
 						"high",
 						hostid)
@@ -459,6 +471,35 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	Spider := groups.Spider
 	ctx := groups.Pctx
 	session := groups.GroupUrls.(map[string]interface{})
+	url := session["url"].(string)
+	method := session["method"].(string)
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	Body := session["data"].(string)
+	var layer layers.Plreq
+
+	layer.Headers = headers
+
+	CheckRandOnHtmlS := func(playload string, MFeatures *[]layers.MFeatures) (bool, map[int]interface{}) {
+		var urlocc brohttp.UrlOCC
+		ReponseInfo := make(map[int]interface{})
+
+		var bOnhtml bool = false
+		for i, Feature := range *MFeatures {
+			Node := ast.SearchInputInResponse(playload, Feature.Response.String())
+			if len(Node) != 0 {
+				bOnhtml = true
+			}
+			var data ast.JsonUrl
+			data.MetHod = method
+			data.Url = url
+			data.Data = string(Body)
+			data.Headers = session["headers"].(map[string]interface{})
+			urlocc.Request = data
+			urlocc.OCC = Node
+			ReponseInfo[i] = urlocc
+		}
+		return bOnhtml, ReponseInfo
+	}
 
 	var hostid int64
 	var Result *util.ScanResult
@@ -481,15 +522,22 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		goto quit
 	}
 
+	// session := groups.GroupUrls.(map[string]interface{})
+
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		tab.CopyRequest(groups.GroupUrls)
-		// println("pre", Spider.Url.String())
-		b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
-		// Spider.CopyRequest(Urlinfo)
-		// println("post", Spider.Url.String())
+		// tab.CopyRequest(groups.GroupUrls)
+		MFeatures, err := layer.RequestAll(url, flag)
+		if err != nil {
+			logger.Error("%s", err.Error())
+		}
+
+		b, Occ := CheckRandOnHtmlS(flag, &MFeatures)
+		if b {
+			bflag = true
+		}
 		if b {
 			bflag = true
 		}
@@ -498,7 +546,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
+		Result, err = DoCheckXss(resources, flag, &layer, *ctx, hostid)
 		if err != nil {
 			return nil, err
 		}
@@ -506,19 +554,35 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		{
-			tab.CopyRequest(groups.GroupUrls)
-			// logger.Debug("pre", Spider.Url.String())
-			b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
-			if b {
-				bflag = true
-			}
-			resources = append(resources, Occ)
+
+		MFeatures, err := layer.RequestAll(url, flag)
+		if err != nil {
+			logger.Error("%s", err.Error())
 		}
+
+		b, Occ := CheckRandOnHtmlS(flag, &MFeatures)
+		if b {
+			bflag = true
+		}
+		resources = append(resources, Occ)
 		if !bflag {
 			return nil, errors.New("xss::not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
+
+		// {
+		// 	tab.CopyRequest(groups.GroupUrls)
+		// 	// logger.Debug("pre", Spider.Url.String())
+		// 	b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
+		// 	if b {
+		// 		bflag = true
+		// 	}
+		// 	resources = append(resources, Occ)
+		// }
+		// if !bflag {
+		// 	return nil, errors.New("xss::not found")
+		// }
+
+		Result, err = DoCheckXss(resources, flag, &layer, *ctx, hostid)
 		if err != nil {
 			return nil, err
 		}
