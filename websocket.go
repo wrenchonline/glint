@@ -406,7 +406,7 @@ func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, erro
 		//获取host表
 		host_result, err := ts.Dm.GetTaskHostid(task.TaskId)
 		if err != nil {
-			logger.Error(Err.Error())
+			logger.Error(err.Error())
 		}
 
 		for _, hostinfo := range host_result {

@@ -46,7 +46,7 @@ func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, er
 	var features []MFeatures
 	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
 	if err != nil {
-		panic(err)
+		logger.Error("Plreq request error: %v", err)
 	}
 	originpayloads := origin.SetPayload(originUrl, paramValue, P.Method)
 	if strings.ToUpper(P.Method) == "POST" {

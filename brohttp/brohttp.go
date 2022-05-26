@@ -51,6 +51,13 @@ type Tab struct {
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
 	Source        chan string //当前爬虫的html的源码
+	RespDone      chan bool
+	Reports       []ReportMsg
+}
+
+type ReportMsg struct {
+	RequestID network.RequestID
+	Count     int
 }
 
 type UrlOCC struct {
@@ -83,6 +90,7 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
 	tab.Source = make(chan string)
+	tab.RespDone = make(chan bool)
 	tab.ListenTarget()
 	return &tab, nil
 }
@@ -161,22 +169,22 @@ func main() {
 func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
-		var RequestID network.RequestID
+		// var RequestID network.RequestID
 		// logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
 		case *runtime.EventConsoleAPICalled:
-			Response := make(map[string]string)
-			Responses := []map[string]string{}
-			logger.Debug("* console.%s call:\n", ev.Type)
-			for _, arg := range ev.Args {
-				fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
-				Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
-				Responses = append(Responses, Response)
-			}
-			go func() {
-				t.Responses <- Responses
-			}()
+			// Response := make(map[string]string)
+			// Responses := []map[string]string{}
+			// logger.Debug("* console.%s call:\n", ev.Type)
+			// for _, arg := range ev.Args {
+			// 	fmt.Printf("%s - %s\n", arg.Type, string(arg.Value))
+			// 	Response[string(ev.Type)] = strings.ReplaceAll(string(arg.Value), "\"", "")
+			// 	Responses = append(Responses, Response)
+			// }
+			// go func() {
+			// 	t.Responses <- Responses
+			// }()
 		case *runtime.EventExceptionThrown:
 		case *fetch.EventRequestPaused:
 			go func() {
@@ -215,22 +223,29 @@ func (t *Tab) ListenTarget() {
 			if ev.RedirectResponse != nil {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
+
+			// t.Report.RequestID = ev.RequestID
+
+			// if ev.Request.URL == urlstr {
+			// 	RequestID = ev.RequestID
+			// }
+
 		case *network.EventLoadingFinished:
 
-			RequestID = ev.RequestID
-			go func(id network.RequestID) {
-				c := chromedp.FromContext(*t.Ctx)
-				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
-				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
-				// }
-				if e != nil {
-					fmt.Printf("network.EventLoadingFinished error: %v", e)
-					return
-				}
-				if len(data) > 0 {
-					t.Source <- string(data)
-				}
-			}(RequestID)
+			// go func(RequestID network.RequestID) {
+			// 	c := chromedp.FromContext(*t.Ctx)
+			// 	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+			// 	data, e := network.GetResponseBody(RequestID).Do(ctx)
+			// 	// }
+			// 	if e != nil {
+			// 		fmt.Printf("network.EventResponseReceived error: %v", e)
+			// 		return
+			// 	}
+			// 	if len(data) > 0 {
+			// 		t.Source <- string(data)
+			// 	}
+			// }(RequestID)
+
 		case *network.EventResponseReceived:
 
 		case *page.EventJavascriptDialogOpening:
@@ -298,13 +313,13 @@ func (t *Tab) Send() ([]string, error) {
 
 	htmls = append(htmls, res)
 	//循环两次获取,不会获取过多内容
-	for i := 0; i < 2; i++ {
-		select {
-		case html := <-t.Source:
-			htmls = append(htmls, html)
-		case <-time.After(time.Second):
-		}
-	}
+	// for i := 0; i < 2; i++ {
+	// 	select {
+	// 	case html := <-t.Source:
+	// 		htmls = append(htmls, html)
+	// 	case <-time.After(time.Second):
+	// 	}
+	// }
 	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)
 	return htmls, err
