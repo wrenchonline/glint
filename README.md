@@ -35,14 +35,12 @@ glint 是一款golang开发的web漏洞主动(被动)扫描器，是目前为止
 glint  --passiveproxy  --cert server.pem --key server.key
 ```
 然后访问  http://martian.proxy/authority.cer 下载证书浏览器导入就行
-浏览器设置代理 127.0.0.1:8080
+
+浏览器设置代理 (你的局域网ip 如192.168.166.8):8080 ，记住是局域网不是127,当然你在agent.go configure 函数中修改
 
 ## 待开发
 一般逻辑漏洞的ai检测
 OOB反链平台的重构
-
-本项目以实战为主，有很多改进的处理:
-1.发包手段和主动爬虫基于基于浏览器chromedp开发，有许多意外惊喜（指js）
 
 
 此项目还在开发阶段,距离发行版放出要我测试直到满意为止。
