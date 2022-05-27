@@ -258,7 +258,10 @@ func (p *PassiveProxy) RecordRequest(id string, req *http.Request) error {
 	element["data"] = postdata
 	element["source"] = "agent"
 	element["hostid"] = int64(122)
-	ReqList["agent"] = append(ReqList["agent"].([]interface{}), element)
+	ex := []interface{}{
+		element,
+	}
+	ReqList["agent"] = ex
 
 	p.CommunicationSingleton <- ReqList
 	return nil

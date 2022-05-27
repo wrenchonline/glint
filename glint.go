@@ -569,7 +569,7 @@ func CmdHandler(c *cli.Context, t *Task) {
 	config := tconfig{}
 	config.EnableCrawler = false
 	config.InstallDb = false
-	config.ProxyPort = 1966
+	// config.ProxyPort = 1966
 	t.dostartTasks(config)
 	t.PluginWg.Wait()
 }
