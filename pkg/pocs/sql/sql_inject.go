@@ -1376,6 +1376,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 }
 
 func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, confirmed bool) bool {
+	logger.Debug("confirmInjectionStringConcatenation %d , %v", varIndex, confirmed)
 
 	return true
 }

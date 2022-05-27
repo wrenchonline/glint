@@ -2,14 +2,14 @@
 glint 是一款golang开发的web漏洞主动(被动)扫描器，是目前为止跟上主流技术的开源工具,如有一下功能:
 
 
-1.xss AST语义检测
+1.xss AST语义检测 配合浏览器爬虫污点记录检测会测试特殊xss检测
 
 2.SQL 注入检测 （正在重构）
 
 3.xray poc 脚本检测（这个偷懒主要参照 https://github.com/jweny/pocassist 
 )
 
-4.基于浏览器的爬虫主动扫描
+4.基于浏览器的爬虫主动扫描 
 
 5.被动扫描
 
@@ -41,6 +41,7 @@ glint.exe  --passiveproxy  --cert server.pem --key server.key
 
 ## 待开发
 一般逻辑漏洞的ai检测,极具挑战性的研究功能
+
 OOB反链平台的重构
 
 
