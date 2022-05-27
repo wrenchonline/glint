@@ -30,10 +30,10 @@ glint 是一款golang开发的web漏洞主动(被动)扫描器，是目前为止
 除了以下推荐命令可以使用，其他的设计还得自己花费时间研究
 
 ### 粗略的使用说明
-因为启动模式设计得很多，比较混乱，我个人推荐测试者使用被动扫描
+因为启动模式设计得很多，比较混乱，我个人推荐测试者使用被动扫描,记住装上chrome
 
 ```shell
-glint  --passiveproxy  --cert server.pem --key server.key
+glint.exe  --passiveproxy  --cert server.pem --key server.key
 ```
 然后访问  http://martian.proxy/authority.cer 下载证书浏览器导入就行
 
