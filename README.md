@@ -30,7 +30,7 @@ glint 是一款golang开发的web漏洞主动(被动)扫描器，是目前为止
 除了以下推荐命令可以使用，其他的设计还得自己花费时间研究
 
 ### 粗略的使用说明
-因为启动模式设计得很多，比较混乱，我个人推荐测试者使用被动扫描,记住装上chrome
+因为启动模式设计得很多，比较混乱，我个人推荐研究人员使用被动扫描,记住装上chrome
 
 ```shell
 glint.exe  --passiveproxy  --cert server.pem --key server.key
@@ -40,7 +40,7 @@ glint.exe  --passiveproxy  --cert server.pem --key server.key
 浏览器设置代理 (你的局域网ip 如192.168.166.8):8080 ，记住是局域网不是127,当然你在agent.go configure 函数中修改
 
 ## 待开发
-一般逻辑漏洞的ai检测
+一般逻辑漏洞的ai检测,极具挑战性的研究功能
 OOB反链平台的重构
 
 

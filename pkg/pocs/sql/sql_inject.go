@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/valyala/fasthttp"
+	"github.com/thoas/go-funk"
 )
 
 //此页面处理sql盲注
@@ -108,8 +108,7 @@ type classBlindSQLInj struct {
 }
 
 type LastJob struct {
-	request          *fasthttp.Request
-	response         *fasthttp.Response
+	Features         layers.MFeatures
 	responseDuration time.Duration
 }
 
@@ -1073,7 +1072,7 @@ func (bsql *classBlindSQLInj) genBenchmarkSleepString(sleepType string) string {
 func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEncode bool) bool {
 	// load scheme variation
 	origParamValue := paramValue
-	var confirmed = false
+	// var confirmed = false
 	var Time1 = 0. // long
 	var Time2 = 0. // no
 	var Time3 = 0. // mid
@@ -1241,6 +1240,142 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 	return true
 }
 
-func (bsql *classBlindSQLInj) responseIsInternalServerError() {
-	bsql.lastJob.response.
+func isEven(n int) bool {
+	return n%2 == 0
+}
+
+func (bsql *classBlindSQLInj) responseIsInternalServerError() bool {
+	body := strings.ToLower(bsql.lastJob.Features.Response.String())
+	if funk.Contains(body, "error") {
+		return true
+	}
+	if bsql.lastJob.Features.Response.StatusCode() == 500 {
+		return true
+	}
+	return false
+}
+
+func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenNumbers(varIndex int, confirmed bool) bool {
+	logger.Debug("confirmInjectionWithOddEvenNumbers %d , %v", varIndex, confirmed)
+	var paramValue string
+	// var origValue = "1"
+	var maxRounds = 7
+
+	for i := 0; i < maxRounds; i++ {
+		randnum := rand.Intn(1000)
+		randNum := string(rune(randnum))
+		if confirmed {
+			paramValue = randNum + strings.Repeat("*1", i)
+		} else {
+			paramValue = randNum + strings.Repeat("-0", i)
+		}
+
+		if !isEven(i) {
+			//如果奇数，删除最后一个0
+			paramValue = paramValue[:len(paramValue)-1]
+		}
+
+		logger.Debug("paramValue %s", paramValue)
+		testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		if err != nil {
+			logger.Error("%s", err.Error())
+		}
+		bsql.lastJob.Features = testBody7
+		if isEven(i) {
+			// even 2, 4, 6
+			if bsql.responseIsInternalServerError() {
+				logger.Debug("failed OddEven test (OK expected)  %d", i)
+				return false
+			}
+		} else {
+			// odd 1, 3, 5
+			if !bsql.responseIsInternalServerError() {
+				logger.Debug("failed OddEven test (ERROR expected)  %d", i)
+				return false
+			}
+		}
+		bsql.addToConfirmInjectionHistory(paramValue, bsql.responseIsInternalServerError())
+	}
+
+	return true
+}
+
+func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, confirmed bool) bool {
+	logger.Debug("confirmInjectionWithOddStrings %d , %v", varIndex, confirmed)
+	// var origValue = "1"
+	var maxRounds = 7
+	var paramValue string
+
+	for i := 0; i < maxRounds; i++ {
+		randnum := rand.Intn(1000)
+		randNum := string(rune(randnum))
+		if confirmed {
+			randNum = util.RandStr(6)
+		}
+		paramValue = randNum + strings.Repeat("'", i)
+		logger.Debug("paramValue %s", paramValue)
+		testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		if err != nil {
+			logger.Error("%s", err.Error())
+		}
+		bsql.lastJob.Features = testBody7
+		if isEven(i) {
+			// even 2, 4, 6
+			if bsql.responseIsInternalServerError() {
+				logger.Debug("failed OddEven test (OK expected)  %d", i)
+				return false
+			}
+		} else {
+			// odd 1, 3, 5
+			if !bsql.responseIsInternalServerError() {
+				logger.Debug("failed OddEven test (ERROR expected)  %d", i)
+				return false
+			}
+		}
+		bsql.addToConfirmInjectionHistory(paramValue, bsql.responseIsInternalServerError())
+	}
+
+	return true
+}
+func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirmed bool) bool {
+	logger.Debug("confirmInjectionWithOddStrings %d , %v", varIndex, confirmed)
+	randnum := rand.Intn(1000)
+	randNum := string(rune(randnum))
+	// [1]. test with a single quote -------------------------------------------------
+	var paramValue = randNum + "'"
+	logger.Debug("paramValue %s", paramValue)
+	feature, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	bsql.lastJob.Features = feature
+	if !bsql.responseIsInternalServerError() {
+		logger.Debug("failed OddEven test 1")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, bsql.responseIsInternalServerError())
+
+	// [2]. test with two single quotes ------------------------------------------------
+	paramValue = randNum + "''"
+	logger.Debug("paramValue %s", paramValue)
+	feature1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	bsql.lastJob.Features = feature1
+
+	bsql.addToConfirmInjectionHistory(paramValue, bsql.responseIsInternalServerError())
+	// if error, it could be a number injection
+	if bsql.responseIsInternalServerError() {
+		bsql.confirmInjectionWithOddEvenNumbers(varIndex, confirmed)
+	} else {
+		bsql.confirmInjectionWithOddEvenStrings(varIndex, confirmed)
+	}
+
+	return true
+}
+
+func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, confirmed bool) bool {
+
+	return true
 }
