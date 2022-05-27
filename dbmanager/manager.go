@@ -81,7 +81,7 @@ type PublishState struct {
 //Init 初始化mysql数据库
 func (Dm *DbManager) Init() error {
 	TaskConfig := config.TaskConfig{}
-	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
+	err := config.ReadTaskConf("config.yaml", &TaskConfig)
 	if err != nil {
 		panic(err)
 	}
