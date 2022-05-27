@@ -28,7 +28,7 @@ func Test_Crawler(t *testing.T) {
 	ctx, _ := context.WithCancel(context.Background())
 	actx, acancel := context.WithTimeout(ctx, TaskConfig.TabRunTimeout)
 	defer acancel()
-	err := config.ReadTaskConf("./config.yaml", &TaskConfig)
+	err := config.ReadTaskConf("config.yaml", &TaskConfig)
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
