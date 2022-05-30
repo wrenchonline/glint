@@ -1516,3 +1516,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 
 	return true
 }
+
+func (bsql *classBlindSQLInj) startTesting() {
+
+}

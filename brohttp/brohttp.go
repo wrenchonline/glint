@@ -39,6 +39,24 @@ type Spider struct {
 	TabTimeOut int64
 }
 
+type RWCount struct {
+	count int
+	mu    sync.RWMutex
+}
+
+func (r *RWCount) Get() int {
+	r.mu.Lock()
+	count := r.count
+	r.mu.Unlock()
+	return count
+}
+
+func (r *RWCount) Set(count int) {
+	r.mu.Lock()
+	r.count = count
+	r.mu.Unlock()
+}
+
 type Tab struct {
 	Ctx           *context.Context
 	Cancel        *context.CancelFunc
@@ -47,6 +65,7 @@ type Tab struct {
 	PostData      []byte
 	Standardlen   int //爬虫请求的长度
 	ReqUrlresplen int
+	Sendlimit     RWCount
 	Url           *url.URL
 	Headers       map[string]interface{} //请求头
 	Isreponse     bool
@@ -92,6 +111,25 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Source = make(chan string)
 	tab.RespDone = make(chan bool)
 	tab.ListenTarget()
+	tab.Sendlimit.Set(1) //最大只能发送一次
+	// tab.Pool, _ = ants.NewPoolWithFunc(p.MaxPoolCount, func(args interface{}) { //新建一个带有同类方法的pool对象
+	// 	var Result_id int64
+	// 	defer p.threadwg.Done()
+	// 	data := args.(GroupData)
+	// 	for _, f := range p.Callbacks {
+	// 		scanresult, err := f(data)
+	// 		if err != nil {
+	// 			logger.Debug("plugin::error %s", err.Error())
+	// 		} else {
+	// 			//在这里保存,在这里抛出信息给web前
+	// 			}
+	// 		}
+	// 	}
+	// })
+	// ctx, cancel := context.WithTimeout(context.Background(), p.Timeout)
+	// p.Ctx = &ctx
+	// p.Cancel = &cancel
+
 	return &tab, nil
 }
 
@@ -307,6 +345,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 func (t *Tab) Send() ([]string, error) {
 	var htmls []string
 	var res string
+
 	err := chromedp.Run(
 		*t.Ctx,
 		fetch.Enable(),
