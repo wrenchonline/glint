@@ -1337,6 +1337,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, c
 
 	return true
 }
+
 func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirmed bool) bool {
 	logger.Debug("confirmInjectionWithOddStrings %d , %v", varIndex, confirmed)
 	randnum := rand.Intn(1000)
@@ -1377,6 +1378,141 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 
 func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, confirmed bool) bool {
 	logger.Debug("confirmInjectionStringConcatenation %d , %v", varIndex, confirmed)
+	//bsql.origValue = "-1"
+	origValue := bsql.origValue
+	randnum := rand.Intn(1000)
+	paramValue := bsql.origValue
+	randString := string(rune(randnum))
+
+	origFeatures := bsql.origFeatures
+	if confirmed {
+		randString = `000` + randString
+	}
+
+	// test 1 TRUE  -------------------------------------------------------------
+	paramValue = origValue + "'||'"
+	logger.Debug("%s", paramValue)
+	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+	}
+	if !layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 1")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
+	// test 2 FALSE  -------------------------------------------------------------
+	paramValue = origValue + "'|||'"
+	logger.Debug("%s", paramValue)
+	testBody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody2}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 2")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	// test 3 TRUE  -------------------------------------------------------------
+	paramValue = origValue + "'||''||'"
+	logger.Debug("%s", paramValue)
+	testBody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if !layers.CompareFeatures(&[]layers.MFeatures{testBody3}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 3")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
+	// test 4 FALSE   -------------------------------------------------------------
+	paramValue = origValue + "'||'" + randString + "'||'"
+	logger.Debug("%s", paramValue)
+	testBody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody4}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 4")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	// test 5 TRUE   -------------------------------------------------------------
+	paramValue = "'||''||'" + origValue
+	logger.Debug("%s", paramValue)
+	testBody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if !layers.CompareFeatures(&[]layers.MFeatures{testBody5}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 5")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
+	// test 6 FALSE   -------------------------------------------------------------
+	paramValue = "'||''||'" + origValue
+	logger.Debug("%s", paramValue)
+	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 6")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	// test 7 FALSE   -------------------------------------------------------------
+	paramValue = "'||''||'" + origValue
+	logger.Debug("%s", paramValue)
+	testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody7}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 7")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
+
+	//test 8 TRUE   -------------------------------------------------------------
+	paramValue = origValue[:1] + "'||'" + origValue[1:]
+	logger.Debug("%s", paramValue)
+	testBody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if !layers.CompareFeatures(&[]layers.MFeatures{testBody8}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 8")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, true)
+
+	//test 9 FALSE   -------------------------------------------------------------
+	paramValue = origValue[:1] + "'|a|'" + origValue[1:]
+	logger.Debug("%s", paramValue)
+	testBody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	if err != nil {
+		logger.Error("%s", err.Error())
+
+	}
+	if layers.CompareFeatures(&[]layers.MFeatures{testBody9}, &[]layers.MFeatures{origFeatures}) {
+		logger.Debug("failed concat test 9")
+		return false
+	}
+	bsql.addToConfirmInjectionHistory(paramValue, false)
 
 	return true
 }
