@@ -151,10 +151,11 @@ func (p *Plugin) Run(args PluginOption) error {
 			}(type_name, urlinter)
 		}
 		p.threadwg.Wait()
-		if p.Spider != nil {
-			p.Spider.Close()
-			p.Spider = nil
-		}
+	}
+
+	if p.Spider != nil {
+		p.Spider.Close()
+		p.Spider = nil
 	}
 
 	//logger.Info("Plugin %s has Finished!", p.PluginName)
