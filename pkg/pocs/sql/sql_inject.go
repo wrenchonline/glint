@@ -1518,5 +1518,9 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 }
 
 func (bsql *classBlindSQLInj) startTesting() {
+	if bsql.origValue == "" {
+		bsql.origValue = "1"
+		bsql.isNumeric = true
+	}
 
 }
