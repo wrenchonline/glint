@@ -77,7 +77,7 @@ type classBlindSQLInj struct {
 	scheme                        string
 	TargetUrl                     string
 	inputIndex                    int
-	variations                    []string
+	variations                    *util.PostData
 	foundVulnOnVariation          bool
 	scanningAnInternalIP          bool
 	scanningATestWebsite          bool
@@ -1517,10 +1517,41 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	return true
 }
 
-func (bsql *classBlindSQLInj) startTesting() {
+func (bsql *classBlindSQLInj) testInjection(varIndex int, quoteChar string, likeInjection bool) bool {
+
+	return true
+}
+
+func (bsql *classBlindSQLInj) startTesting() bool {
 	if bsql.origValue == "" {
 		bsql.origValue = "1"
 		bsql.isNumeric = true
 	}
+	for _, p := range bsql.variations.Params {
+		if bsql.foundVulnOnVariation {
+			break
+		}
+		if !bsql.checkIfResponseIsStable(p.Index) {
+			return false
+		}
+		var doBooleanTests = true
+		var doTimingTests = true
+		var doTimingTestsMySQL = true
+		var doTimingTestsMySQLBenchmark = false
+		var doTimingTestsMSSQL = true
+		var doTimingTestsMSSQLExtra = false
+		var doTimingTestsPostgreSQL = true
+		var doTimingTestsPostgreSQLExtra = false
+		var doTimingTestsOracle = true
+		var doTimingTestsRails = true
+		var doOOBTests = false
+		var doOddEvenTests = false
+		if doBooleanTests {
+			// boolean tests
+			if bsql.inputIsStable {
 
+			}
+		}
+	}
+	return true
 }

@@ -173,7 +173,7 @@ type Param struct {
 	// ContentType is the content type of a posted file.
 	ContentType string `json:"contentType,omitempty"`
 
-	index int //
+	Index int //
 }
 
 // QueryString is a query string parameter on a request.
@@ -297,7 +297,7 @@ func (p PostData) Len() int {
 
 //Less(): 顺序有低到高排序
 func (p PostData) Less(i, j int) bool {
-	return p.Params[i].index < p.Params[j].index
+	return p.Params[i].Index < p.Params[j].Index
 }
 
 //Swap()
@@ -429,7 +429,7 @@ func ParseUri(uri string, body []byte, method string, content_type string) (*Pos
 				}
 				for k, v := range json_map {
 					index++
-					Post := Param{Name: k, Value: v.(string), index: index, ContentType: content_type}
+					Post := Param{Name: k, Value: v.(string), Index: index, ContentType: content_type}
 					Postinfo.Params = append(Postinfo.Params, Post)
 				}
 			case "application/x-www-form-urlencoded":
@@ -437,7 +437,7 @@ func ParseUri(uri string, body []byte, method string, content_type string) (*Pos
 				for i, kv := range strs {
 					key := strings.Split(string(kv), "=")[0]
 					value := strings.Split(string(kv), "=")[1]
-					Post := Param{Name: key, Value: value, index: i, ContentType: content_type}
+					Post := Param{Name: key, Value: value, Index: i, ContentType: content_type}
 					Postinfo.Params = append(Postinfo.Params, Post)
 				}
 			}
@@ -457,7 +457,7 @@ func ParseUri(uri string, body []byte, method string, content_type string) (*Pos
 		for i, kv := range strs {
 			key := strings.Split(string(kv), "=")[0]
 			value := strings.Split(string(kv), "=")[1]
-			Post := Param{Name: key, Value: value, index: i, ContentType: content_type}
+			Post := Param{Name: key, Value: value, Index: i, ContentType: content_type}
 			Postinfo.Params = append(Postinfo.Params, Post)
 		}
 		sort.Sort(Postinfo)
