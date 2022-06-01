@@ -314,7 +314,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36`),
+		chromedp.UserAgent(`Mozilla/5.0 (X11; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
 

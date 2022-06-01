@@ -74,10 +74,17 @@ func (t *Task) quitmsg() {
 	// for _, task := range Tasks {
 
 	<-(*t.Ctx).Done()
+
 	if t.Status != TaskStop {
 		sendmsg(2, "The Task is End", t.TaskId)
 	} else {
 		sendmsg(4, "The Task is End", t.TaskId)
+	}
+
+	for _, v := range t.Plugins {
+		if v.Spider != nil {
+			v.Spider.Close()
+		}
 	}
 	// }
 }
@@ -312,7 +319,6 @@ func (ts *TaskServer) Task(ctx context.Context, mjson map[string]interface{}) er
 			sendmsg(-1, err.Error(), task.TaskId)
 			return err
 		}
-		logger.Info("1111111")
 		Taskslock.Lock()
 		Tasks = append(Tasks, &task)
 		Taskslock.Unlock()
