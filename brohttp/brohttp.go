@@ -86,7 +86,7 @@ type UrlOCC struct {
 
 func (spider *Spider) Close() {
 	defer (*spider.Cancel)()
-	defer chromedp.Cancel(*spider.Ctx)
+	// defer chromedp.Cancel(*spider.Ctx)
 }
 
 func (t *Tab) Close() {
