@@ -320,7 +320,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 		chromedp.Flag("disable-webgl", true),
 		chromedp.Flag("disable-popup-blocking", true),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.UserAgent(`Mozilla/5.0 (X11; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0`),
+		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
 	}
 	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
 
@@ -352,23 +352,27 @@ func (t *Tab) Send() ([]string, error) {
 	// Ctx, _ := chromedp.NewContext(
 	// 	*t.Ctx,
 	// )
-
-	// xCtx, xCancel := context.WithTimeout(Ctx, time.Second*4)
+	// Ctx, _ := chromedp.NewContext(
+	// 	*t.Ctx,
+	// )
+	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*30)
 	// defer xCancel()
 	// err := chromedp.Run(xCtx, fetch.Enable())
 
 	err := chromedp.Run(
-		*t.Ctx,
+		Ctx,
 		fetch.Enable(),
 		chromedp.Navigate(t.Url.String()),
-		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
+		chromedp.OuterHTML("html", &res, chromedp.BySearch),
 	)
 
 	if err != nil {
 		if err.Error() == context.DeadlineExceeded.Error() {
 			logger.Error("url:%s 超时发包", t.Url.String())
+		} else {
+			logger.Error(err.Error())
 		}
-		logger.Error(err.Error())
+
 	}
 
 	htmls = append(htmls, res)

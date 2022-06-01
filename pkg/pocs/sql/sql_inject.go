@@ -1519,6 +1519,73 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 
 func (bsql *classBlindSQLInj) testInjection(varIndex int, quoteChar string, likeInjection bool) bool {
 
+	var confirmed = false
+	var confirmResult = false
+	for {
+		confirmResult = bsql.confirmInjection(varIndex, quoteChar, likeInjection, confirmed)
+		if !confirmResult {
+			return false
+		}
+		if confirmed {
+			logger.Debug("second round finished with success")
+			break
+		} else {
+			logger.Debug("first round finished with success")
+			confirmed = true
+		}
+	}
+	// report sql injection
+	// bsql.alert(confirmResult)
+
+	bsql.confirmInjectionHistory = []InjectionResult{}
+	return true
+}
+
+func (bsql *classBlindSQLInj) testInjectionWithOR(varIndex int, quoteChar string, dontCommentRestOfQuery bool) bool {
+
+	var confirmed = false
+	var confirmResult = false
+	for {
+		confirmResult = bsql.confirmInjectionWithOR(varIndex, quoteChar, confirmed, dontCommentRestOfQuery)
+		if !confirmResult {
+			return false
+		}
+		if confirmed {
+			logger.Debug("second round finished with success")
+			break
+		} else {
+			logger.Debug("first round finished with success")
+			confirmed = true
+		}
+	}
+	// report sql injection
+	// bsql.alert(confirmResult)
+
+	bsql.confirmInjectionHistory = []InjectionResult{}
+	return true
+}
+
+func (bsql *classBlindSQLInj) testInjectionStringConcatenation(varIndex int) bool {
+
+	var confirmed = false
+	var confirmResult = false
+	for {
+		confirmResult = bsql.confirmInjectionStringConcatenation(varIndex, confirmed)
+		if !confirmResult {
+			return false
+		}
+		if confirmed {
+			logger.Debug("second round finished with success")
+			break
+		} else {
+			logger.Debug("first round finished with success")
+			confirmed = true
+		}
+	}
+	// report sql injection
+	// bsql.alert(confirmResult)
+
+	bsql.confirmInjectionHistory = []InjectionResult{}
 	return true
 }
 
@@ -1549,6 +1616,33 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 		if doBooleanTests {
 			// boolean tests
 			if bsql.inputIsStable {
+				// numeric
+				if bsql.isNumeric && bsql.testInjection(p.Index, "", false) {
+					return true
+				}
+				// single quote
+				if bsql.testInjection(p.Index, "'", false) {
+					return true
+				}
+				// double quote
+				if bsql.testInjection(p.Index, `"`, false) {
+					return true
+				}
+				// single quote, inside like
+				if bsql.testInjection(p.Index, "'", true) {
+					return true
+				}
+				// no quotes
+				// if (this.testInjectionWithOR(i, '')) return true;
+				// no quotes (don't comment rest of query)
+				if bsql.testInjectionWithOR(p.Index, "'", true) {
+					return true
+				}
+				// string concatenation PostgreSQL, Oracle (doesn't work on MySQL)
+				if !bsql.isNumeric && bsql.origValue != "" && len(bsql.origValue) >= 2 && bsql.testInjectionStringConcatenation(p.Index) {
+					return true
+				}
+				// for special named parameters make the order/group by tests
 
 			}
 		}

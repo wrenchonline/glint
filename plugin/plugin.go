@@ -153,10 +153,10 @@ func (p *Plugin) Run(args PluginOption) error {
 		p.threadwg.Wait()
 	}
 
-	if p.Spider != nil {
-		p.Spider.Close()
-		p.Spider = nil
-	}
+	// if p.Spider != nil {
+	// 	p.Spider.Close()
+	// 	p.Spider = nil
+	// }
 
 	//logger.Info("Plugin %s has Finished!", p.PluginName)
 	if args.IsSocket {
