@@ -91,7 +91,7 @@ func (spider *Spider) Close() {
 
 func (t *Tab) Close() {
 	defer (*t.Cancel)()
-	defer chromedp.Cancel(*t.Ctx)
+	//defer chromedp.Cancel(*t.Ctx)
 }
 
 func NewTab(spider *Spider) (*Tab, error) {
