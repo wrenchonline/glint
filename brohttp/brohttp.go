@@ -544,7 +544,10 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 func (t *Tab) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
-	htmls, _ := t.CheckPayloadLocation(playload)
+	htmls, err := t.CheckPayloadLocation(playload)
+	if err != nil {
+		return false, nil
+	}
 	var bOnhtml bool = false
 	for i, html := range htmls {
 		Node := ast.SearchInputInResponse(playload, html)

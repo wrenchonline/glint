@@ -492,8 +492,8 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		// println("post", Spider.Url.String())
 		if b {
 			bflag = true
+			resources = append(resources, Occ)
 		}
-		resources = append(resources, Occ)
 
 		if !bflag {
 			return nil, errors.New("xss:: not found")
@@ -512,8 +512,8 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
 			if b {
 				bflag = true
+				resources = append(resources, Occ)
 			}
-			resources = append(resources, Occ)
 		}
 		if !bflag {
 			return nil, errors.New("xss::not found")
