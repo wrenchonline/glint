@@ -76,7 +76,7 @@ func TestURL(t *testing.T) {
 	Spider := brohttp.Spider{}
 
 	var taskconfig config.TaskConfig
-	taskconfig.Proxy = "127.0.0.1:7777"
+	taskconfig.Proxy = ""
 	Spider.Init(taskconfig)
 
 	Headers := make(map[string]interface{})

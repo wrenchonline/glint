@@ -94,11 +94,17 @@ func (t *Tab) Close() {
 	//defer chromedp.Cancel(*t.Ctx)
 }
 
+func (t *Tab) GetExecutor() context.Context {
+	c := chromedp.FromContext(*t.Ctx)
+	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+	return ctx
+}
+
 func NewTab(spider *Spider) (*Tab, error) {
 	var tab Tab
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
 	// logger.Info("set timeout for the tab page : %d second", 20)
-	ctx, cancel = context.WithTimeout(ctx, time.Duration(300)*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, 120*time.Second)
 	tab.Ctx = &ctx
 	tab.Cancel = &cancel
 	tab.Responses = make(chan []map[string]string)
@@ -339,6 +345,17 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 func (t *Tab) Send() ([]string, error) {
 	var htmls []string
 	var res string
+	// Ctx := t.GetExecutor()
+	// tCtx, cancel := context.WithTimeout(Ctx, time.Second*2)
+	// defer cancel()
+	// go tab.CommitBySubmit()
+	// Ctx, _ := chromedp.NewContext(
+	// 	*t.Ctx,
+	// )
+
+	// xCtx, xCancel := context.WithTimeout(Ctx, time.Second*4)
+	// defer xCancel()
+	// err := chromedp.Run(xCtx, fetch.Enable())
 
 	err := chromedp.Run(
 		*t.Ctx,
@@ -351,6 +368,7 @@ func (t *Tab) Send() ([]string, error) {
 	}
 
 	htmls = append(htmls, res)
+
 	//循环两次获取,不会获取过多内容
 	// for i := 0; i < 2; i++ {
 	// 	select {
