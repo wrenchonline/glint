@@ -363,7 +363,11 @@ func (t *Tab) Send() ([]string, error) {
 		chromedp.Navigate(t.Url.String()),
 		chromedp.OuterHTML("html", &res, chromedp.ByQuery),
 	)
+
 	if err != nil {
+		if err.Error() == context.DeadlineExceeded.Error() {
+			logger.Error("url:%s 超时发包", t.Url.String())
+		}
 		logger.Error(err.Error())
 	}
 

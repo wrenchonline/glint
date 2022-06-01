@@ -414,7 +414,10 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 				if len(urlocc.OCC) > 0 {
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
 					tab.CopyRequest(urlocc.Request)
-					response, _ := tab.CheckPayloadLocation(payload)
+					response, err := tab.CheckPayloadLocation(payload)
+					if err != nil {
+						return nil, err
+					}
 					occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
 					Occs = append(Occs, occ)
 				}
