@@ -1602,17 +1602,17 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 			return false
 		}
 		var doBooleanTests = true
-		var doTimingTests = true
-		var doTimingTestsMySQL = true
-		var doTimingTestsMySQLBenchmark = false
-		var doTimingTestsMSSQL = true
-		var doTimingTestsMSSQLExtra = false
-		var doTimingTestsPostgreSQL = true
-		var doTimingTestsPostgreSQLExtra = false
-		var doTimingTestsOracle = true
-		var doTimingTestsRails = true
-		var doOOBTests = false
-		var doOddEvenTests = false
+		// var doTimingTests = true
+		// var doTimingTestsMySQL = true
+		// var doTimingTestsMySQLBenchmark = false
+		// var doTimingTestsMSSQL = true
+		// var doTimingTestsMSSQLExtra = false
+		// var doTimingTestsPostgreSQL = true
+		// var doTimingTestsPostgreSQLExtra = false
+		// var doTimingTestsOracle = true
+		// var doTimingTestsRails = true
+		// var doOOBTests = false
+		// var doOddEvenTests = false
 		if doBooleanTests {
 			// boolean tests
 			if bsql.inputIsStable {
@@ -1648,4 +1648,8 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 		}
 	}
 	return true
+}
+
+func Sql_inject_Vaild() {
+
 }
