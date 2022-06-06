@@ -140,12 +140,12 @@ func (parser *Parser) HttpParser(body string) bool {
 		case html.ErrorToken:
 			goto processing
 		case html.TextToken:
-			logger.Debug("html.TextToken:%s", string(z.Raw()))
+			//logger.Debug("html.TextToken:%s", string(z.Raw()))
 			if field, ok := Tree.Max().(*Node); ok {
 				field.Content = string(z.Raw())
 			}
 		case html.StartTagToken:
-			logger.Debug("html.StartTagToken:%s", string(z.Raw()))
+			//logger.Debug("html.StartTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -168,7 +168,7 @@ func (parser *Parser) HttpParser(body string) bool {
 			Tree.Set(&Node{Idx: i, Tagname: cx, Content: "", Attributes: &Attributes})
 		case html.EndTagToken:
 			name, _ := z.TagName()
-			logger.Debug("html.EndTagToken:%s", string(z.Raw()))
+			//logger.Debug("html.EndTagToken:%s", string(z.Raw()))
 			for {
 				if field, ok := Tree.Max().(*Node); ok {
 					if field.Tagname == string(name) {
@@ -198,7 +198,7 @@ func (parser *Parser) HttpParser(body string) bool {
 			}
 
 		case html.SelfClosingTagToken:
-			logger.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
+			//logger.Debug("html.SelfClosingTagToken:%s", string(z.Raw()))
 			Attributes := make([]Attribute, 0)
 			array, _ := z.TagName()
 			for {
@@ -243,7 +243,7 @@ func (parser *Parser) HttpParser(body string) bool {
 
 		case html.CommentToken:
 			Attributes := make([]Attribute, 0)
-			logger.Debug("html.CommentToken:%s", string(z.Raw()))
+			//logger.Debug("html.CommentToken:%s", string(z.Raw()))
 			parser.tokenizer.Set(&Node{Idx: i, Tagname: "#comment", Content: string(z.Raw()), Attributes: &Attributes})
 		}
 

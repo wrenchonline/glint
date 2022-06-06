@@ -1,0 +1,19 @@
+{
+    "": [
+        {
+            "url": "http://www.jykc.com/news.asp?class=1&classname=%EF%BF%BD%EF%BF%BD%D4%AA%EF%BF%BD%EF%BF%BD%CC%AC",
+            "method": "GET",
+            "headers": {
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": "http://www.jykc.com/",
+                "Connection": "Keep-alive",
+                "Cookie": "safedog-flow-item=; ASPSESSIONIDAQRDTSCD=BEGAAFOAFAJLEGMCMEAJLOFC; ASPSESSIONIDCQSCRTDC=GBMNHCPAGHBJCBGFNMBKFALE",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            },
+            "data": "",
+            "source": "DOM"
+        }
+    ]
+}

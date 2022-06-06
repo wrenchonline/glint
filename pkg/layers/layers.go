@@ -5,7 +5,6 @@ import (
 	"glint/fastreq"
 	"glint/logger"
 	"glint/util"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -99,6 +98,7 @@ func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string, o .
 	}
 
 	originpayload := origin.SetPayloadByindex(idx, originUrl, paramValue, P.Method)
+
 	if strings.ToUpper(P.Method) == "POST" {
 
 		req, resp, err := P.Sess.Post(originUrl, P.Headers, []byte(originpayload))
@@ -151,19 +151,33 @@ func CompareFeatures(src *[]MFeatures, dst *[]MFeatures) bool {
 					// logger.Error("SearchInputInResponse tokens 没有发现节点")
 					return false
 				}
-
+				for i := 0; i < len(s_tokens); i++ {
+					st := s_tokens[i]
+					dt := d_tokens[i]
+					if st.Tagname != dt.Tagname {
+						isEquivalent = false
+					} else {
+						if st.Content != dt.Content {
+							isEquivalent = false
+						}
+					}
+				}
 				// for _, st := range s_tokens {
 				// 	for _, dt := range d_tokens {
 				// 		if st.Idx == dt.Idx {
 				// 			if st.Tagname != dt.Tagname {
 				// 				isEquivalent = false
+				// 			} else {
+				// 				if st.Content != dt.Content {
+				// 					isEquivalent = false
+				// 				}
 				// 			}
 				// 		}
 				// 	}
 				// }
-				if !reflect.DeepEqual(s_tokens, d_tokens) {
-					isEquivalent = false
-				}
+				// if !reflect.DeepEqual(s_tokens, d_tokens) {
+				// 	isEquivalent = false
+				// }
 			}
 		}
 	}

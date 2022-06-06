@@ -1,43 +1,44 @@
 package main
 
 import (
+	"fmt"
+	"glint/config"
+	"glint/logger"
+	"glint/pkg/pocs/sql"
+	"glint/plugin"
+	"sync"
 	"testing"
+	"time"
 )
 
-func TestSqlerror(t *testing.T) {
-	// Spider := brohttp.Spider{}
-	// Spider.Init()
-	// defer Spider.Close()
-	// c := cf.Conf{}
-	// //读取配置文件
-	// conf := c.GetConf()
-	// Spider.ReqMode = conf.ReqMode
-
-	// // if err := Spider.SetCookie(conf); err != nil {
-	// // 	panic(err)
-	// // }
-	// jsonFile, err := os.Open("result.json")
-
-	// // 最好要处理以下错误
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// // 要记得关闭
-	// defer jsonFile.Close()
-
-	// byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	// var JsonUrls []ast.JsonUrl
-
-	// err = json.Unmarshal([]byte(byteValue), &JsonUrls)
-	// // 最好要处理以下错误
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// Spider.Url, _ = url.Parse("http://localhost/vulnerabilities/sqli/?id=312&Submit=Submit#")
-	// result, err := sql.Validationsqlerror(&Spider)
-	// if err == nil {
-	// 	fmt.Println(result)
-	// }
+func TestSqlBlind(t *testing.T) {
+	logger.DebugEnable(true)
+	var PluginWg sync.WaitGroup
+	data, _ := config.ReadResultConf("sql_test.json")
+	myfunc := []plugin.PluginCallback{}
+	myfunc = append(myfunc, sql.Sql_inject_Vaild)
+	pluginInternal := plugin.Plugin{
+		PluginName:   "SQL",
+		PluginId:     plugin.SQL,
+		MaxPoolCount: 5,
+		Callbacks:    myfunc,
+		Timeout:      30 * time.Second,
+	}
+	pluginInternal.Init()
+	PluginWg.Add(1)
+	Progress := 0.
+	args := plugin.PluginOption{
+		PluginWg: &PluginWg,
+		Progress: &Progress,
+		IsSocket: false,
+		Data:     data,
+		TaskId:   999,
+		// Sendstatus: &PliuginsMsg,
+	}
+	go func() {
+		pluginInternal.Run(args)
+	}()
+	PluginWg.Wait()
+	fmt.Println("exit...")
 
 }

@@ -16,6 +16,7 @@ import (
 	"glint/pkg/pocs/crlf"
 	"glint/pkg/pocs/csrf"
 	"glint/pkg/pocs/jsonp"
+	"glint/pkg/pocs/sql"
 	"glint/pkg/pocs/ssrfcheck"
 	"glint/pkg/pocs/xsschecker"
 	"glint/pkg/pocs/xxe"
@@ -436,6 +437,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 				t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
 			case "cors":
 				t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
+			case "sql":
+				t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
 			}
 		}
 
@@ -490,6 +493,8 @@ func (t *Task) agentPluginRun(args interface{}) {
 						t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
 					case "cors":
 						t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
+					case "sql":
+						t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, urlinfo, true, 0., false, p.HttpsCert, p.HttpsCertKey)
 					}
 
 				}

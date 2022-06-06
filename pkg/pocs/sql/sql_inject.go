@@ -23,7 +23,7 @@ var letterFrequency = [...]int{
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 49, 71, 49, 0, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 116, 30, 64, 60, 218, 24, 34, 72, 105, 5, 16, 68, 56, 101, 127, 46, 0, 110, 123, 139, 57, 19, 44, 4, 35, 1, 0, 0, 0, 0, 0,
 }
 
-var DefaultProxy = ""
+var DefaultProxy = "127.0.0.1:7777"
 var cert string
 var mkey string
 
@@ -128,7 +128,6 @@ func (bsql *classBlindSQLInj) filterBody(body string, testValue string) string {
 	// if testValue != "" {
 	// 	str := strings.Replace(body, testValue, "")
 	// }
-
 	return body2
 }
 
@@ -148,6 +147,9 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	bsql.origBody = body1
 	bsql.origFeatures = Feature
 	bsql.lastJob.responseDuration = Time1
+	bsql.longDuration = 8
+	bsql.shortDuration = 5
+
 	// 发送一些值 (查看回复是否不同)
 	// bsql.origMessage = bsql.Response.msg3
 	bsql.origStatusCode = Feature.Response.StatusCode()
@@ -170,7 +172,10 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	} else {
 		bsql.responseTimingIsStable = true
 	}
-	if body2 != body1 {
+
+	if !layers.CompareFeatures(&[]layers.MFeatures{Feature}, &[]layers.MFeatures{Feature2}) {
+		logger.Debug("body1:%s", body1)
+		logger.Debug("body2:%s", body2)
 		bsql.responseIsStable = false
 		return true
 	} else {
@@ -211,14 +216,14 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	logger.Debug("adjusted longDuration: %.2f", bsql.longDuration)
 	// check if the input is stable
 	if layers.CompareFeatures(&[]layers.MFeatures{body1Features}, &[]layers.MFeatures{body2Features}) &&
-		layers.CompareFeatures(&[]layers.MFeatures{body1Features}, &[]layers.MFeatures{body3Features}) {
+		!layers.CompareFeatures(&[]layers.MFeatures{body1Features}, &[]layers.MFeatures{body3Features}) {
 		bsql.inputIsStable = true
 		logger.Debug("input is stable. good")
 	} else {
 		bsql.inputIsStable = false
 	}
 
-	return false
+	return true
 
 }
 
@@ -435,7 +440,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		randString = `000` + randString
 	}
 	if bsql.isNumeric {
-		randString = string(rune(randNum))
+		randString = strconv.Itoa(randNum)
 	}
 	equalitySign := "="
 	// like injection
@@ -463,7 +468,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		}
 		bsql.addToConfirmInjectionHistory(paramValue, true)
 		// test 2 FALSE  -------------------------------------------------------------
-		paramValue = origValue + "*" + string(rune(randNum)) + "*" + string(rune((randNum - 5))) + "*0"
+		paramValue = origValue + "*" + strconv.Itoa(randNum) + "*" + strconv.Itoa(randNum-5) + "*0"
 		logger.Debug("%s", paramValue)
 		testbody1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
@@ -475,7 +480,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		}
 		bsql.addToConfirmInjectionHistory(paramValue, false)
 		// test 3 TRUE  -------------------------------------------------------------
-		paramValue = "(" + string((origValueAsInt + (randNum + 5))) + "-" + string(randNum) + "-5)"
+		paramValue = "(" + strconv.Itoa((origValueAsInt + (randNum + 5))) + "-" + strconv.Itoa(randNum) + "-5)"
 		logger.Debug("%s", paramValue)
 		testbody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
@@ -487,7 +492,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		}
 		bsql.addToConfirmInjectionHistory(paramValue, true)
 		// test 4 TRUE  -------------------------------------------------------------
-		paramValue = string(rune(origValueAsInt)) + "/1"
+		paramValue = strconv.Itoa(origValueAsInt) + "/1"
 		logger.Debug("%s", paramValue)
 		testbody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
@@ -499,7 +504,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		}
 		bsql.addToConfirmInjectionHistory(paramValue, true)
 		// test 5 FALSE  -------------------------------------------------------------
-		paramValue = string(rune(origValueAsInt)) + "/0"
+		paramValue = strconv.Itoa(origValueAsInt) + "/0"
 		logger.Debug("%s", paramValue)
 		testbody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
@@ -511,7 +516,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		}
 		bsql.addToConfirmInjectionHistory(paramValue, false)
 		// test 6 TRUE  -------------------------------------------------------------
-		paramValue = string(rune(origValueAsInt)) + "/(3*2-5)"
+		paramValue = strconv.Itoa(origValueAsInt) + "/(3*2-5)"
 		logger.Debug("%s", paramValue)
 		testbody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
@@ -621,7 +626,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	origValue := bsql.origValue
 	randNum := rand.Intn(1000)
 	var paramValue string
-	randString := string(rune(randNum))
+	randString := strconv.Itoa(randNum)
 	origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
@@ -723,14 +728,14 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
-	randString := string(rune(randnum))
+	randString := strconv.Itoa(randnum)
 	origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
 	}
 	randStrLong := util.RandStr(8)
 
-	randNum := string(rune(randnum))
+	randNum := strconv.Itoa(randnum)
 	// equalitySign := "="
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = origValue + quoteChar + " OR 2+" + randNum + "-" + randNum +
@@ -887,14 +892,14 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR3(varIndex int,
 	origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
-	randString := string(rune(randnum))
+	randString := strconv.Itoa(randnum)
 	origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
 	}
 	randStrLong := util.RandStr(8)
 
-	randNum := string(rune(randnum))
+	randNum := strconv.Itoa(randnum)
 	// equalitySign := "="
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = origValue + quoteChar + " OR 2+" + randNum + "-" + randNum +
@@ -1051,14 +1056,14 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR4(varIndex int,
 	origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
-	randString := string(rune(randnum))
+	randString := strconv.Itoa(randnum)
 	origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
 	}
 	randStrLong := util.RandStr(8)
 
-	randNum := string(rune(randnum))
+	randNum := strconv.Itoa(randnum)
 	// equalitySign := "="
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = origValue + quoteChar + " OR 2+" + randNum + "-" + randNum +
@@ -1214,7 +1219,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
-	randString := string(rune(randnum))
+	randString := strconv.Itoa(randnum)
 	// origFeatures := bsql.origFeatures
 	if confirmed {
 		randString = `000` + randString
@@ -1594,7 +1599,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenNumbers(varIndex int, c
 
 	for i := 0; i < maxRounds; i++ {
 		randnum := rand.Intn(1000)
-		randNum := string(rune(randnum))
+		randNum := strconv.Itoa(randnum)
 		if confirmed {
 			paramValue = randNum + strings.Repeat("*1", i)
 		} else {
@@ -1639,7 +1644,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, c
 
 	for i := 0; i < maxRounds; i++ {
 		randnum := rand.Intn(1000)
-		randNum := string(rune(randnum))
+		randNum := strconv.Itoa(randnum)
 		if confirmed {
 			randNum = util.RandStr(6)
 		}
@@ -1672,7 +1677,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, c
 func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirmed bool) bool {
 	logger.Debug("confirmInjectionWithOddStrings %d , %v", varIndex, confirmed)
 	randnum := rand.Intn(1000)
-	randNum := string(rune(randnum))
+	randNum := strconv.Itoa(randnum)
 	// [1]. test with a single quote -------------------------------------------------
 	var paramValue = randNum + "'"
 	logger.Debug("paramValue %s", paramValue)
@@ -1713,7 +1718,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	origValue := bsql.origValue
 	randnum := rand.Intn(1000)
 	paramValue := bsql.origValue
-	randString := string(rune(randnum))
+	randString := strconv.Itoa(randnum)
 
 	origFeatures := bsql.origFeatures
 	if confirmed {
@@ -1978,7 +1983,7 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 			}
 		}
 	}
-	return true
+	return false
 }
 
 // var DefaultProxy = ""
@@ -2011,7 +2016,7 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 	Mkey = group.HttpsCertKey
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
-			Timeout:       2 * time.Second,
+			Timeout:       10 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,
 			Cert:          Cert,
@@ -2035,6 +2040,11 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 	//赋值
 	BlindSQL.variations = variations
 	BlindSQL.layer.Sess = sess
+	BlindSQL.TargetUrl = url
+	BlindSQL.layer.Method = method
+	BlindSQL.layer.ContentType = ContentType
+	BlindSQL.layer.Headers = headers
+	BlindSQL.layer.Body = body
 
 	if BlindSQL.startTesting() {
 		println(hostid)

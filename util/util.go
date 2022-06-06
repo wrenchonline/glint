@@ -401,7 +401,8 @@ func (p *PostData) SetPayloadByindex(index int, uri string, payload string, meth
 			if idx <= MIN_SEND_COUNT {
 				if idx == index {
 					p.Set(kv.Name, payload)
-					str := strings.Split(string(uri), "?")[0] + "?" + v.Encode()
+					stv := p.Release()
+					str := strings.Split(string(uri), "?")[0] + "?" + stv
 					v.Set(kv.Name, kv.Value)
 					return str
 				}
