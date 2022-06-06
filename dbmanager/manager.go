@@ -338,15 +338,15 @@ func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (confi
 	TaskConfig.SubDomainReturn = dbTaskConfig.SubDomainReturn.Bool
 	TaskConfig.IncognitoContext = dbTaskConfig.IncognitoContext.Bool
 	TaskConfig.NoHeadless = dbTaskConfig.NoHeadless.Bool
-	TaskConfig.DomContentLoadedTimeout = time.Duration(dbTaskConfig.DomContentLoadedTimeout.Int64)
-	TaskConfig.TabRunTimeout = time.Duration(dbTaskConfig.TabRunTimeout.Int64)
+	TaskConfig.DomContentLoadedTimeout = time.Duration(dbTaskConfig.DomContentLoadedTimeout.Int64) * time.Millisecond
+	TaskConfig.TabRunTimeout = time.Duration(dbTaskConfig.TabRunTimeout.Int64) * time.Millisecond
 	TaskConfig.PathByFuzz = dbTaskConfig.PathByFuzz.Bool
 	TaskConfig.FuzzDictPath = dbTaskConfig.FuzzDictPath.String
 	TaskConfig.PathFromRobots = dbTaskConfig.PathFromRobots.Bool
 	TaskConfig.ChromiumPath = dbTaskConfig.ChromiumPath.String
 	TaskConfig.EventTriggerMode = dbTaskConfig.EventTriggerMode.String
-	TaskConfig.EventTriggerInterval = time.Duration(dbTaskConfig.EventTriggerInterval.Int64)
-	TaskConfig.BeforeExitDelay = time.Duration(dbTaskConfig.BeforeExitDelay.Int64)
+	TaskConfig.EventTriggerInterval = time.Duration(dbTaskConfig.EventTriggerInterval.Int64) * time.Millisecond
+	TaskConfig.BeforeExitDelay = time.Duration(dbTaskConfig.BeforeExitDelay.Int64) * time.Millisecond
 	TaskConfig.EncodeURLWithCharset = dbTaskConfig.EncodeURLWithCharset.Bool
 	TaskConfig.IgnoreKeywords = func() []string {
 		var ignored []string
