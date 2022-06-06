@@ -142,15 +142,15 @@ func (errsql *classSQLErrorMessages) searchOnText(text string) string {
 	}
 	for _, v := range regexTexts {
 		r, _ := regexp.Compile(v)
-		C := r.FindAllStringSubmatch(text, -1)
+		C := r.FindStringSubmatch(text)
 		if len(C) > 0 {
-			return C[0][0]
+			return C[0]
 		}
 	}
 	return result
 }
 
-func (errsql *classSQLErrorMessages) testInjection(value string, confirmData []string) bool {
+func (errsql *classSQLErrorMessages) testInjection(index int, value string, confirmData []string) bool {
 
 	return true
 }
