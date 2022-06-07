@@ -92,7 +92,7 @@ type classBlindSQLInj struct {
 	origValue                     string
 	confirmInjectionHistory       []InjectionResult
 	ConfirmInjectionHistoryTiming []TimeoutResult
-	lastJob                       LastJob
+	lastJob                       layers.LastJob
 	origBody                      interface{}
 	origFeatures                  layers.MFeatures //原始特征
 	lastJobProof                  interface{}
@@ -102,7 +102,6 @@ type classBlindSQLInj struct {
 	trueFeatures                  layers.MFeatures
 	originalFullResponse          bool
 	disableSensorBased            bool
-	layer                         layers.Plreq
 	origStatusCode                int
 	responseTimingIsStable        bool
 	inputIsStable                 bool
@@ -110,10 +109,11 @@ type classBlindSQLInj struct {
 	// method                  string
 }
 
-type LastJob struct {
-	Features         layers.MFeatures
-	responseDuration time.Duration
-}
+// type LastJob struct {
+// 	layer            layers.Plreq
+// 	Features         layers.MFeatures
+// 	responseDuration time.Duration
+// }
 
 func (bsql *classBlindSQLInj) Init() {
 
@@ -136,7 +136,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	var Time2 time.Duration
 	var Time3 time.Duration
 	s := time.Now()
-	Feature, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
+	Feature, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -146,7 +146,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	body1Features := Feature
 	bsql.origBody = body1
 	bsql.origFeatures = Feature
-	bsql.lastJob.responseDuration = Time1
+	bsql.lastJob.ResponseDuration = Time1
 	bsql.longDuration = 8
 	bsql.shortDuration = 5
 
@@ -154,7 +154,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	// bsql.origMessage = bsql.Response.msg3
 	bsql.origStatusCode = Feature.Response.StatusCode()
 	s2 := time.Now()
-	Feature2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
+	Feature2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
 	Time2 = time.Since(s2)
 	if err != nil {
 		logger.Error("%s", err.Error())
@@ -190,7 +190,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	//发送错误的值
 	s3 := time.Now()
 	newValue := util.RandStr(8)
-	Feature3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, newValue)
+	Feature3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, newValue)
 	Time3 = time.Since(s3)
 	if err != nil {
 		logger.Error("%s", err.Error())
@@ -254,7 +254,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -272,7 +272,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -289,7 +289,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -305,7 +305,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -323,7 +323,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -336,7 +336,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -353,7 +353,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -369,7 +369,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -385,7 +385,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -402,7 +402,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 	}
 	logger.Debug("paramValue:%s", paramValue)
 
-	testbody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testbody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -458,7 +458,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 1 TRUE  -------------------------------------------------------------
 		paramValue := "1*" + origValue
 		logger.Debug("%s", paramValue)
-		testbody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -470,7 +470,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 2 FALSE  -------------------------------------------------------------
 		paramValue = origValue + "*" + strconv.Itoa(randNum) + "*" + strconv.Itoa(randNum-5) + "*0"
 		logger.Debug("%s", paramValue)
-		testbody1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -482,7 +482,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 3 TRUE  -------------------------------------------------------------
 		paramValue = "(" + strconv.Itoa((origValueAsInt + (randNum + 5))) + "-" + strconv.Itoa(randNum) + "-5)"
 		logger.Debug("%s", paramValue)
-		testbody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -494,7 +494,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 4 TRUE  -------------------------------------------------------------
 		paramValue = strconv.Itoa(origValueAsInt) + "/1"
 		logger.Debug("%s", paramValue)
-		testbody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -506,7 +506,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 5 FALSE  -------------------------------------------------------------
 		paramValue = strconv.Itoa(origValueAsInt) + "/0"
 		logger.Debug("%s", paramValue)
-		testbody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -518,7 +518,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		// test 6 TRUE  -------------------------------------------------------------
 		paramValue = strconv.Itoa(origValueAsInt) + "/(3*2-5)"
 		logger.Debug("%s", paramValue)
-		testbody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -538,7 +538,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue := origValue + likeStr + quoteChar + " AND 2*3*8=6*8 AND " +
 			quoteChar + randString + quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -551,7 +551,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue = origValue + likeStr + quoteChar + " AND 2*3*8=6*9 AND " + quoteChar +
 			randString + quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -564,7 +564,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue = origValue + likeStr + quoteChar + " AND 3*3<(2*4) AND " + quoteChar + randString +
 			quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -577,7 +577,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue = origValue + likeStr + quoteChar + " AND 3*3<(2*4) AND " + quoteChar + randString +
 			quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -590,7 +590,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue = origValue + likeStr + quoteChar + " AND 3*2*0>=0 AND " + quoteChar + randString +
 			quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -604,7 +604,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		paramValue = origValue + likeStr + quoteChar + " AND 3*3*9<(2*4) AND " + quoteChar + randString +
 			quoteChar + equalitySign + quoteChar + randString + likeStr
 		logger.Debug("%s", paramValue)
-		testbody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -635,7 +635,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (" +
 		randString + "=" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -650,7 +650,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (" +
 		randString + "=" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -664,7 +664,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (" +
 		randString + "=1*" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -678,7 +678,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (0*" + randString +
 		"=0*" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -691,7 +691,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (0*" + randString +
 		"=1*" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -704,7 +704,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	paramValue = origValue + quoteChar + " RLIKE (SELECT (CASE WHEN (1+1-2+" +
 		randString + "=2+2-4+" + randString + ") THEN 1 ELSE 0x28 END)) -- "
 	logger.Debug("%s", paramValue)
-	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -741,7 +741,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 2+" + randNum + "-" + randNum +
 		"-1=0+0+0+1 or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -756,7 +756,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 3+" + randNum + "-" + randNum + "-1=0+0+0+1 or " +
 		quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -770,7 +770,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 3*2<(0+5+" + randNum + "-" + randNum +
 		") or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -783,7 +783,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 3*2>(0+5+" + randNum + "-" + randNum + ") or " +
 		quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -797,7 +797,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 2+1-1-1=1 AND " + randString + "=" + randString +
 		" or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -806,7 +806,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	paramValue = origValue + quoteChar + " OR 2+1-1+1=1 AND " + randString + "=" +
 		randString + " or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 	logger.Debug("%s", paramValue)
-	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -820,7 +820,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 		" or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 
 	logger.Debug("%s", paramValue)
-	testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -835,7 +835,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 		" or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 
 	logger.Debug("%s", paramValue)
-	testBody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -850,7 +850,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 		" or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 
 	logger.Debug("%s", paramValue)
-	testBody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -864,7 +864,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 		" or " + quoteChar + randStrLong + quoteChar + "=" + quoteChar
 
 	logger.Debug("%s", paramValue)
-	testBody10, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody10, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -907,14 +907,14 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	paramValue = strings.Replace(baseline, "${comparison}", randString+equalitySign+randString, 1)
 	//paramValue = baseline.replace("${comparison}", randString+equalitySign+randString)
 	logger.Debug("%s", paramValue)
-	origBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	origBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "2+1-1-1=0+0+0+1", 1)
 	logger.Debug("%s", paramValue)
-	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -927,7 +927,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 2 FALSE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3+1-1-1=0+0+0+1", 1)
 	logger.Debug("%s", paramValue)
-	testBody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -940,7 +940,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 3 FALSE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3+1-1-1=0+0+0+1", 1)
 	logger.Debug("%s", paramValue)
-	testBody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -953,7 +953,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 4 TRUE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2>(0+5+0+0)", 1)
 	logger.Debug("%s", paramValue)
-	testBody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -966,7 +966,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 5 TRUE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2>(0+5+0+0)", 1)
 	logger.Debug("%s", paramValue)
-	testBody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -978,7 +978,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 6 FALSE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3+1-1-1=1)", 1)
 	logger.Debug("%s", paramValue)
-	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -990,7 +990,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 7 FALSE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2=5 AND "+randString+equalitySign+randString, 1)
 	logger.Debug("%s", paramValue)
-	testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1003,7 +1003,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 8 TRUE	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2=6 AND "+randString+equalitySign+randString, 1)
 	logger.Debug("%s", paramValue)
-	testBody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1016,7 +1016,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 9 False	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2*0=6 AND "+randString+equalitySign+randString, 1)
 	logger.Debug("%s", paramValue)
-	testBody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1029,7 +1029,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	// test 10 true	  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "3*2*1=6 AND "+randString+equalitySign+randString, 1)
 	logger.Debug("%s", paramValue)
-	testBody10, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody10, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1109,12 +1109,12 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		logger.Debug("paramValue:%s", paramValue)
 		timeout := make(map[string]string)
 		timeout["timeout"] = string(timeOutSecs)
-		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
 			logger.Error("%s", err.Error())
 			return false
 		}
-		Time1 = float64(bsql.lastJob.responseDuration.Seconds())
+		Time1 = float64(bsql.lastJob.ResponseDuration.Seconds())
 		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time1)))
 		logger.Debug("Time1:", Time1)
 		if Time1 < bsql.longDuration*99/100 {
@@ -1131,12 +1131,12 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		logger.Debug("paramValue:%s", paramValue)
 		timeout := make(map[string]string)
 		timeout["timeout"] = string(timeOutSecs)
-		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
 			logger.Error("%s", err.Error())
 			return false
 		}
-		Time2 = float64(bsql.lastJob.responseDuration.Seconds())
+		Time2 = float64(bsql.lastJob.ResponseDuration.Seconds())
 		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time2)))
 		logger.Debug("Time2:", Time2)
 		if Time2 > zeroTimeOut {
@@ -1153,12 +1153,12 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		logger.Debug("paramValue:%s", paramValue)
 		timeout := make(map[string]string)
 		timeout["timeout"] = string(timeOutSecs)
-		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
 			logger.Error("%s", err.Error())
 			return false
 		}
-		Time3 = float64(bsql.lastJob.responseDuration.Seconds())
+		Time3 = float64(bsql.lastJob.ResponseDuration.Seconds())
 		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time3)))
 		logger.Debug("Time3:", Time3)
 		if Time3 < bsql.longDuration*99/100 {
@@ -1176,9 +1176,9 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		logger.Debug("paramValue:%s", paramValue)
 		timeout := make(map[string]string)
 		timeout["timeout"] = string(timeOutSecs)
-		_, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
+		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 
-		Time4 = float64(bsql.lastJob.responseDuration.Seconds())
+		Time4 = float64(bsql.lastJob.ResponseDuration.Seconds())
 		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time4)))
 		logger.Debug("Time4:", Time4)
 		if err != nil {
@@ -1284,7 +1284,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenNumbers(varIndex int, c
 		}
 
 		logger.Debug("paramValue %s", paramValue)
-		testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -1322,7 +1322,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, c
 		}
 		paramValue = randNum + strings.Repeat("'", i)
 		logger.Debug("paramValue %s", paramValue)
-		testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+		testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
 			logger.Error("%s", err.Error())
 		}
@@ -1353,7 +1353,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 	// [1]. test with a single quote -------------------------------------------------
 	var paramValue = randNum + "'"
 	logger.Debug("paramValue %s", paramValue)
-	feature, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	feature, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1367,7 +1367,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 	// [2]. test with two single quotes ------------------------------------------------
 	paramValue = randNum + "''"
 	logger.Debug("paramValue %s", paramValue)
-	feature1, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	feature1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1400,7 +1400,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = origValue + "'||'"
 	logger.Debug("%s", paramValue)
-	testBody, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 	}
@@ -1413,7 +1413,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 2 FALSE  -------------------------------------------------------------
 	paramValue = origValue + "'|||'"
 	logger.Debug("%s", paramValue)
-	testBody2, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1427,7 +1427,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 3 TRUE  -------------------------------------------------------------
 	paramValue = origValue + "'||''||'"
 	logger.Debug("%s", paramValue)
-	testBody3, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1441,7 +1441,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 4 FALSE   -------------------------------------------------------------
 	paramValue = origValue + "'||'" + randString + "'||'"
 	logger.Debug("%s", paramValue)
-	testBody4, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1455,7 +1455,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 5 TRUE   -------------------------------------------------------------
 	paramValue = "'||''||'" + origValue
 	logger.Debug("%s", paramValue)
-	testBody5, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1469,7 +1469,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 6 FALSE   -------------------------------------------------------------
 	paramValue = "'||''||'" + origValue
 	logger.Debug("%s", paramValue)
-	testBody6, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1483,7 +1483,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	// test 7 FALSE   -------------------------------------------------------------
 	paramValue = "'||''||'" + origValue
 	logger.Debug("%s", paramValue)
-	testBody7, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1497,7 +1497,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	//test 8 TRUE   -------------------------------------------------------------
 	paramValue = origValue[:1] + "'||'" + origValue[1:]
 	logger.Debug("%s", paramValue)
-	testBody8, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1511,7 +1511,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	//test 9 FALSE   -------------------------------------------------------------
 	paramValue = origValue[:1] + "'|a|'" + origValue[1:]
 	logger.Debug("%s", paramValue)
-	testBody9, err := bsql.layer.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
+	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
 		logger.Error("%s", err.Error())
 
@@ -1711,17 +1711,24 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 	variations, err = util.ParseUri(url, body, method, ContentType)
 	//赋值
 	BlindSQL.variations = variations
-	BlindSQL.layer.Sess = sess
+	BlindSQL.lastJob.Layer.Sess = sess
 	BlindSQL.TargetUrl = url
-	BlindSQL.layer.Method = method
-	BlindSQL.layer.ContentType = ContentType
-	BlindSQL.layer.Headers = headers
-	BlindSQL.layer.Body = body
+	BlindSQL.lastJob.Layer.Method = method
+	BlindSQL.lastJob.Layer.ContentType = ContentType
+	BlindSQL.lastJob.Layer.Headers = headers
+	BlindSQL.lastJob.Layer.Body = body
 
 	if BlindSQL.startTesting() {
 		println(hostid)
 		println("发现sql漏洞")
 		//....................
+		Result := util.VulnerableTcpOrUdpResult(url,
+			"sql Vulnerable",
+			[]string{string(BlindSQL.lastJob.Features.Request.String())},
+			[]string{string(BlindSQL.lastJob.Features.Response.String())},
+			"middle",
+			hostid)
+		return Result, err
 	}
 
 	return nil, err

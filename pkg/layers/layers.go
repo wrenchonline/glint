@@ -21,13 +21,19 @@ type Plreq struct {
 	Index       int
 }
 
+type LastJob struct {
+	Layer            Plreq
+	Features         MFeatures
+	ResponseDuration time.Duration
+}
+
 type MFeatures struct {
 	Index    int
 	Request  *fasthttp.Request
 	Response *fasthttp.Response
 }
 
-func (P *Plreq) Init(Proxy string, Cert string, PrivateKey string) {
+func (P *LastJob) Init(Proxy string, Cert string, PrivateKey string) {
 	util.Setup()
 	sess := fastreq.GetSessionByOptions(
 		&fastreq.ReqOptions{
@@ -37,20 +43,20 @@ func (P *Plreq) Init(Proxy string, Cert string, PrivateKey string) {
 			Cert:          Cert,
 			PrivateKey:    PrivateKey,
 		})
-	P.Sess = sess
-	P.Headers = make(map[string]string)
+	P.Layer.Sess = sess
+	P.Layer.Headers = make(map[string]string)
 }
 
-func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, error) {
+func (P *LastJob) RequestAll(originUrl string, paramValue string) ([]MFeatures, error) {
 	var features []MFeatures
-	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
+	origin, err := util.ParseUri(originUrl, P.Layer.Body, P.Layer.Method, P.Layer.ContentType)
 	if err != nil {
 		logger.Error("Plreq request error: %v", err)
 	}
-	originpayloads := origin.SetPayload(originUrl, paramValue, P.Method)
-	if strings.ToUpper(P.Method) == "POST" {
+	originpayloads := origin.SetPayload(originUrl, paramValue, P.Layer.Method)
+	if strings.ToUpper(P.Layer.Method) == "POST" {
 		for i, v := range originpayloads {
-			req, resp, err := P.Sess.Post(originUrl, P.Headers, []byte(v))
+			req, resp, err := P.Layer.Sess.Post(originUrl, P.Layer.Headers, []byte(v))
 			if err != nil {
 				logger.Error("Plreq request error: %v", err)
 				return nil, err
@@ -61,9 +67,9 @@ func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, er
 			f.Response = resp
 			features = append(features, *f)
 		}
-	} else if strings.ToUpper(P.Method) == "GET" {
+	} else if strings.ToUpper(P.Layer.Method) == "GET" {
 		for i, v := range originpayloads {
-			req, resp, err := P.Sess.Get(v, P.Headers)
+			req, resp, err := P.Layer.Sess.Get(v, P.Layer.Headers)
 			if err != nil {
 				logger.Error("Plreq request error: %v", err)
 				return nil, err
@@ -78,7 +84,7 @@ func (P *Plreq) RequestAll(originUrl string, paramValue string) ([]MFeatures, er
 	return features, nil
 }
 
-func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string, o ...map[string]string) (MFeatures, error) {
+func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o ...map[string]string) (MFeatures, error) {
 	var feature MFeatures
 	var Timeout int
 	var err error
@@ -88,20 +94,20 @@ func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string, o .
 			if err != nil {
 				panic(err.Error())
 			}
-			P.Sess.Timeout = time.Duration(Timeout) * time.Second
+			P.Layer.Sess.Timeout = time.Duration(Timeout) * time.Second
 		}
 	}
 
-	origin, err := util.ParseUri(originUrl, P.Body, P.Method, P.ContentType)
+	origin, err := util.ParseUri(originUrl, P.Layer.Body, P.Layer.Method, P.Layer.ContentType)
 	if err != nil {
 		panic(err)
 	}
 
-	originpayload := origin.SetPayloadByindex(idx, originUrl, paramValue, P.Method)
+	originpayload := origin.SetPayloadByindex(idx, originUrl, paramValue, P.Layer.Method)
 
-	if strings.ToUpper(P.Method) == "POST" {
+	if strings.ToUpper(P.Layer.Method) == "POST" {
 
-		req, resp, err := P.Sess.Post(originUrl, P.Headers, []byte(originpayload))
+		req, resp, err := P.Layer.Sess.Post(originUrl, P.Layer.Headers, []byte(originpayload))
 		if err != nil {
 			logger.Error("Plreq request error: %v", err)
 			return feature, err
@@ -110,10 +116,11 @@ func (P *Plreq) RequestByIndex(idx int, originUrl string, paramValue string, o .
 		feature.Index = idx
 		feature.Request = req
 		feature.Response = resp
+		P.Features = feature
 
-	} else if strings.ToUpper(P.Method) == "GET" {
+	} else if strings.ToUpper(P.Layer.Method) == "GET" {
 
-		req, resp, err := P.Sess.Get(originpayload, P.Headers)
+		req, resp, err := P.Layer.Sess.Get(originpayload, P.Layer.Headers)
 		if err != nil {
 			logger.Error("Plreq request error: %v", err)
 			return feature, err

