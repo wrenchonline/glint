@@ -57,6 +57,7 @@ type PluginOption struct {
 	Bstripurl    bool   //是否分开groupurl
 	HttpsCert    string //
 	HttpsCertKey string //
+	// XssTimeOut   time.Duration //xss扫描总超时
 }
 
 type GroupData struct {
@@ -69,6 +70,7 @@ type GroupData struct {
 	Msg          *chan map[string]interface{}
 	HttpsCert    string //
 	HttpsCertKey string //
+	// XssTimeOut   time.Duration //xss扫描总超时
 }
 
 func (p *Plugin) Init() {

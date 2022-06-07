@@ -351,9 +351,13 @@ type xssOcc struct {
 	Htmls []string
 }
 
-func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab *brohttp.Tab, ctx context.Context, hostid int64) (*util.ScanResult, error) {
+func DoCheckXss(
+	GroupUrlsReponseInfo []map[int]interface{},
+	playload string,
+	tab *brohttp.Tab,
+	ctx context.Context,
+	hostid int64) (*util.ScanResult, error) {
 	g := new(Generator)
-
 	var (
 		htmlok     bool
 		attibuteoK bool
@@ -371,6 +375,12 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
+		default:
+		}
+
+		select {
+		case <-(*tab.Ctx).Done():
+			return nil, (*tab.Ctx).Err()
 		default:
 		}
 
@@ -404,6 +414,18 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 			}
 
 			for {
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				default:
+				}
+
+				select {
+				case <-(*tab.Ctx).Done():
+					return nil, (*tab.Ctx).Err()
+				default:
+				}
+
 				payload, Evalmode, tag := g.GetPayloadValue()
 				if payload == "" {
 					break
@@ -414,6 +436,7 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 				if len(urlocc.OCC) > 0 {
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
 					tab.CopyRequest(urlocc.Request)
+
 					response, err := tab.CheckPayloadLocation(payload)
 					if err != nil {
 						return nil, err
@@ -427,9 +450,16 @@ func DoCheckXss(GroupUrlsReponseInfo []map[int]interface{}, playload string, tab
 
 	for _, occ := range Occs {
 		for _, html := range occ.Htmls {
+
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
+			default:
+			}
+
+			select {
+			case <-(*tab.Ctx).Done():
+				return nil, (*tab.Ctx).Err()
 			default:
 			}
 

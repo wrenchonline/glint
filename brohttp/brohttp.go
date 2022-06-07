@@ -327,9 +327,9 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	if TaskConfig.Proxy != "" {
 		options = append(options, chromedp.Flag("proxy-server", TaskConfig.Proxy))
 	}
-
-	c, cancel := chromedp.NewExecAllocator(context.Background(), options...)
-	ctx, cancel := chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Hour/2))
+	c, cancel := chromedp.NewExecAllocator(ctx, options...)
+	ctx, cancel = chromedp.NewContext(c) // chromedp.WithDebugf(logger.Info)
 	spider.Cancel = &cancel
 	spider.Ctx = &ctx
 	spider.TabTimeOut = int64(TaskConfig.TabRunTimeout * time.Second)
