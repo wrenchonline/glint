@@ -1719,16 +1719,32 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 	BlindSQL.lastJob.Layer.Body = body
 
 	if BlindSQL.startTesting() {
-		println(hostid)
-		println("发现sql漏洞")
+		// println(hostid)
+		// println("发现sql漏洞")
 		//....................
 		Result := util.VulnerableTcpOrUdpResult(url,
-			"sql Vulnerable",
+			"sql inject Vulnerable",
 			[]string{string(BlindSQL.lastJob.Features.Request.String())},
 			[]string{string(BlindSQL.lastJob.Features.Response.String())},
-			"middle",
+			"high",
 			hostid)
 		return Result, err
+	} else {
+		errtester := ClassSQLErrorMessages{
+			TargetUrl:  url,
+			LastJob:    &BlindSQL.lastJob,
+			variations: BlindSQL.variations,
+		}
+		if errtester.startTesting() {
+			Result := util.VulnerableTcpOrUdpResult(url,
+				"sql error inject Vulnerable",
+				[]string{string(errtester.LastJob.Features.Request.String())},
+				[]string{string(errtester.LastJob.Features.Response.String())},
+				"high",
+				hostid)
+			return Result, err
+		}
+
 	}
 
 	return nil, err

