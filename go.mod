@@ -3,6 +3,7 @@ module glint
 go 1.16
 
 require (
+	github.com/Ullaakut/nmap/v2 v2.2.0 // indirect
 	github.com/beevik/etree v1.1.0
 	github.com/chromedp/cdproto v0.0.0-20220428002153-285dfb42699c
 	github.com/chromedp/chromedp v0.8.1
