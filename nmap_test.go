@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -17,8 +18,9 @@ func Test_nmap(t *testing.T) {
 	// Equivalent to `/usr/local/bin/nmap -p 80,443,843 google.com facebook.com youtube.com`,
 	// with a 5 minute timeout.
 	scanner, err := nmap.NewScanner(
-		nmap.WithTargets("google.com", "facebook.com", "youtube.com"),
-		nmap.WithPorts("80,443,843"),
+		nmap.WithTargets("bilibili.com"),
+		nmap.WithPorts("443"),
+		nmap.WithScripts("ssl-enum-ciphers"),
 		nmap.WithContext(ctx),
 	)
 	if err != nil {
@@ -33,6 +35,7 @@ func Test_nmap(t *testing.T) {
 	if warnings != nil {
 		log.Printf("Warnings: \n %v", warnings)
 	}
+	var buf bytes.Buffer
 
 	// Use the results to print an example output
 	for _, host := range result.Hosts {
@@ -41,10 +44,12 @@ func Test_nmap(t *testing.T) {
 		}
 
 		fmt.Printf("Host %q:\n", host.Addresses[0])
-
 		for _, port := range host.Ports {
 			fmt.Printf("\tPort %d/%s %s %s\n", port.ID, port.Protocol, port.State, port.Service.Name)
 		}
+		rawXml := result.ToReader()
+		buf.ReadFrom(rawXml)
+		fmt.Printf("raw XMl:%s", buf.String())
 	}
 
 	fmt.Printf("Nmap done: %d hosts up scanned in %3f seconds\n", len(result.Hosts), result.Stats.Finished.Elapsed)

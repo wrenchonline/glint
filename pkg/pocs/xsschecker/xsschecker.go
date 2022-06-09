@@ -509,9 +509,15 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	}
 	defer tab.Close()
 
-	if _, ok := (*Spider.Ctx).Deadline(); ok {
-		logger.Warning("xss spider is dead")
+	// if _, ok := (*Spider.Ctx).Deadline(); ok {
+	// 	logger.Warning("xss spider has dead")
+	// 	goto quit
+	// }
+
+	select {
+	case <-(*Spider.Ctx).Done():
 		goto quit
+	default:
 	}
 
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {

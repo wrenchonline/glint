@@ -37,14 +37,14 @@ xss:
     ]
   script:
     [
-      {
-      PayLoad: "javascript:console.log('flag')",
-      CheckTag: "",
-      CheckType: "Console",
-      },
-      {
-      PayLoad: "';alert(flag);//",
-      CheckTag: "",
-      CheckType: "Dialog",
-      },
+      # {
+      # PayLoad: "javascript:console.log('flag')",
+      # CheckTag: "",
+      # CheckType: "Console",
+      # },
+      # {
+      # PayLoad: "';alert(flag);//",
+      # CheckTag: "",
+      # CheckType: "Dialog",
+      # },
     ]
