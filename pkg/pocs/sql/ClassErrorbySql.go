@@ -169,7 +169,10 @@ func encodeStringAsChar(str string, separator string) string {
 }
 
 func (errsql *ClassSQLErrorMessages) TestInjection(index int, value string, confirmData []string) bool {
-
+	_, err := errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, value)
+	if err != nil {
+		return false
+	}
 	matchedText := errsql.searchOnText(errsql.LastJob.Features.Response.String())
 	if matchedText != "" {
 		for _, data := range confirmData {
