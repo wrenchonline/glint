@@ -23,6 +23,7 @@ func Test_nmap(t *testing.T) {
 		nmap.WithScripts("ssl-enum-ciphers"),
 		nmap.WithContext(ctx),
 	)
+
 	if err != nil {
 		log.Fatalf("unable to create nmap scanner: %v", err)
 	}

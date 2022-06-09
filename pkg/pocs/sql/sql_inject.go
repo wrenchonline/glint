@@ -23,7 +23,7 @@ var letterFrequency = [...]int{
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 49, 71, 49, 0, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 116, 30, 64, 60, 218, 24, 34, 72, 105, 5, 16, 68, 56, 101, 127, 46, 0, 110, 123, 139, 57, 19, 44, 4, 35, 1, 0, 0, 0, 0, 0,
 }
 
-var DefaultProxy = "127.0.0.1:7777"
+var DefaultProxy = ""
 var cert string
 var mkey string
 
@@ -1602,59 +1602,62 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 		bsql.origValue = "1"
 		bsql.isNumeric = true
 	}
-	for _, p := range bsql.variations.Params {
-		if bsql.foundVulnOnVariation {
-			break
-		}
-		if !bsql.checkIfResponseIsStable(p.Index) {
-			return false
-		}
-		var doBooleanTests = true
-		// var doTimingTests = true
-		// var doTimingTestsMySQL = true
-		// var doTimingTestsMySQLBenchmark = false
-		// var doTimingTestsMSSQL = true
-		// var doTimingTestsMSSQLExtra = false
-		// var doTimingTestsPostgreSQL = true
-		// var doTimingTestsPostgreSQLExtra = false
-		// var doTimingTestsOracle = true
-		// var doTimingTestsRails = true
-		// var doOOBTests = false
-		// var doOddEvenTests = false
-		if doBooleanTests {
-			// boolean tests
-			if bsql.inputIsStable {
-				// numeric
-				if bsql.isNumeric && bsql.testInjection(p.Index, "", false) {
-					return true
-				}
-				// single quote
-				if bsql.testInjection(p.Index, "'", false) {
-					return true
-				}
-				// double quote
-				if bsql.testInjection(p.Index, `"`, false) {
-					return true
-				}
-				// single quote, inside like
-				if bsql.testInjection(p.Index, "'", true) {
-					return true
-				}
-				// no quotes
-				// if (this.testInjectionWithOR(i, '')) return true;
-				// no quotes (don't comment rest of query)
-				if bsql.testInjectionWithOR(p.Index, "'", true) {
-					return true
-				}
-				// string concatenation PostgreSQL, Oracle (doesn't work on MySQL)
-				if !bsql.isNumeric && bsql.origValue != "" && len(bsql.origValue) >= 2 && bsql.testInjectionStringConcatenation(p.Index) {
-					return true
-				}
-				// for special named parameters make the order/group by tests
+	if bsql.variations != nil {
+		for _, p := range bsql.variations.Params {
+			if bsql.foundVulnOnVariation {
+				break
+			}
+			if !bsql.checkIfResponseIsStable(p.Index) {
+				return false
+			}
+			var doBooleanTests = true
+			// var doTimingTests = true
+			// var doTimingTestsMySQL = true
+			// var doTimingTestsMySQLBenchmark = false
+			// var doTimingTestsMSSQL = true
+			// var doTimingTestsMSSQLExtra = false
+			// var doTimingTestsPostgreSQL = true
+			// var doTimingTestsPostgreSQLExtra = false
+			// var doTimingTestsOracle = true
+			// var doTimingTestsRails = true
+			// var doOOBTests = false
+			// var doOddEvenTests = false
+			if doBooleanTests {
+				// boolean tests
+				if bsql.inputIsStable {
+					// numeric
+					if bsql.isNumeric && bsql.testInjection(p.Index, "", false) {
+						return true
+					}
+					// single quote
+					if bsql.testInjection(p.Index, "'", false) {
+						return true
+					}
+					// double quote
+					if bsql.testInjection(p.Index, `"`, false) {
+						return true
+					}
+					// single quote, inside like
+					if bsql.testInjection(p.Index, "'", true) {
+						return true
+					}
+					// no quotes
+					// if (this.testInjectionWithOR(i, '')) return true;
+					// no quotes (don't comment rest of query)
+					if bsql.testInjectionWithOR(p.Index, "'", true) {
+						return true
+					}
+					// string concatenation PostgreSQL, Oracle (doesn't work on MySQL)
+					if !bsql.isNumeric && bsql.origValue != "" && len(bsql.origValue) >= 2 && bsql.testInjectionStringConcatenation(p.Index) {
+						return true
+					}
+					// for special named parameters make the order/group by tests
 
+				}
 			}
 		}
 	}
+
 	return false
 }
 
@@ -1724,26 +1727,27 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 		//....................
 		Result := util.VulnerableTcpOrUdpResult(url,
 			"sql inject Vulnerable",
-			[]string{string(BlindSQL.lastJob.Features.Request.String())},
-			[]string{string(BlindSQL.lastJob.Features.Response.String())},
+			[]string{string(BlindSQL.trueFeatures.Request.String())},
+			[]string{string(BlindSQL.trueFeatures.Response.String())},
 			"high",
 			hostid)
 		return Result, err
 	} else {
-		errtester := ClassSQLErrorMessages{
-			TargetUrl:  url,
-			LastJob:    &BlindSQL.lastJob,
-			variations: BlindSQL.variations,
-		}
-		if errtester.startTesting() {
-			Result := util.VulnerableTcpOrUdpResult(url,
-				"sql error inject Vulnerable",
-				[]string{string(errtester.LastJob.Features.Request.String())},
-				[]string{string(errtester.LastJob.Features.Response.String())},
-				"high",
-				hostid)
-			return Result, err
-		}
+		// errtester := ClassSQLErrorMessages{
+		// 	TargetUrl:  url,
+		// 	LastJob:    &BlindSQL.lastJob,
+		// 	variations: BlindSQL.variations,
+		// }
+		// if errtester.startTesting() {
+
+		// 	Result := util.VulnerableTcpOrUdpResult(url,
+		// 		"sql error inject Vulnerable",
+		// 		[]string{string(errtester.LastJob.Features.Request.String())},
+		// 		[]string{string(errtester.LastJob.Features.Response.String())},
+		// 		"high",
+		// 		hostid)
+		// 	return Result, err
+		// }
 
 	}
 

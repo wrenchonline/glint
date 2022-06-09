@@ -43,9 +43,9 @@ func TestSqlBlind(t *testing.T) {
 }
 
 func TestSqlBlindError(t *testing.T) {
-	logger.DebugEnable(true)
+	logger.DebugEnable(false)
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/sql_error.json")
+	data, _ := config.ReadResultConf("./json_file/result2.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, sql.Sql_inject_Vaild)
 	pluginInternal := plugin.Plugin{
@@ -53,7 +53,7 @@ func TestSqlBlindError(t *testing.T) {
 		PluginId:     plugin.SQL,
 		MaxPoolCount: 5,
 		Callbacks:    myfunc,
-		Timeout:      99 * time.Second,
+		Timeout:      999 * time.Second,
 	}
 	pluginInternal.Init()
 	PluginWg.Add(1)

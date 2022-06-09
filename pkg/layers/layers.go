@@ -29,8 +29,8 @@ type LastJob struct {
 
 type MFeatures struct {
 	Index    int
-	Request  *fasthttp.Request
-	Response *fasthttp.Response
+	Request  fasthttp.Request
+	Response fasthttp.Response
 }
 
 func (P *LastJob) Init(Proxy string, Cert string, PrivateKey string) {
@@ -63,8 +63,8 @@ func (P *LastJob) RequestAll(originUrl string, paramValue string) ([]MFeatures, 
 			}
 			f := new(MFeatures)
 			f.Index = i
-			f.Request = req
-			f.Response = resp
+			f.Request = *req
+			f.Response = *resp
 			features = append(features, *f)
 		}
 	} else if strings.ToUpper(P.Layer.Method) == "GET" {
@@ -76,8 +76,8 @@ func (P *LastJob) RequestAll(originUrl string, paramValue string) ([]MFeatures, 
 			}
 			f := new(MFeatures)
 			f.Index = i
-			f.Request = req
-			f.Response = resp
+			f.Request = *req
+			f.Response = *resp
 			features = append(features, *f)
 		}
 	}
@@ -114,8 +114,8 @@ func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o
 		}
 
 		feature.Index = idx
-		feature.Request = req
-		feature.Response = resp
+		feature.Request = *req
+		feature.Response = *resp
 		P.Features = feature
 
 	} else if strings.ToUpper(P.Layer.Method) == "GET" {
@@ -126,8 +126,8 @@ func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o
 			return feature, err
 		}
 		feature.Index = idx
-		feature.Request = req
-		feature.Response = resp
+		feature.Request = *req
+		feature.Response = *resp
 	}
 
 	return feature, nil

@@ -236,26 +236,31 @@ func (errsql *ClassSQLErrorMessages) TestInjection(index int, value string, conf
 }
 
 func (errsql *ClassSQLErrorMessages) testForError() bool {
-	if errsql.searchOnText(errsql.LastJob.Features.Response.String()) == "" {
-		return false
+	if errsql.LastJob != nil {
+		if errsql.searchOnText(errsql.LastJob.Features.Response.String()) == "" {
+			return false
+		}
 	}
 	return true
 }
 
 func (errsql *ClassSQLErrorMessages) startTesting() bool {
-	for _, p := range errsql.variations.Params {
-		if !errsql.testForError() {
-			return true
-		}
-		if !errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {
-			return true
-		}
-		if !errsql.TestInjection(p.Index, "1\x00\xc0\xa7\xc0\xa2%2527%2522", []string{"", "'", `"`}) {
-			return true
-		}
-		if !errsql.TestInjection(p.Index, "@@"+util.RandStr(8), []string{"", "'", `"`}) {
-			return true
+	if errsql.variations != nil {
+		for _, p := range errsql.variations.Params {
+			if !errsql.testForError() {
+				return true
+			}
+			if !errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {
+				return true
+			}
+			if !errsql.TestInjection(p.Index, "1\x00\xc0\xa7\xc0\xa2%2527%2522", []string{"", "'", `"`}) {
+				return true
+			}
+			if !errsql.TestInjection(p.Index, "@@"+util.RandStr(8), []string{"", "'", `"`}) {
+				return true
+			}
 		}
 	}
+
 	return false
 }
