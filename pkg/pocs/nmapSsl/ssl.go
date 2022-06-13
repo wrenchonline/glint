@@ -1,8 +1,9 @@
-package nmap_ssl
+package nmapSsl
 
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/plugin"
@@ -15,11 +16,14 @@ import (
 )
 
 var DefaultProxy = ""
-var cert string
-var mkey string
 
-func ssl_verify(args interface{}) (*util.ScanResult, error) {
+// var cert string
+// var mkey string
+
+func Sslverify(args interface{}) (*util.ScanResult, error) {
 	util.Setup()
+	var hostid int64
+
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	ctx := *group.Pctx
@@ -45,6 +49,13 @@ func ssl_verify(args interface{}) (*util.ScanResult, error) {
 	// 		Cert:          cert,
 	// 		PrivateKey:    mkey,
 	// 	})
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -84,13 +95,22 @@ func ssl_verify(args interface{}) (*util.ScanResult, error) {
 		rawXml := result.ToReader()
 		buf.ReadFrom(rawXml)
 		fmt.Printf("raw XMl:%s", buf.String())
-		if funk.Contains(buf.String(), "TLSV0") {
+		if funk.Contains(buf.String(), "TLSv1.0") {
 			Result := util.VulnerableTcpOrUdpResult(url,
 				"TLSV0 has enable",
 				[]string{string("")},
 				[]string{string("")},
 				"high",
-				session["hostid"].(int64))
+				hostid)
+			return Result, nil
+		}
+		if funk.Contains(buf.String(), "TLSv1.1") {
+			Result := util.VulnerableTcpOrUdpResult(url,
+				"TLSV1 has enable",
+				[]string{string("")},
+				[]string{string("")},
+				"middle",
+				hostid)
 			return Result, nil
 		}
 	}

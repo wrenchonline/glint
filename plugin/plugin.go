@@ -25,6 +25,7 @@ const (
 	Crlf      Plugin_type = "rj-007-0001"
 	CORS      Plugin_type = "rj-008-0001"
 	SQL       Plugin_type = "rj-009-0001"
+	TLS       Plugin_type = "rj-010-0001"
 )
 
 type Plugin struct {
