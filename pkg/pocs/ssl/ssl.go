@@ -5,13 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"glint/fastreq"
 	"glint/plugin"
 	"glint/util"
 	"log"
 	"time"
 
 	"github.com/Ullaakut/nmap/v2"
+	"github.com/thoas/go-funk"
 )
 
 var DefaultProxy = ""
@@ -32,19 +32,19 @@ func ssl_verify(args interface{}) (*util.ScanResult, error) {
 
 	session := group.GroupUrls.(map[string]interface{})
 	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
-			Timeout:       2 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
-		})
+	// method := session["method"].(string)
+	// headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	// body := []byte(session["data"].(string))
+	// cert = group.HttpsCert
+	// mkey = group.HttpsCertKey
+	// sess := fastreq.GetSessionByOptions(
+	// 	&fastreq.ReqOptions{
+	// 		Timeout:       2 * time.Second,
+	// 		AllowRedirect: true,
+	// 		Proxy:         DefaultProxy,
+	// 		Cert:          cert,
+	// 		PrivateKey:    mkey,
+	// 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -84,6 +84,15 @@ func ssl_verify(args interface{}) (*util.ScanResult, error) {
 		rawXml := result.ToReader()
 		buf.ReadFrom(rawXml)
 		fmt.Printf("raw XMl:%s", buf.String())
+		if funk.Contains(buf.String(), "TLSV0") {
+			Result := util.VulnerableTcpOrUdpResult(url,
+				"TLSV0 has enable",
+				[]string{string("")},
+				[]string{string("")},
+				"high",
+				session["hostid"].(int64))
+			return Result, nil
+		}
 	}
 	return nil, errors.New("not found")
 }
