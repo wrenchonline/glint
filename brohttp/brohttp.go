@@ -60,6 +60,8 @@ func (r *RWCount) Set(count int) {
 type Tab struct {
 	Ctx           *context.Context
 	Cancel        *context.CancelFunc
+	PackCtx       *context.Context
+	PackCancel    *context.CancelFunc
 	Responses     chan []map[string]string
 	ReqMode       string
 	PostData      []byte
