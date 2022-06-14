@@ -43,9 +43,9 @@ func TestSqlBlind(t *testing.T) {
 }
 
 func TestSqlBlindError(t *testing.T) {
-	logger.DebugEnable(false)
+	logger.DebugEnable(true)
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/result2.json")
+	data, _ := config.ReadResultConf("./json_file/sql_error.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, sql.Sql_inject_Vaild)
 	pluginInternal := plugin.Plugin{

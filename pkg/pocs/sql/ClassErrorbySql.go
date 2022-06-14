@@ -111,6 +111,7 @@ type ClassSQLErrorMessages struct {
 	FalsePositivesPlainArray []string
 	LastJob                  *layers.LastJob
 	variations               *util.PostData
+	trueFeatures             layers.MFeatures
 	// layer                    *layers.Plreq
 }
 
@@ -169,7 +170,8 @@ func encodeStringAsChar(str string, separator string) string {
 }
 
 func (errsql *ClassSQLErrorMessages) TestInjection(index int, value string, confirmData []string) bool {
-	_, err := errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, value)
+	feature, err := errsql.LastJob.RequestByIndex(index, errsql.TargetUrl, value)
+	errsql.trueFeatures = feature
 	if err != nil {
 		return false
 	}
@@ -250,7 +252,7 @@ func (errsql *ClassSQLErrorMessages) testForError() bool {
 func (errsql *ClassSQLErrorMessages) startTesting() bool {
 	if errsql.variations != nil {
 		for _, p := range errsql.variations.Params {
-			if !errsql.testForError() {
+			if errsql.testForError() {
 				return true
 			}
 			if !errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {

@@ -1611,7 +1611,7 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 				return false
 			}
 			var doBooleanTests = true
-			// var doTimingTests = true
+			var doTimingTests = true
 			// var doTimingTestsMySQL = true
 			// var doTimingTestsMySQLBenchmark = false
 			// var doTimingTestsMSSQL = true
@@ -1654,6 +1654,11 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 					// for special named parameters make the order/group by tests
 
 				}
+			}
+			if doTimingTests {
+				// if bsql.inputIsStable {
+				// 	prioDBMS = calcDMBSPriorities()
+				// }
 			}
 		}
 	}
@@ -1733,21 +1738,21 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 			hostid)
 		return Result, err
 	} else {
-		// errtester := ClassSQLErrorMessages{
-		// 	TargetUrl:  url,
-		// 	LastJob:    &BlindSQL.lastJob,
-		// 	variations: BlindSQL.variations,
-		// }
-		// if errtester.startTesting() {
+		errtester := ClassSQLErrorMessages{
+			TargetUrl:  url,
+			LastJob:    &BlindSQL.lastJob,
+			variations: BlindSQL.variations,
+		}
+		if errtester.startTesting() {
 
-		// 	Result := util.VulnerableTcpOrUdpResult(url,
-		// 		"sql error inject Vulnerable",
-		// 		[]string{string(errtester.LastJob.Features.Request.String())},
-		// 		[]string{string(errtester.LastJob.Features.Response.String())},
-		// 		"high",
-		// 		hostid)
-		// 	return Result, err
-		// }
+			Result := util.VulnerableTcpOrUdpResult(url,
+				"sql error inject Vulnerable",
+				[]string{string(errtester.trueFeatures.Request.String())},
+				[]string{string(errtester.trueFeatures.Response.String())},
+				"high",
+				hostid)
+			return Result, err
+		}
 
 	}
 

@@ -103,6 +103,7 @@ func OutputVulnerable(ScanResult *ScanResult) {
 	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("target:"), aurora.Green(ScanResult.Target)))
 	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("Output:"), aurora.Cyan(ScanResult.Output)))
 	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("ReqMsg:"), aurora.Magenta(ScanResult.ReqMsg)))
+	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("respMsg:"), aurora.Magenta(ScanResult.RespMsg)))
 	fmt.Println(aurora.Sprintf("%s %s", aurora.Yellow("VulnerableLevel:"), aurora.Red(ScanResult.VulnerableLevel)))
 	fmt.Println(aurora.Yellow("***********************************"))
 
