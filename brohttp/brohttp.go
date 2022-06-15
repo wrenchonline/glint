@@ -1,16 +1,14 @@
 package brohttp
 
 import (
-	"container/list"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	ast "glint/ast"
 	"glint/config"
 	"glint/logger"
 	"glint/util"
-	"log"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -114,58 +112,28 @@ func (t *Tab) GetExecutor() context.Context {
 }
 
 // process requests and return a structured data
-func processRequest(r *network.EventRequestWillBeSent) *hRequest {
-	req := hRequest{}
-	// http method
-	req.Method = r.Request.Method
-	// http request url
-	req.URL = r.Request.URL
-	// http version.
-	req.HTTPVersion = ""
-	// Associated headers for the request.
-	req.Headers = []*har.NameValuePair{}
-	// headers from the *network.EventRequestWillBeSent are in the form,
-	// map[key:value]. this needs to be converted to the form of a
-	// har.NameValuePair
-	for header := range r.Request.Headers {
-		h := har.NameValuePair{}
-		h.Name = header
-		h.Value = r.Request.Headers[header].(string)
-		req.Headers = append(req.Headers, &h)
-	}
-	// Store cookie details.
-	req.Cookies = []*har.Cookie{}
-	// Url Query stirngs details.
-	req.QueryString = []*har.NameValuePair{}
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		log.Printf("[E] Invalid URL data recived : %v", err)
-	}
-	// Query strings are of the format name = []values when
-	// received from the network.EventRequestWillBeSent. This
-	// needs to be converted to the form of multiple name, value
-	// pairs.
-	for name := range u.Query() {
-		if len(name) != 0 {
-			values := u.Query()[name]
-			for _, val := range values {
-				req.QueryString = append(req.QueryString, &har.NameValuePair{
-					Name:  name,
-					Value: val,
-				})
-			}
+func Processequest(r *network.EventRequestWillBeSent) *http.Request {
+	//req := http.Request{}
+	var req *http.Request
+	var err error
+	if r.Request.HasPostData {
+		req, err = http.NewRequest(r.Request.Method, r.Request.URL, strings.NewReader(r.Request.PostData))
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	} else {
+		req, err = http.NewRequest(r.Request.Method, r.Request.URL, nil)
+		if err != nil {
+			logger.Error(err.Error())
 		}
 	}
-	// req.Postdata points to the post data.
-	req.PostData = nil
-	//if req.Method == "POST" {
-	//// Process the post data of the form *har.PostData
-	//}
-	log.Printf("Post Data : %s", r.Request.PostData)
-	// TODO : to implement headersize and bodySize for the request
-	req.HeadersSize = 0
-	req.BodySize = 0
-	return &req
+
+	for header := range r.Request.Headers {
+		req.Header[header] = []string{r.Request.Headers[header].(string)}
+	}
+	// req.Body.Read([]byte(r.Request.PostData))
+
+	return req
 }
 
 func NewTab(spider *Spider) (*Tab, error) {
@@ -302,7 +270,6 @@ func (t *Tab) ListenTarget() {
 					return
 				default:
 				}
-
 				req := fetch.ContinueRequest(ev.RequestID)
 				// req.URL = spider.Url.String()
 				req.Headers = []*fetch.HeaderEntry{}
@@ -415,7 +382,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (t *Tab) Send() ([]string, error) {
 	var htmls []string
-	nRequests := list.New()
+	//nRequests := list.New()
 	//nResponses := list.New()
 
 	//var res string
@@ -479,16 +446,16 @@ func (t *Tab) Send() ([]string, error) {
 		}
 	}
 
-	for e := nRequests.Front(); e != nil; e = e.Next() {
-		r := e.Value.(map[network.RequestID]*hRequest)
-		for k := range r {
-			e, err := json.Marshal(r[k])
-			if err != nil {
-				log.Printf("Error : %v\n", err)
-			}
-			log.Printf("\n%s\n", string(e))
-		}
-	}
+	// for e := nRequests.Front(); e != nil; e = e.Next() {
+	// 	r := e.Value.(map[network.RequestID]*hRequest)
+	// 	for k := range r {
+	// 		e, err := json.Marshal(r[k])
+	// 		if err != nil {
+	// 			log.Printf("Error : %v\n", err)
+	// 		}
+	// 		log.Printf("\n%s\n", string(e))
+	// 	}
+	// }
 
 	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)

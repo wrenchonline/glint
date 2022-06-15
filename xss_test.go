@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"glint/ast"
 	brohttp "glint/brohttp"
@@ -16,10 +17,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/martian/v3/har"
 	"github.com/k0kubun/go-ansi"
 	. "github.com/logrusorgru/aurora"
 	"github.com/mitchellh/colorstring"
 	"github.com/thoas/go-funk"
+	"github.com/valyala/bytebufferpool"
 )
 
 func TestXSS(t *testing.T) {
@@ -141,4 +144,35 @@ func Test_JS(t *testing.T) {
 	if sourceFound && sinkFound {
 		colorstring.Fprintf(io, "[red] 发现DOM XSS漏洞,该对应参考payload代码应由研究人员构造 \n")
 	}
+}
+
+type httpWriter interface {
+	Write(w *bufio.Writer) error
+}
+
+func getHTTPString(hw httpWriter) string {
+	w := bytebufferpool.Get()
+	bw := bufio.NewWriter(w)
+	if err := hw.Write(bw); err != nil {
+		return err.Error()
+	}
+	if err := bw.Flush(); err != nil {
+		return err.Error()
+	}
+	s := string(w.B)
+	bytebufferpool.Put(w)
+	return s
+}
+
+func Test_har_log(t *testing.T) {
+
+	var nhreq har.Request
+	nhreq.HTTPVersion = "HTTP/1.1"
+	nhreq.Method = "POST"
+	nhreq.URL = "http://localhost:5451"
+	req, _ := http.NewRequest("GET", "http://api.themoviedb.org/3/tv/popular", nil)
+	req.Header.Add("Accept", "application/json")
+	// getHTTPString(&req)
+	// httputil.DumpRequest()
+
 }
