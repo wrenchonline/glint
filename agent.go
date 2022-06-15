@@ -120,7 +120,7 @@ func (s *SProxy) Run() error {
 
 	if GenerateCA {
 		var err error
-		x509c, priv, err = mitm.NewAuthority("rsf.proxy", "Martian Authority", 365*24*time.Hour)
+		x509c, priv, err = mitm.NewAuthority("martian.proxy", "Martian Authority", 365*24*time.Hour)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -1,13 +1,16 @@
 package brohttp
 
 import (
+	"container/list"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	ast "glint/ast"
 	"glint/config"
 	"glint/logger"
 	"glint/util"
+	"log"
 	"net/url"
 	"strings"
 	"sync"
@@ -15,11 +18,18 @@ import (
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
+	"github.com/chromedp/cdproto/har"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 )
+
+type nvPair har.NameValuePair
+type hRequest har.Request
+type hResponse har.Response
+
+var start = time.Now()
 
 //Headers_IMPORTMENT
 var headers_importment = []string{
@@ -101,6 +111,61 @@ func (t *Tab) GetExecutor() context.Context {
 	c := chromedp.FromContext(*t.Ctx)
 	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 	return ctx
+}
+
+// process requests and return a structured data
+func processRequest(r *network.EventRequestWillBeSent) *hRequest {
+	req := hRequest{}
+	// http method
+	req.Method = r.Request.Method
+	// http request url
+	req.URL = r.Request.URL
+	// http version.
+	req.HTTPVersion = ""
+	// Associated headers for the request.
+	req.Headers = []*har.NameValuePair{}
+	// headers from the *network.EventRequestWillBeSent are in the form,
+	// map[key:value]. this needs to be converted to the form of a
+	// har.NameValuePair
+	for header := range r.Request.Headers {
+		h := har.NameValuePair{}
+		h.Name = header
+		h.Value = r.Request.Headers[header].(string)
+		req.Headers = append(req.Headers, &h)
+	}
+	// Store cookie details.
+	req.Cookies = []*har.Cookie{}
+	// Url Query stirngs details.
+	req.QueryString = []*har.NameValuePair{}
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		log.Printf("[E] Invalid URL data recived : %v", err)
+	}
+	// Query strings are of the format name = []values when
+	// received from the network.EventRequestWillBeSent. This
+	// needs to be converted to the form of multiple name, value
+	// pairs.
+	for name := range u.Query() {
+		if len(name) != 0 {
+			values := u.Query()[name]
+			for _, val := range values {
+				req.QueryString = append(req.QueryString, &har.NameValuePair{
+					Name:  name,
+					Value: val,
+				})
+			}
+		}
+	}
+	// req.Postdata points to the post data.
+	req.PostData = nil
+	//if req.Method == "POST" {
+	//// Process the post data of the form *har.PostData
+	//}
+	log.Printf("Post Data : %s", r.Request.PostData)
+	// TODO : to implement headersize and bodySize for the request
+	req.HeadersSize = 0
+	req.BodySize = 0
+	return &req
 }
 
 func NewTab(spider *Spider) (*Tab, error) {
@@ -262,6 +327,8 @@ func (t *Tab) ListenTarget() {
 				if err := req.Do(ctx); err != nil {
 					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
+
+				// network.GetRequestPostData()
 			}()
 		case *network.EventRequestWillBeSent:
 			//fmt.Println(aurora.Sprintf("EventRequestWillBeSent==>  url: %s requestid: %s", aurora.Red(ev.Request.URL), aurora.Red(ev.RequestID)))
@@ -278,24 +345,23 @@ func (t *Tab) ListenTarget() {
 			// }
 
 		case *network.EventLoadingFinished:
-
-		case *network.EventResponseReceived:
-
-			go func(ev *network.EventResponseReceived) {
+			go func(ev *network.EventLoadingFinished) {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 				select {
 				case <-(*t.PackCtx).Done():
+					fmt.Printf("超时或者超出次数，取消发包")
 					return
 				default:
 				}
 				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
 				if e != nil {
-					fmt.Printf("network.EventResponseReceived error: %v", e)
+					fmt.Printf("network.EventLoadingFinished error: %v", e)
 					return
 				}
 				t.Source <- string(data)
 			}(ev)
+		case *network.EventResponseReceived:
 
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
@@ -349,6 +415,9 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (t *Tab) Send() ([]string, error) {
 	var htmls []string
+	nRequests := list.New()
+	//nResponses := list.New()
+
 	//var res string
 	// Ctx := t.GetExecutor()
 	// tCtx, cancel := context.WithTimeout(Ctx, time.Second*2)
@@ -401,13 +470,26 @@ func (t *Tab) Send() ([]string, error) {
 	for i := 0; i < 2; i++ {
 		if i == 1 {
 			(*t.PackCancel)()
+			break
 		}
 		select {
 		case html := <-t.Source:
 			htmls = append(htmls, html)
-		case <-time.After(time.Second * 5):
+		case <-time.After(time.Second * 3):
 		}
 	}
+
+	for e := nRequests.Front(); e != nil; e = e.Next() {
+		r := e.Value.(map[network.RequestID]*hRequest)
+		for k := range r {
+			e, err := json.Marshal(r[k])
+			if err != nil {
+				log.Printf("Error : %v\n", err)
+			}
+			log.Printf("\n%s\n", string(e))
+		}
+	}
+
 	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)
 	return htmls, err
