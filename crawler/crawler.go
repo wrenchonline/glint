@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -50,11 +51,10 @@ const (
 	GroupsEmtry  GroupsType = ""
 )
 
-// type chromecontext struct {
-// 	Ctx      context.Context
-// 	Cancel   context.CancelFunc
-// 	Requests []reqinfo
-// }
+type BrowserHttpInfo struct {
+	Request  *http.Request
+	Response *http.Response
+}
 
 type Filter struct {
 	MarkedQueryMap    map[string]interface{}

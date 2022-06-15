@@ -3,7 +3,7 @@ module glint
 go 1.16
 
 require (
-	github.com/Ullaakut/nmap/v2 v2.2.0 // indirect
+	github.com/Ullaakut/nmap/v2 v2.2.0
 	github.com/beevik/etree v1.1.0
 	github.com/chromedp/cdproto v0.0.0-20220428002153-285dfb42699c
 	github.com/chromedp/chromedp v0.8.1
@@ -30,6 +30,7 @@ require (
 	github.com/thoas/go-funk v0.9.1
 	github.com/tidwall/btree v1.1.0
 	github.com/urfave/cli/v2 v2.3.0
+	github.com/valyala/bytebufferpool v1.0.0
 	github.com/valyala/fasthttp v1.34.0
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
