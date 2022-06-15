@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"glint/logger"
 	"glint/util"
 	"testing"
@@ -17,4 +18,10 @@ func Test_Post(t *testing.T) {
 	logger.Debug("%v", param1)
 	pal1 := param1.SetPayload("https://www.google.com/search?q=dasdas&oq=dasdas", "122", "GET")
 	logger.Debug("%v", pal1)
+}
+
+func Test_For(t *testing.T) {
+	for i := 0; i < 2; i++ {
+		fmt.Printf("%d", i)
+	}
 }

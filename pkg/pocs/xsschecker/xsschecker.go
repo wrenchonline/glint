@@ -490,7 +490,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
-	ctx := groups.Pctx
+	ctx := *groups.Pctx
 	session := groups.GroupUrls.(map[string]interface{})
 
 	var hostid int64
@@ -517,6 +517,8 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	select {
 	case <-(*Spider.Ctx).Done():
 		goto quit
+	case <-ctx.Done():
+		goto quit
 	default:
 	}
 
@@ -537,7 +539,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
+		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
 		if err != nil {
 			return nil, err
 		}
@@ -557,7 +559,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss::not found")
 		}
-		Result, err = DoCheckXss(resources, flag, tab, *ctx, hostid)
+		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
 		if err != nil {
 			return nil, err
 		}

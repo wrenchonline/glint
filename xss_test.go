@@ -40,7 +40,7 @@ func TestXSS(t *testing.T) {
 	}
 	defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/result2.json")
+	data, _ := config.ReadResultConf("./json_file/result_1.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)

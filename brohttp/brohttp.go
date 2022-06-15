@@ -74,6 +74,7 @@ type Tab struct {
 	Source        chan string //当前爬虫的html的源码
 	RespDone      chan bool
 	Reports       []ReportMsg
+	mu            sync.Mutex //
 }
 
 type ReportMsg struct {
@@ -209,7 +210,7 @@ func main() {
 func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
 	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
-		// var RequestID network.RequestID
+		//var RequestID network.RequestID
 		// logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
 		case *page.EventLoadEventFired:
@@ -270,7 +271,7 @@ func (t *Tab) ListenTarget() {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 
-			// t.Report.RequestID = ev.RequestID
+			//RequestID = ev.RequestID
 
 			// if ev.Request.URL == urlstr {
 			// 	RequestID = ev.RequestID
@@ -278,21 +279,23 @@ func (t *Tab) ListenTarget() {
 
 		case *network.EventLoadingFinished:
 
-			// go func(RequestID network.RequestID) {
-			// 	c := chromedp.FromContext(*t.Ctx)
-			// 	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
-			// 	data, e := network.GetResponseBody(RequestID).Do(ctx)
-			// 	// }
-			// 	if e != nil {
-			// 		fmt.Printf("network.EventResponseReceived error: %v", e)
-			// 		return
-			// 	}
-			// 	if len(data) > 0 {
-			// 		t.Source <- string(data)
-			// 	}
-			// }(RequestID)
-
 		case *network.EventResponseReceived:
+
+			go func(ev *network.EventResponseReceived) {
+				c := chromedp.FromContext(*t.Ctx)
+				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				select {
+				case <-(*t.PackCtx).Done():
+					return
+				default:
+				}
+				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
+				if e != nil {
+					fmt.Printf("network.EventResponseReceived error: %v", e)
+					return
+				}
+				t.Source <- string(data)
+			}(ev)
 
 		case *page.EventJavascriptDialogOpening:
 			logger.Debug("* EventJavascriptDialogOpening.%s call", ev.Type)
@@ -346,7 +349,7 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (t *Tab) Send() ([]string, error) {
 	var htmls []string
-	var res string
+	//var res string
 	// Ctx := t.GetExecutor()
 	// tCtx, cancel := context.WithTimeout(Ctx, time.Second*2)
 	// defer cancel()
@@ -357,6 +360,12 @@ func (t *Tab) Send() ([]string, error) {
 	// Ctx, _ := chromedp.NewContext(
 	// 	*t.Ctx,
 	// )
+	pctx, pcancel := context.WithCancel(context.Background())
+	t.mu.Lock()
+	t.PackCtx = &pctx
+	t.PackCancel = &pcancel
+	t.mu.Unlock()
+
 	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*30)
 	// defer xCancel()
 	// err := chromedp.Run(xCtx, fetch.Enable())
@@ -365,7 +374,7 @@ func (t *Tab) Send() ([]string, error) {
 		Ctx,
 		fetch.Enable(),
 		chromedp.Navigate(t.Url.String()),
-		chromedp.OuterHTML("html", &res, chromedp.BySearch),
+		//chromedp.OuterHTML("html", &res, chromedp.BySearch),
 	)
 
 	if err != nil {
@@ -377,16 +386,28 @@ func (t *Tab) Send() ([]string, error) {
 
 	}
 
-	htmls = append(htmls, res)
+	//htmls = append(htmls, res)
 
 	//循环两次获取,不会获取过多内容
-	// for i := 0; i < 2; i++ {
-	// 	select {
-	// 	case html := <-t.Source:
-	// 		htmls = append(htmls, html)
-	// 	case <-time.After(time.Second):
+
+	// for v := range t.Source {
+	// 	fmt.Println(v)
+	// 	if v == 5 {
+	// 		cancel()
+	// 		break
 	// 	}
 	// }
+
+	for i := 0; i < 2; i++ {
+		if i == 1 {
+			(*t.PackCancel)()
+		}
+		select {
+		case html := <-t.Source:
+			htmls = append(htmls, html)
+		case <-time.After(time.Second * 5):
+		}
+	}
 	//logger.Info("%v", htmls)
 	// res = html.UnescapeString(res)
 	return htmls, err
