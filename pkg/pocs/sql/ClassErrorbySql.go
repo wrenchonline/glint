@@ -255,13 +255,13 @@ func (errsql *ClassSQLErrorMessages) startTesting() bool {
 			if errsql.testForError() {
 				return true
 			}
-			if !errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {
+			if errsql.TestInjection(p.Index, "1'\"", []string{"", "'", `"`}) {
 				return true
 			}
-			if !errsql.TestInjection(p.Index, "1\x00\xc0\xa7\xc0\xa2%2527%2522", []string{"", "'", `"`}) {
+			if errsql.TestInjection(p.Index, "1\x00\xc0\xa7\xc0\xa2%2527%2522", []string{"", "'", `"`}) {
 				return true
 			}
-			if !errsql.TestInjection(p.Index, "@@"+util.RandStr(8), []string{"", "'", `"`}) {
+			if errsql.TestInjection(p.Index, "@@"+util.RandStr(8), []string{"", "'", `"`}) {
 				return true
 			}
 		}

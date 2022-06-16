@@ -14,7 +14,7 @@ import (
 func TestSqlBlind(t *testing.T) {
 	logger.DebugEnable(true)
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("sql_test.json")
+	data, _ := config.ReadResultConf("./json_file/sql_test.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, sql.Sql_inject_Vaild)
 	pluginInternal := plugin.Plugin{
