@@ -353,7 +353,7 @@ type xssOcc struct {
 
 func DoCheckXss(
 	GroupUrlsReponseInfo []map[int]interface{},
-	playload string,
+	flag string,
 	tab *brohttp.Tab,
 	ctx context.Context,
 	hostid int64) (*util.ScanResult, error) {
@@ -394,17 +394,17 @@ func DoCheckXss(
 					switch n.Type {
 					case "html":
 						if !htmlok {
-							g.GeneratorPayload(Htmlmode, playload, payloadsdata, nodes)
+							g.GeneratorPayload(Htmlmode, flag, payloadsdata, nodes)
 							htmlok = true
 						}
 					case "attibute":
 						if !attibuteoK {
-							g.GeneratorPayload(Attibute, playload, payloadsdata, nodes)
+							g.GeneratorPayload(Attibute, flag, payloadsdata, nodes)
 							attibuteoK = true
 						}
 					case "script":
 						if !scriptok {
-							g.GeneratorPayload(Script, playload, payloadsdata, nodes)
+							g.GeneratorPayload(Script, flag, payloadsdata, nodes)
 							scriptok = true
 						}
 
@@ -465,13 +465,19 @@ func DoCheckXss(
 
 			// fmt.Println(aurora.html))
 			for payload, checkfilter := range payloadinfo {
-				Node := ast.SearchInputInResponse(playload, html)
+				// fmt.Println(payload)
+				// if funk.Contains(html, "<TITLE>系统提示信息</TITLE>") {
+				// 	fmt.Println(html)
+				// }
+
+				Node := ast.SearchInputInResponse(flag, html)
 				if len(Node) == 0 {
 					break
 				}
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
+
 					for _, Html := range occ.Htmls {
-						r, _ := regexp.Compile(`<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>`)
+						r, _ := regexp.Compile(`(?i)(<html>([\s\S]*?))`)
 						resp := r.FindStringSubmatch(Html)
 						if len(resp) > 0 {
 							Result := util.VulnerableTcpOrUdpResult(occ.Url,
@@ -484,8 +490,16 @@ func DoCheckXss(
 						}
 					}
 
+					// Result := util.VulnerableTcpOrUdpResult(occ.Url,
+					// 	fmt.Sprintf("VULNERABLE to Cross-site scripting ,the Vaild payload:%s", payload),
+					// 	[]string{string(occ.Reqstr)},
+					// 	[]string{occ.Htmls[len(occ.Htmls)-1]},
+					// 	"high",
+					// 	hostid)
+					// return Result, err
+
 					//fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-					return nil, err
+					//return nil, err
 				}
 			}
 		}
@@ -560,6 +574,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			// logger.Debug("pre", Spider.Url.String())
 			b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
 			if b {
+				logger.Debug("flag存在")
 				bflag = true
 				resources = append(resources, Occ)
 			}

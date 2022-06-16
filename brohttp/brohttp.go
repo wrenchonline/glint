@@ -238,6 +238,7 @@ func (t *Tab) ListenTarget() {
 			}
 
 		case *network.EventLoadingFinished:
+
 			go func(ev *network.EventLoadingFinished) {
 				c := chromedp.FromContext(*t.Ctx)
 				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
@@ -252,10 +253,11 @@ func (t *Tab) ListenTarget() {
 					fmt.Printf("network.EventLoadingFinished error: %v", e)
 					return
 				}
-				responseBody := string(array)
-				//logger.Info("network.EventLoadingFinished  RequestID:=%s body:%s", ev.RequestID, responseBody)
-				t.Source <- responseBody
+				// responseBody := string(array)
+				//logger.Info("network.EventLoadingFinished  RequestID:=%s body:%s", ev.RequestID, string(array))
+				t.Source <- string(array)
 			}(ev)
+
 		case *network.EventResponseReceived:
 
 		case *page.EventJavascriptDialogOpening:
@@ -333,15 +335,18 @@ func (t *Tab) Send() ([]string, string, error) {
 
 	}
 
-	for i := 0; i < 2; i++ {
-		if i == 1 {
+	// for
+	tctx, tcancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer tcancel()
+	for i := 0; i < 3; i++ {
+		if i == 2 {
 			(*t.PackCancel)()
 			break
 		}
 		select {
 		case html := <-t.Source:
 			htmls = append(htmls, html)
-		case <-time.After(time.Second * 3):
+		case <-tctx.Done():
 		}
 	}
 	Str := t.RequestsStr

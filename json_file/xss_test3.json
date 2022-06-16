@@ -1,0 +1,18 @@
+{
+    "Normal": [
+        {
+            "url": "http://www.jykc.com/error.asp?msg=û�п�����!",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Cookie": "safedog-flow-item=; ASPSESSIONIDCABTSSCQ=EONHDLGDGGEBPMCCGGJAGMGF; Hm_lvt_8416799e905e356dc68e1ec3ceaf3334=1654053607; Hm_lpvt_8416799e905e356dc68e1ec3ceaf3334=1654053630",
+                "Referer": "http://www.jykc.com",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "Document",
+            "hostid": 0
+        }
+    ]
+}
