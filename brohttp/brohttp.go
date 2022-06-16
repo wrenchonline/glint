@@ -1,6 +1,7 @@
 package brohttp
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"glint/logger"
 	"glint/util"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"sync"
@@ -65,6 +67,7 @@ func (r *RWCount) Set(count int) {
 	r.mu.Unlock()
 }
 
+//这个Tab几乎代表单线程所以很多情况不是很担心数据抢占的问题。
 type Tab struct {
 	Ctx           *context.Context
 	Cancel        *context.CancelFunc
@@ -83,6 +86,7 @@ type Tab struct {
 	RespDone      chan bool
 	Reports       []ReportMsg
 	mu            sync.Mutex //
+	RequestsStr   string
 }
 
 type ReportMsg struct {
@@ -112,27 +116,34 @@ func (t *Tab) GetExecutor() context.Context {
 }
 
 // process requests and return a structured data
-func Processequest(r *network.EventRequestWillBeSent) *http.Request {
+func Processequest(r *fetch.ContinueRequestParams) *http.Request {
 	//req := http.Request{}
 	var req *http.Request
 	var err error
-	if r.Request.HasPostData {
-		req, err = http.NewRequest(r.Request.Method, r.Request.URL, strings.NewReader(r.Request.PostData))
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	} else {
-		req, err = http.NewRequest(r.Request.Method, r.Request.URL, nil)
-		if err != nil {
-			logger.Error(err.Error())
-		}
+	array, err := base64.StdEncoding.DecodeString(r.PostData)
+	if err != nil {
+		logger.Error(err.Error())
 	}
+	req, err = http.NewRequest(r.Method, r.URL, bytes.NewReader(array))
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	// if r.Request.HasPostData {
 
-	for header := range r.Request.Headers {
-		req.Header[header] = []string{r.Request.Headers[header].(string)}
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 	}
+	// } else {
+	// 	req, err = http.NewRequest(r.Request.Method, r.Request.URL, nil)
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 	}
+	// }
+
+	for _, header := range r.Headers {
+		req.Header[header.Name] = []string{header.Value}
 	}
 	// req.Body.Read([]byte(r.Request.PostData))
-
 	return req
 }
 
@@ -148,97 +159,8 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.RespDone = make(chan bool)
 	tab.ListenTarget()
 	tab.Sendlimit.Set(1) //最大只能发送一次
-	// tab.Pool, _ = ants.NewPoolWithFunc(p.MaxPoolCount, func(args interface{}) { //新建一个带有同类方法的pool对象
-	// 	var Result_id int64
-	// 	defer p.threadwg.Done()
-	// 	data := args.(GroupData)
-	// 	for _, f := range p.Callbacks {
-	// 		scanresult, err := f(data)
-	// 		if err != nil {
-	// 			logger.Debug("plugin::error %s", err.Error())
-	// 		} else {
-	// 			//在这里保存,在这里抛出信息给web前
-	// 			}
-	// 		}
-	// 	}
-	// })
-	// ctx, cancel := context.WithTimeout(context.Background(), p.Timeout)
-	// p.Ctx = &ctx
-	// p.Cancel = &cancel
-
 	return &tab, nil
 }
-
-/*
-
-
-func main() {
-	// create context
-	ctx, cancel := chromedp.NewContext(
-		context.Background(),
-		chromedp.WithLogf(log.Printf),
-	)
-	defer cancel()
-
-	// create a timeout as a safety net to prevent any infinite wait loops
-	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-
-	// set up a channel so we can block later while we monitor the download
-	// progress
-	done := make(chan bool)
-
-	// set the download url as the chromedp github user avatar
-	urlstr := "https://avatars.githubusercontent.com/u/33149672"
-
-	// this will be used to capture the request id for matching network events
-	var requestID network.RequestID
-
-	// set up a listener to watch the network events and close the channel when
-	// complete the request id matching is important both to filter out
-	// unwanted network events and to reference the downloaded file later
-	chromedp.ListenTarget(ctx, func(v interface{}) {
-		switch ev := v.(type) {
-		case *network.EventRequestWillBeSent:
-			log.Printf("EventRequestWillBeSent: %v: %v", ev.RequestID, ev.Request.URL)
-			if ev.Request.URL == urlstr {
-				requestID = ev.RequestID
-			}
-		case *network.EventLoadingFinished:
-			log.Printf("EventLoadingFinished: %v", ev.RequestID)
-			if ev.RequestID == requestID {
-				close(done)
-			}
-		}
-	})
-
-	// all we need to do here is navigate to the download url
-	if err := chromedp.Run(ctx,
-		chromedp.Navigate(urlstr),
-	); err != nil {
-		log.Fatal(err)
-	}
-
-	// This will block until the chromedp listener closes the channel
-	<-done
-	// get the downloaded bytes for the request id
-	var buf []byte
-	if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-		var err error
-		buf, err = network.GetResponseBody(requestID).Do(ctx)
-		return err
-	})); err != nil {
-		log.Fatal(err)
-	}
-
-	// write the file to disk - since we hold the bytes we dictate the name and
-	// location
-	if err := ioutil.WriteFile("download.png", buf, 0644); err != nil {
-		log.Fatal(err)
-	}
-	log.Print("wrote download.png")
-}
-*/
 
 func (t *Tab) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
@@ -291,6 +213,16 @@ func (t *Tab) ListenTarget() {
 					req.PostData = base64.StdEncoding.EncodeToString(t.PostData)
 				}
 
+				httpreq := Processequest(req)
+				array, err := httputil.DumpRequest(httpreq, true)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				//logger.Debug("request:%s", string(array))
+				//logger.Info("requestid:%s request:%s", req.RequestID, string(array))
+				if t.RequestsStr == "" {
+					t.RequestsStr = string(array)
+				}
 				if err := req.Do(ctx); err != nil {
 					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
@@ -305,12 +237,6 @@ func (t *Tab) ListenTarget() {
 				logger.Debug("链接 %s: 重定向到: %s", request.RedirectResponse.URL, request.DocumentURL)
 			}
 
-			//RequestID = ev.RequestID
-
-			// if ev.Request.URL == urlstr {
-			// 	RequestID = ev.RequestID
-			// }
-
 		case *network.EventLoadingFinished:
 			go func(ev *network.EventLoadingFinished) {
 				c := chromedp.FromContext(*t.Ctx)
@@ -321,12 +247,14 @@ func (t *Tab) ListenTarget() {
 					return
 				default:
 				}
-				data, e := network.GetResponseBody(ev.RequestID).Do(ctx)
+				array, e := network.GetResponseBody(ev.RequestID).Do(ctx)
 				if e != nil {
 					fmt.Printf("network.EventLoadingFinished error: %v", e)
 					return
 				}
-				t.Source <- string(data)
+				responseBody := string(array)
+				//logger.Info("network.EventLoadingFinished  RequestID:=%s body:%s", ev.RequestID, responseBody)
+				t.Source <- responseBody
 			}(ev)
 		case *network.EventResponseReceived:
 
@@ -380,22 +308,8 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 }
 
 //Sendreq 发送请求 url为空使用爬虫装载的url
-func (t *Tab) Send() ([]string, error) {
+func (t *Tab) Send() ([]string, string, error) {
 	var htmls []string
-	//nRequests := list.New()
-	//nResponses := list.New()
-
-	//var res string
-	// Ctx := t.GetExecutor()
-	// tCtx, cancel := context.WithTimeout(Ctx, time.Second*2)
-	// defer cancel()
-	// go tab.CommitBySubmit()
-	// Ctx, _ := chromedp.NewContext(
-	// 	*t.Ctx,
-	// )
-	// Ctx, _ := chromedp.NewContext(
-	// 	*t.Ctx,
-	// )
 	pctx, pcancel := context.WithCancel(context.Background())
 	t.mu.Lock()
 	t.PackCtx = &pctx
@@ -403,9 +317,6 @@ func (t *Tab) Send() ([]string, error) {
 	t.mu.Unlock()
 
 	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*30)
-	// defer xCancel()
-	// err := chromedp.Run(xCtx, fetch.Enable())
-
 	err := chromedp.Run(
 		Ctx,
 		fetch.Enable(),
@@ -422,18 +333,6 @@ func (t *Tab) Send() ([]string, error) {
 
 	}
 
-	//htmls = append(htmls, res)
-
-	//循环两次获取,不会获取过多内容
-
-	// for v := range t.Source {
-	// 	fmt.Println(v)
-	// 	if v == 5 {
-	// 		cancel()
-	// 		break
-	// 	}
-	// }
-
 	for i := 0; i < 2; i++ {
 		if i == 1 {
 			(*t.PackCancel)()
@@ -445,21 +344,9 @@ func (t *Tab) Send() ([]string, error) {
 		case <-time.After(time.Second * 3):
 		}
 	}
-
-	// for e := nRequests.Front(); e != nil; e = e.Next() {
-	// 	r := e.Value.(map[network.RequestID]*hRequest)
-	// 	for k := range r {
-	// 		e, err := json.Marshal(r[k])
-	// 		if err != nil {
-	// 			log.Printf("Error : %v\n", err)
-	// 		}
-	// 		log.Printf("\n%s\n", string(e))
-	// 	}
-	// }
-
-	//logger.Info("%v", htmls)
-	// res = html.UnescapeString(res)
-	return htmls, err
+	Str := t.RequestsStr
+	t.RequestsStr = ""
+	return htmls, Str, err
 }
 
 func (t *Tab) GetRequrlparam() (url.Values, error) {
@@ -483,7 +370,7 @@ func (t *Tab) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 	if JsonUrls.MetHod == "GET" {
 		t.ReqMode = "GET"
 		t.Url, _ = url.Parse(JsonUrls.Url)
-		response, err := t.Send()
+		response, _, err := t.Send()
 		if err != nil {
 			return err
 		}
@@ -492,7 +379,7 @@ func (t *Tab) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 		t.ReqMode = "POST"
 		t.Url, _ = url.Parse(JsonUrls.Url)
 		t.PostData = []byte(JsonUrls.Data)
-		response, err := t.Send()
+		response, _, err := t.Send()
 		if err != nil {
 			return err
 		}
@@ -554,9 +441,11 @@ func (t *Tab) PayloadHandle(payload string, reqmod string, paramname string, Get
 }
 
 //这个要改一下加速发包速度
-func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
+func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) {
 	var (
-		htmls []string
+		htmls    []string
+		req_str  string
+		resp_str []string
 	)
 
 	if t.ReqMode == "GET" {
@@ -569,62 +458,62 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, error) {
 			logger.Error(err.Error())
 		}
 		if t.Headers["Referer"] == t.Url.String() {
-			html_s, err := t.Send()
+			resp_str, req_str, err = t.Send()
 			if err != nil {
-				return nil, err
+				return nil, "", err
 			}
-			htmls = append(htmls, html_s...)
+			htmls = append(htmls, resp_str...)
 		} else {
 
 			for param, _ := range Getparams {
 				t.PayloadHandle(newpayload, "GET", param, Getparams)
 				Getparams = tmpParams
-				html_s, err := t.Send()
+				resp_str, req_str, err = t.Send()
 				if err != nil {
-					return nil, err
+					return nil, "", err
 				}
-				htmls = append(htmls, html_s...)
+				htmls = append(htmls, resp_str...)
 			}
 		}
 
 		if len(Getparams) == 0 {
-			html_s, err := t.Send()
+			resp_str, req_str, err := t.Send()
 			if err != nil {
-				return nil, err
+				return nil, req_str, err
 			}
-			htmls = append(htmls, html_s...)
+			htmls = append(htmls, resp_str...)
 		}
-		return htmls, nil
+		return htmls, req_str, nil
 	} else {
 		PostData := t.PostData
 		if value, ok := t.Headers["Content-Type"]; ok {
 			params, err := util.ParseUri("", PostData, "POST", value.(string))
 			if err != nil {
 				logger.Error(err.Error())
-				return nil, err
+				return nil, "", err
 			}
 			payloads := params.SetPayload("", newpayload, "POST")
 			for _, v := range payloads {
 				t.PostData = []byte(PostData)
 				t.PayloadHandle(v, "POST", "", nil)
-				html_s, err := t.Send()
+				resp_str, req_str, err = t.Send()
 				if err != nil {
-					return nil, err
+					return nil, "", err
 				}
-				htmls = append(htmls, html_s...)
+				htmls = append(htmls, resp_str...)
 			}
 
 		} else {
 			logger.Error("checkpayloadlocation error: haven't found content type")
 		}
-		return htmls, nil
+		return htmls, req_str, nil
 	}
 }
 
 func (t *Tab) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
-	htmls, err := t.CheckPayloadLocation(playload)
+	htmls, _, err := t.CheckPayloadLocation(playload)
 	if err != nil {
 		return false, nil
 	}

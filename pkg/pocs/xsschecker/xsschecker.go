@@ -16,8 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logrusorgru/aurora"
-
 	"github.com/thoas/go-funk"
 )
 
@@ -347,8 +345,9 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 }
 
 type xssOcc struct {
-	Url   string
-	Htmls []string
+	Url    string
+	Reqstr string
+	Htmls  []string
 }
 
 func DoCheckXss(
@@ -437,11 +436,11 @@ func DoCheckXss(
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
 					tab.CopyRequest(urlocc.Request)
 
-					response, err := tab.CheckPayloadLocation(payload)
+					response_strarray, requeststr, err := tab.CheckPayloadLocation(payload)
 					if err != nil {
 						return nil, err
 					}
-					occ := xssOcc{Url: urlocc.Request.Url, Htmls: response}
+					occ := xssOcc{Url: urlocc.Request.Url, Reqstr: requeststr, Htmls: response_strarray}
 					Occs = append(Occs, occ)
 				}
 			}
@@ -471,12 +470,12 @@ func DoCheckXss(
 				}
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
 					Result := util.VulnerableTcpOrUdpResult(occ.Url,
-						"VULNERABLE to Cross-site scripting ...",
-						[]string{string(payload)},
-						[]string{string("")},
+						fmt.Sprintf("VULNERABLE to Cross-site scripting ,the Vaild payload:%s", payload),
+						[]string{string(occ.Reqstr)},
+						[]string{string(occ.Htmls[0])},
 						"high",
 						hostid)
-					fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
+					//fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
 					return Result, err
 				}
 			}

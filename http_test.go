@@ -29,13 +29,13 @@ func TestCheckPayloadNormal(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	playload := "<ScRiPt>e6X1fe54</sCrIpT>"
-	htmls, _ := tab.CheckPayloadLocation(playload)
+	htmls, _, _ := tab.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		ast.SearchInputInResponse(playload, v)
 		// fmt.Println(aurora.Red(OCC))
 	}
 
-	htmls, _ = tab.CheckPayloadLocation(playload)
+	htmls, _, _ = tab.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		OCC := ast.SearchInputInResponse(playload, v)
 		fmt.Println(aurora.Red(OCC))
