@@ -339,7 +339,6 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 			return false
 		}
 		return false
-
 	}
 
 	return VulOK
@@ -469,6 +468,17 @@ func DoCheckXss(
 				// if funk.Contains(html, "<TITLE>系统提示信息</TITLE>") {
 				// 	fmt.Println(html)
 				// }
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				default:
+				}
+
+				select {
+				case <-(*tab.Ctx).Done():
+					return nil, (*tab.Ctx).Err()
+				default:
+				}
 
 				Node := ast.SearchInputInResponse(flag, html)
 				if len(Node) == 0 {
@@ -545,6 +555,15 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	}
 
 	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
+
+		select {
+		case <-(*Spider.Ctx).Done():
+			goto quit
+		case <-ctx.Done():
+			goto quit
+		default:
+		}
+
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
@@ -566,6 +585,15 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			return nil, err
 		}
 	} else {
+
+		select {
+		case <-(*Spider.Ctx).Done():
+			goto quit
+		case <-ctx.Done():
+			goto quit
+		default:
+		}
+
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
