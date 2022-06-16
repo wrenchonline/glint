@@ -13,6 +13,7 @@ import (
 	"glint/plugin"
 	"glint/util"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
@@ -469,14 +470,22 @@ func DoCheckXss(
 					break
 				}
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
-					Result := util.VulnerableTcpOrUdpResult(occ.Url,
-						fmt.Sprintf("VULNERABLE to Cross-site scripting ,the Vaild payload:%s", payload),
-						[]string{string(occ.Reqstr)},
-						[]string{string(occ.Htmls[0])},
-						"high",
-						hostid)
+					for _, Html := range occ.Htmls {
+						r, _ := regexp.Compile(`<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>`)
+						resp := r.FindStringSubmatch(Html)
+						if len(resp) > 0 {
+							Result := util.VulnerableTcpOrUdpResult(occ.Url,
+								fmt.Sprintf("VULNERABLE to Cross-site scripting ,the Vaild payload:%s", payload),
+								[]string{string(occ.Reqstr)},
+								[]string{Html},
+								"high",
+								hostid)
+							return Result, err
+						}
+					}
+
 					//fmt.Println(aurora.Sprintf("检测Xss漏洞,Payload:%s", aurora.Red(payload)))
-					return Result, err
+					return nil, err
 				}
 			}
 		}
