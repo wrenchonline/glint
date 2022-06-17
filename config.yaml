@@ -1,10 +1,10 @@
 MaxCrawlCount: 20
 
-DBUser: "iot"
-DBName: "iot"
-DBPassWord: "iot95976"
+DBUser: "newitop"
+DBName: "itop"
+DBPassWord: "rjjsoft+0591"
 
-FilterMode: "simple"
+FilterMode: "strict"
 
 ExtraHeaders:
  
