@@ -85,8 +85,8 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			if errs != nil {
 				return nil, errs
 			}
-			body := string(resp1.Body())
-			Text := resp1.String()
+
+			Text := string(resp1.Header.Header())
 			//logger.Inf("%s", Text)
 			// println(Text)
 			r, err := regexp.Compile(RegexRule)
@@ -101,8 +101,8 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"CRLF Vulnerable",
 					[]string{string(r)},
-					[]string{body},
-					"high",
+					[]string{resp1.String()},
+					"middle",
 					hostid)
 				return Result, err
 			}
@@ -112,13 +112,14 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			if errs != nil {
 				return nil, errs
 			}
-			body := string(resp1.Body())
-			if str, _ := regexp.MatchString(RegexRule, body); str {
+
+			// body := string(resp1.Body())
+			if str, _ := regexp.MatchString(RegexRule, string(resp1.Header.Header())); str {
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"CRLF Vulnerable",
 					[]string{string(req1.String())},
-					[]string{string(body)},
-					"high",
+					[]string{resp1.String()},
+					"middle",
 					session["hostid"].(int64))
 				return Result, errs
 			}

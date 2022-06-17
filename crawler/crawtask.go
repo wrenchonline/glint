@@ -17,8 +17,9 @@ type Result struct {
 	AllReqList    []*model.Request // 所有域名的请求
 	AllDomainList []string         // 所有域名列表
 	SubDomainList []string         // 子域名列表
+	RootDomain    string           // 当前爬取根域名 用于子域名收集
 	resultLock    sync.Mutex       // 合并结果时加锁
-	Hostid        int64
+	Hostid        int64            //域名id，实际上是和前端分不开原因
 }
 
 type CrawlerTask struct {

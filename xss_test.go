@@ -7,10 +7,12 @@ import (
 	brohttp "glint/brohttp"
 	"glint/config"
 	"glint/logger"
+	"glint/model"
 	"glint/pkg/pocs/xsschecker"
 	"glint/plugin"
 	"net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -43,7 +45,7 @@ func TestXSS(t *testing.T) {
 	}
 	defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/xss_test5.json")
+	data, _ := config.ReadResultConf("./json_file/xss_test2.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 
@@ -175,5 +177,19 @@ func Test_har_log(t *testing.T) {
 	req.Header.Add("Accept", "application/json")
 	// getHTTPString(&req)
 	// httputil.DumpRequest()
+
+}
+func Test_url_parse(t *testing.T) {
+
+	s := "http://api.themoviedb.org/3/tv/popular"
+
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(u.Hostname())
+
+	mu := model.URL{*u}
+	fmt.Println(mu.RootDomain())
 
 }

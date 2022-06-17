@@ -12,7 +12,7 @@ import (
 
 func Test_Crlf(t *testing.T) {
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("result2.json")
+	data, _ := config.ReadResultConf("./json_file/crlf_test.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, crlf.Crlf)
 	pluginInternal := plugin.Plugin{

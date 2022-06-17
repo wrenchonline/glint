@@ -1,0 +1,18 @@
+{
+    "Normal": [
+        {
+            "url": "http://www.chinaipo.com/",
+            "method": "GET",
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Encoding": "gzip,deflate,br",
+                "Host": "www.chinaipo.com",
+                "Connection": "Keep-alive",
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+            },
+            "data": "",
+            "source": "DOM",
+            "hostid": 0
+        }
+    ]
+}

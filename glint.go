@@ -282,6 +282,32 @@ func (t *Task) sendprog() {
 	t.PliuginsMsg <- Element
 }
 
+func (t *Task) EnablePlugins(originUrls map[string]interface{}, percentage float64, HttpsCert string, HttpsCertKey string) {
+	StartPlugins := Plugins.Value()
+	for _, PluginName := range StartPlugins {
+		switch strings.ToLower(PluginName) {
+		case "csrf":
+			t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+		case "xss":
+			t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, originUrls, true, percentage, true, HttpsCert, HttpsCertKey)
+		case "ssrf":
+			t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+		case "jsonp":
+			t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+		case "cmdinject":
+			t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+		case "xxe":
+			t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+		case "crlf":
+			t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+		case "cors":
+			t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+		case "sql":
+			t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+		}
+	}
+}
+
 //bpayloadbrower 该插件是否开启浏览器方式发送payload
 func (t *Task) AddPlugins(
 	PluginName string,
@@ -380,6 +406,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 			craw_cleanup(crawtask)
 			result := crawtask.Result
 			result.Hostid = crawtask.Result.Hostid
+			result.RootDomain = crawtask.RootDomain
+			fmt.Printf("爬取 %s 域名结束", crawtask.RootDomain)
 			Results = append(Results, result)
 			logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 				len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
@@ -388,6 +416,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 		t.setprog(percentage)
 
 		t.sendprog()
+
 		for _, result := range Results {
 			funk.Map(result.ReqList, func(r *model.Request) bool {
 				element0 := ast.JsonUrl{
@@ -419,28 +448,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 		//Crawtask.PluginBrowser = t.XssSpider
 		//爬完虫加载插件检测漏洞
-		for _, PluginName := range StartPlugins {
-			switch strings.ToLower(PluginName) {
-			case "csrf":
-				t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, ReqList1, true, percentage, false, config.HttpsCert, config.HttpsCertKey)
-			case "xss":
-				t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, ReqList1, true, percentage, true, config.HttpsCert, config.HttpsCertKey)
-			case "ssrf":
-				t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, ReqList1, true, percentage, false, config.HttpsCert, config.HttpsCertKey)
-			case "jsonp":
-				t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, ReqList1, true, percentage, false, config.HttpsCert, config.HttpsCertKey)
-			case "cmdinject":
-				t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, ReqList1, true, percentage, false, config.HttpsCert, config.HttpsCertKey)
-			case "xxe":
-				t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
-			case "crlf":
-				t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
-			case "cors":
-				t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
-			case "sql":
-				t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, ReqList1, true, 0., false, config.HttpsCert, config.HttpsCertKey)
-			}
-		}
+		t.EnablePlugins(ReqList1, percentage, config.HttpsCert, config.HttpsCertKey)
 
 		t.PluginWg.Wait()
 		// quit:
@@ -469,37 +477,11 @@ func (t *Task) SaveQuitTime() {
 }
 
 func (t *Task) agentPluginRun(args interface{}) {
-	StartPlugins := Plugins.Value()
 	if p, ok := args.(*proxy.PassiveProxy); ok {
 		go func() {
 			for {
-				urlinfo := <-p.CommunicationSingleton
-				//logger.Info("Obtain url:%s", urlinfo["agent"]["url"])
-				for _, PluginName := range StartPlugins {
-					switch strings.ToLower(PluginName) {
-					case "csrf":
-						t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "xss":
-						t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, urlinfo, false, 0., true, p.HttpsCert, p.HttpsCertKey)
-					case "ssrf":
-						t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "jsonp":
-						t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "cmdinject":
-						t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "xxe":
-						t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "crlf":
-						t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "cors":
-						t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, urlinfo, false, 0., false, p.HttpsCert, p.HttpsCertKey)
-					case "sql":
-						t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, urlinfo, true, 0., false, p.HttpsCert, p.HttpsCertKey)
-					}
-
-				}
-				//t.PluginWg.Wait()
-				//logger.Info("origin url:%s has finished", urlinfo["url"])
+				Url := <-p.CommunicationSingleton
+				t.EnablePlugins(Url, 0., p.HttpsCert, p.HttpsCertKey)
 			}
 		}()
 	}

@@ -542,7 +542,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	if value, ok := session["hostid"].(json.Number); ok {
 		hostid, _ = value.Int64()
 	}
-
+	Spider.TaskCtx = &ctx
 	tab, err := brohttp.NewTab(Spider)
 	if err != nil {
 		return nil, err
@@ -588,6 +588,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		if !bflag {
 			return nil, errors.New("xss:: not found")
 		}
+
 		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
 		if err != nil {
 			return nil, err

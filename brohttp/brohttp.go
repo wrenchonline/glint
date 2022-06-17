@@ -47,6 +47,7 @@ type Spider struct {
 	Ctx        *context.Context //存储着浏览器的资源
 	Cancel     *context.CancelFunc
 	TabTimeOut int64
+	TaskCtx    *context.Context //存储着任务上下文
 }
 
 type RWCount struct {
@@ -69,6 +70,7 @@ func (r *RWCount) Set(count int) {
 
 //这个Tab几乎代表单线程所以很多情况不是很担心数据抢占的问题。
 type Tab struct {
+	TaskCtx       *context.Context //存储着任务上下文
 	Ctx           *context.Context
 	Cancel        *context.CancelFunc
 	PackCtx       *context.Context
@@ -157,6 +159,7 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Responses = make(chan []map[string]string)
 	tab.Source = make(chan string)
 	tab.RespDone = make(chan bool)
+	tab.TaskCtx = spider.TaskCtx
 	tab.ListenTarget()
 	tab.Sendlimit.Set(1) //最大只能发送一次
 	return &tab, nil
@@ -344,6 +347,9 @@ func (t *Tab) Send() ([]string, string, error) {
 			htmls = append(htmls, html)
 		case <-tctx.Done():
 			(*t.PackCancel)()
+			goto quit
+		case <-(*t.TaskCtx).Done():
+			logger.Warning("xss插件收到任务过期,中断发包")
 			goto quit
 		}
 	}
