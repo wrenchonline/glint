@@ -490,7 +490,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 
 		if len(Getparams) == 0 {
 			if !strings.HasSuffix(t.Url.String(), "/") && sfName != "" {
-				t.Url.RawQuery = "/" + newpayload
+				t.Url.RawQuery = newpayload
 				resp_str, req_str, err := t.Send()
 				if err != nil {
 					return nil, req_str, err
