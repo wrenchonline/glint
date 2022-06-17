@@ -27,16 +27,16 @@ import (
 
 func TestXSS(t *testing.T) {
 	logger.DebugEnable(false)
-	go func() {
-		ip := "0.0.0.0:6060"
-		if err := http.ListenAndServe(ip, nil); err != nil {
-			fmt.Printf("start pprof failed on %s\n", ip)
-		}
-	}()
+	// go func() {
+	// 	ip := "0.0.0.0:6060"
+	// 	if err := http.ListenAndServe(ip, nil); err != nil {
+	// 		fmt.Printf("start pprof failed on %s\n", ip)
+	// 	}
+	// }()
 
 	Spider := brohttp.Spider{}
 	var taskconfig config.TaskConfig
-	taskconfig.Proxy = ""
+	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	err := Spider.Init(taskconfig)
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +46,7 @@ func TestXSS(t *testing.T) {
 	data, _ := config.ReadResultConf("./json_file/xss_test5.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
+
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	pluginInternal := plugin.Plugin{
 		PluginName:   "XSS",

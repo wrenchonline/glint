@@ -31,16 +31,17 @@ xss:
   #"onmouseover='LI5h(93812)'bad="
 
     [
+
       {
-        PayLoad: "'><flag>//",
-        CheckTag: "flag",
-        CheckType: "Value",
-      }, 
-      {
-        PayLoad: "\"onmouseover='flag(93812)'bad=\"",
+        PayLoad: "1%22onmouseover=flag(95102)%22",
         CheckTag: "key",
         CheckType: "Value",
       },
+      # {
+      #   PayLoad: "'><flag>//",
+      #   CheckTag: "flag",
+      #   CheckType: "Value",
+      # }, 
     ]
   script:
     [

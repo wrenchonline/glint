@@ -318,7 +318,7 @@ func (t *Tab) Send() ([]string, string, error) {
 	t.PackCancel = &pcancel
 	t.mu.Unlock()
 
-	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*30)
+	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*120)
 	err := chromedp.Run(
 		Ctx,
 		fetch.Enable(),
@@ -336,19 +336,18 @@ func (t *Tab) Send() ([]string, string, error) {
 	}
 
 	// for
-	tctx, tcancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	tctx, tcancel := context.WithTimeout(context.Background(), time.Duration(time.Second*2))
 	defer tcancel()
-	for i := 0; i < 3; i++ {
-		if i == 2 {
-			(*t.PackCancel)()
-			break
-		}
+	for {
 		select {
 		case html := <-t.Source:
 			htmls = append(htmls, html)
 		case <-tctx.Done():
+			(*t.PackCancel)()
+			goto quit
 		}
 	}
+quit:
 	Str := t.RequestsStr
 	t.RequestsStr = ""
 	return htmls, Str, err
@@ -482,6 +481,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 		}
 
 		if len(Getparams) == 0 {
+			t.Url.RawQuery = newpayload
 			resp_str, req_str, err := t.Send()
 			if err != nil {
 				return nil, req_str, err
@@ -501,6 +501,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 			for _, v := range payloads {
 				t.PostData = []byte(PostData)
 				t.PayloadHandle(v, "POST", "", nil)
+
 				resp_str, req_str, err = t.Send()
 				if err != nil {
 					return nil, "", err

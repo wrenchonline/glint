@@ -106,6 +106,8 @@ func CheckHtmlNodeAttributes(s ast.Occurence, types string, name string, HasPref
 					Attributes.K.WriteString(A.Key)
 					Attributes.V.WriteString(A.Key)
 					return true
+				} else {
+
 				}
 			} else {
 				if strings.HasPrefix(A.Val, name) {
@@ -232,10 +234,16 @@ func (g *Generator) GeneratorPayload(Tagmode int, flag string, payloaddata paylo
 					g.extension = append(g.extension, mode)
 				}
 				if !attibuteoK {
-					g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
-						Rstr := `'">` + payload
-						return Rstr
+
+					g.CopyPayLoadtoXSS(payloaddata, "attibute", func(payload string) string {
+						return payload
 					})
+
+					// g.CopyPayLoadtoXSS(payloaddata, "html", func(payload string) string {
+					// 	Rstr := `'">` + payload
+					// 	return Rstr
+					// })
+
 					attibuteoK = true
 				}
 			}
@@ -291,17 +299,17 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	}
 	if methods == CheckValue {
 		for _, location := range locations {
-			if checktag == location.Details.Tagname || checktag == "" {
+			if checktag == location.Details.Tagname || checktag == "" || checktag == "key" {
 				if location.Type == "attibute" {
 					for _, Attributes := range *location.Details.Attributes {
-						if Attributes.Key == g.flag || Attributes.Val == g.flag {
+						if funk.Contains(Attributes.Key, g.flag) || funk.Contains(Attributes.Val, g.flag) {
 							VulOK = true
-							break
+							return VulOK
 						}
 					}
 				} else if location.Details.Content == g.flag {
 					VulOK = true
-					break
+					return VulOK
 				}
 			}
 
@@ -313,12 +321,12 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 					for _, Attributes := range *location.Details.Attributes {
 						if Attributes.Key == g.flag || Attributes.Val == g.flag {
 							VulOK = true
-							break
+							return VulOK
 						}
 					}
 				} else if location.Details.Tagname == g.flag {
 					VulOK = true
-					break
+					return VulOK
 				}
 			}
 		}
@@ -391,22 +399,22 @@ func DoCheckXss(
 			if len(nodes) != 0 {
 				funk.Map(nodes, func(n ast.Occurence) interface{} {
 					switch n.Type {
-					case "html":
-						if !htmlok {
-							g.GeneratorPayload(Htmlmode, flag, payloadsdata, nodes)
-							htmlok = true
-						}
 					case "attibute":
 						if !attibuteoK {
 							g.GeneratorPayload(Attibute, flag, payloadsdata, nodes)
 							attibuteoK = true
 						}
+
 					case "script":
 						if !scriptok {
 							g.GeneratorPayload(Script, flag, payloadsdata, nodes)
 							scriptok = true
 						}
-
+					case "html":
+						if !htmlok {
+							g.GeneratorPayload(Htmlmode, flag, payloadsdata, nodes)
+							htmlok = true
+						}
 					}
 					return false
 				})
@@ -487,7 +495,7 @@ func DoCheckXss(
 				if g.evaluate(Node, checkfilter.mode, checkfilter.Tag, tab) {
 
 					for _, Html := range occ.Htmls {
-						r, _ := regexp.Compile(`(?i)(<html>([\s\S]*?))`)
+						r, _ := regexp.Compile(`(?i)(<(.*?)html>([\s\S]*?))`)
 						resp := r.FindStringSubmatch(Html)
 						if len(resp) > 0 {
 							Result := util.VulnerableTcpOrUdpResult(occ.Url,

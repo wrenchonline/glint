@@ -1,17 +1,19 @@
 {
     "Normal": [
         {
-            "url": "https://www.chinaipo.com/",
-            "method": "GET",
+            "url": "https://www.chinaipo.com/search/?type=4",
+            "method": "POST",
             "headers": {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Cookie": "PHPSESSID=a5ppgitt42mvnib066umjea455",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "XSBTSV4_ACTIVE_TIME": "1655431267",
                 "Referer": "https://www.chinaipo.com/",
                 "Accept-Encoding": "gzip,deflate,br",
                 "Host": "www.chinaipo.com",
                 "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
             },
-            "data": "",
+            "data": "keywords=124&type=4",
             "source": "DOM",
             "hostid": 0
         }
