@@ -11,12 +11,13 @@
             "mode": "auto",
             "program": "${workspaceRoot}",
             "args": [
-                "--passiveproxy",
+                "--socket",
                 "127.0.0.1:3009",
                 "--cert",
                 "server.pem",
                 "--key",
                 "server.key",
+                "--dbconnect",
             ],
         }
     ]
