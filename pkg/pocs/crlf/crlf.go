@@ -114,7 +114,8 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			}
 
 			// body := string(resp1.Body())
-			if str, _ := regexp.MatchString(RegexRule, string(resp1.Header.Header())); str {
+			Header_str := string(resp1.Header.Header())
+			if str, _ := regexp.MatchString(RegexRule, Header_str); str {
 				Result := util.VulnerableTcpOrUdpResult(url,
 					"CRLF Vulnerable",
 					[]string{string(req1.String())},
