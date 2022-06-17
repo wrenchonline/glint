@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -456,8 +457,9 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 		htmls    []string
 		req_str  string
 		resp_str []string
+		sfName   string
 	)
-
+	sfName = path.Base(t.Url.Path)
 	if t.ReqMode == "GET" {
 		Getparams, err := t.GetRequrlparam()
 		tmpParams := make(url.Values)
@@ -487,12 +489,14 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 		}
 
 		if len(Getparams) == 0 {
-			t.Url.RawQuery = newpayload
-			resp_str, req_str, err := t.Send()
-			if err != nil {
-				return nil, req_str, err
+			if !strings.HasSuffix(t.Url.String(), "/") && sfName != "" {
+				t.Url.RawQuery = "/" + newpayload
+				resp_str, req_str, err := t.Send()
+				if err != nil {
+					return nil, req_str, err
+				}
+				htmls = append(htmls, resp_str...)
 			}
-			htmls = append(htmls, resp_str...)
 		}
 		return htmls, req_str, nil
 	} else {

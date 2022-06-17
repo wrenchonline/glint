@@ -13,6 +13,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -191,5 +192,8 @@ func Test_url_parse(t *testing.T) {
 
 	mu := model.URL{*u}
 	fmt.Println(mu.RootDomain())
+
+	r, _ := http.NewRequest("GET", "http://localhost/slow/one.json", nil)
+	fmt.Println(path.Base(r.URL.Path))
 
 }
