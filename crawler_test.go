@@ -25,6 +25,7 @@ func Test_Crawler(t *testing.T) {
 	TaskConfig.Proxy = ""
 	TaskConfig.NoHeadless = true
 	TaskConfig.TabRunTimeout = 20 * time.Second
+	var Results []*crawler.Result
 	ctx, _ := context.WithCancel(context.Background())
 	actx, acancel := context.WithTimeout(ctx, TaskConfig.TabRunTimeout)
 	defer acancel()
@@ -32,7 +33,7 @@ func Test_Crawler(t *testing.T) {
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("http://www.jykc.com")
+	murl, _ := url.Parse("https://www.bilibili.com")
 	Headers := make(map[string]interface{})
 	targets := &model.Request{
 		URL:           &model.URL{URL: *murl},
@@ -50,12 +51,27 @@ func Test_Crawler(t *testing.T) {
 	logger.Info(msg)
 	logger.Info("filter mode: %s", TaskConfig.FilterMode)
 	logger.Info("Start crawling.")
-	task.Run()
+	go task.Run()
+	task.Waitforsingle()
 	result := task.Result
 	for _, rest := range result.AllReqList {
 		fmt.Println(aurora.Red(rest))
 	}
 	ReqList := make(map[string][]ast.JsonUrl)
+
+	//ALLURLS := make(map[string][]interface{})
+	ALLURI := make(map[string][]interface{})
+	// URLSList := make(map[string]interface{})
+	// URISList := make(map[string]interface{})
+
+	mresult := task.Result
+	mresult.Hostid = task.Result.Hostid
+	mresult.HOSTNAME = task.HostName
+	fmt.Printf("爬取 %s 域名结束", task.HostName)
+	Results = append(Results, mresult)
+
+	CrawlerConvertToMap(Results, &ALLURI, nil, true)
+
 	funk.Map(result.ReqList, func(r *model.Request) bool {
 		// element := make(map[string]interface{})
 		element := ast.JsonUrl{
