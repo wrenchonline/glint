@@ -17,13 +17,15 @@ type Result struct {
 	AllReqList    []*model.Request // 所有域名的请求
 	AllDomainList []string         // 所有域名列表
 	SubDomainList []string         // 子域名列表
-	RootDomain    string           // 当前爬取根域名 用于子域名收集
+	HOSTNAME      string           // 收集Uri
 	resultLock    sync.Mutex       // 合并结果时加锁
 	Hostid        int64            //域名id，实际上是和前端分不开原因
 }
 
 type CrawlerTask struct {
 	Browser       *Spider             // 爬虫浏览器
+	HostName      string              // 收集Uri
+	Scheme        string              //
 	PluginBrowser *brohttp.Spider     // 插件浏览器
 	RootDomain    string              // 当前爬取根域名 用于子域名收集
 	Targets       []*model.Request    // 输入目标
@@ -281,7 +283,8 @@ func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config
 
 	crawlerTask.Browser = InitSpider(taskConf.ChromiumPath, taskConf.IncognitoContext, taskConf.ExtraHeaders, taskConf.Proxy, taskConf.NoHeadless)
 	crawlerTask.RootDomain = target.URL.RootDomain()
-
+	crawlerTask.HostName = target.URL.Hostname()
+	crawlerTask.Scheme = target.URL.Scheme
 	crawlerTask.smartFilter.Init()
 
 	// 创建协程池

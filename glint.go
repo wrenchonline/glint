@@ -16,6 +16,7 @@ import (
 	"glint/pkg/pocs/crlf"
 	"glint/pkg/pocs/csrf"
 	"glint/pkg/pocs/jsonp"
+	"glint/pkg/pocs/nmapSsl"
 	"glint/pkg/pocs/sql"
 	"glint/pkg/pocs/ssrfcheck"
 	"glint/pkg/pocs/xsschecker"
@@ -282,7 +283,17 @@ func (t *Task) sendprog() {
 	t.PliuginsMsg <- Element
 }
 
-func (t *Task) EnablePlugins(originUrls map[string]interface{}, percentage float64, HttpsCert string, HttpsCertKey string) {
+func (t *Task) EnablePluginsByUri(originUrls map[string]interface{}, percentage float64, HttpsCert string, HttpsCertKey string) {
+	StartPlugins := Plugins.Value()
+	for _, PluginName := range StartPlugins {
+		switch strings.ToLower(PluginName) {
+		case "tls":
+			t.AddPlugins("TlS", plugin.TLS, nmapSsl.Sslverify, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+		}
+	}
+}
+
+func (t *Task) EnablePluginsALLURL(originUrls map[string]interface{}, percentage float64, HttpsCert string, HttpsCertKey string) {
 	StartPlugins := Plugins.Value()
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
@@ -361,6 +372,66 @@ func (t *Task) AddPlugins(
 	}()
 }
 
+func CrawlerConvertToMap(
+	Results []*crawler.Result,
+	DATA1 *map[string][]interface{},
+	DATA2 *map[string][]ast.JsonUrl,
+	IscollectUri bool) {
+	for _, result := range Results {
+		funk.Map(result.ReqList, func(r *model.Request) bool {
+			if IscollectUri {
+				if r.URL.Hostname() == result.HOSTNAME {
+					element0 := ast.JsonUrl{
+						Url:     r.URL.String(),
+						MetHod:  r.Method,
+						Headers: r.Headers,
+						Data:    r.PostData,
+						Source:  r.Source,
+						Hostid:  result.Hostid,
+					}
+					element := make(map[string]interface{})
+					element["url"] = r.URL.String()
+					element["method"] = r.Method
+					element["headers"] = r.Headers
+					element["data"] = r.PostData
+					element["source"] = r.Source
+					element["hostid"] = result.Hostid
+					if DATA1 != nil {
+						(*DATA1)[r.GroupsId] = append((*DATA1)[r.GroupsId], element)
+					}
+					if DATA2 != nil {
+						(*DATA2)[r.GroupsId] = append((*DATA2)[r.GroupsId], element0)
+					}
+					return false
+				}
+			} else {
+				element0 := ast.JsonUrl{
+					Url:     r.URL.String(),
+					MetHod:  r.Method,
+					Headers: r.Headers,
+					Data:    r.PostData,
+					Source:  r.Source,
+					Hostid:  result.Hostid,
+				}
+				element := make(map[string]interface{})
+				element["url"] = r.URL.String()
+				element["method"] = r.Method
+				element["headers"] = r.Headers
+				element["data"] = r.PostData
+				element["source"] = r.Source
+				element["hostid"] = result.Hostid
+				if DATA1 != nil {
+					(*DATA1)[r.GroupsId] = append((*DATA1)[r.GroupsId], element)
+				}
+				if DATA2 != nil {
+					(*DATA2)[r.GroupsId] = append((*DATA2)[r.GroupsId], element0)
+				}
+			}
+			return false
+		})
+	}
+}
+
 func (t *Task) dostartTasks(config tconfig) error {
 	var (
 		err       error
@@ -368,9 +439,11 @@ func (t *Task) dostartTasks(config tconfig) error {
 		Results   []*crawler.Result
 	)
 
-	ReqList := make(map[string][]interface{})
-	ReqList1 := make(map[string]interface{})
-	List := make(map[string][]ast.JsonUrl)
+	ALLURLS := make(map[string][]interface{})
+	ALLURI := make(map[string][]interface{})
+	URLSList := make(map[string]interface{})
+	URISList := make(map[string]interface{})
+	JSONALLURLS := make(map[string][]ast.JsonUrl)
 
 	if config.InstallDb {
 		t.deletedbresult()
@@ -406,8 +479,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 			craw_cleanup(crawtask)
 			result := crawtask.Result
 			result.Hostid = crawtask.Result.Hostid
-			result.RootDomain = crawtask.RootDomain
-			fmt.Printf("爬取 %s 域名结束", crawtask.RootDomain)
+			result.HOSTNAME = crawtask.HostName
+			fmt.Printf("爬取 %s 域名结束", crawtask.HostName)
 			Results = append(Results, result)
 			logger.Info(fmt.Sprintf("Task finished, %d results, %d requests, %d subdomains, %d domains found.",
 				len(result.ReqList), len(result.AllReqList), len(result.SubDomainList), len(result.AllDomainList)))
@@ -417,40 +490,48 @@ func (t *Task) dostartTasks(config tconfig) error {
 
 		t.sendprog()
 
-		for _, result := range Results {
-			funk.Map(result.ReqList, func(r *model.Request) bool {
-				element0 := ast.JsonUrl{
-					Url:     r.URL.String(),
-					MetHod:  r.Method,
-					Headers: r.Headers,
-					Data:    r.PostData,
-					Source:  r.Source,
-					Hostid:  result.Hostid,
-				}
-				element := make(map[string]interface{})
-				element["url"] = r.URL.String()
-				element["method"] = r.Method
-				element["headers"] = r.Headers
-				element["data"] = r.PostData
-				element["source"] = r.Source
-				element["hostid"] = result.Hostid
+		CrawlerConvertToMap(Results, &ALLURLS, &JSONALLURLS, false)
 
-				ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
-				List[r.GroupsId] = append(List[r.GroupsId], element0)
-				return false
-			})
+		CrawlerConvertToMap(Results, &ALLURI, nil, true)
+		// for _, result := range Results {
+		// 	funk.Map(result.ReqList, func(r *model.Request) bool {
+		// 		element0 := ast.JsonUrl{
+		// 			Url:     r.URL.String(),
+		// 			MetHod:  r.Method,
+		// 			Headers: r.Headers,
+		// 			Data:    r.PostData,
+		// 			Source:  r.Source,
+		// 			Hostid:  result.Hostid,
+		// 		}
+		// 		element := make(map[string]interface{})
+		// 		element["url"] = r.URL.String()
+		// 		element["method"] = r.Method
+		// 		element["headers"] = r.Headers
+		// 		element["data"] = r.PostData
+		// 		element["source"] = r.Source
+		// 		element["hostid"] = result.Hostid
+
+		// 		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
+		// 		List[r.GroupsId] = append(List[r.GroupsId], element0)
+		// 		return false
+		// 	})
+		// }
+		util.SaveCrawOutPut(JSONALLURLS, "result.json")
+
+		for s, v := range ALLURLS {
+			URLSList[s] = v
 		}
-		util.SaveCrawOutPut(List, "result.json")
-
-		for s, v := range ReqList {
-			ReqList1[s] = v
+		for s, v := range ALLURI {
+			URISList[s] = v
 		}
 
 		//Crawtask.PluginBrowser = t.XssSpider
 		//爬完虫加载插件检测漏洞
-		t.EnablePlugins(ReqList1, percentage, config.HttpsCert, config.HttpsCertKey)
+		t.EnablePluginsALLURL(URISList, percentage, config.HttpsCert, config.HttpsCertKey)
+		t.EnablePluginsByUri(URISList, percentage, config.HttpsCert, config.HttpsCertKey)
 
 		t.PluginWg.Wait()
+
 		// quit:
 		Taskslock.Lock()
 		removetasks(t.TaskId)
@@ -481,7 +562,7 @@ func (t *Task) agentPluginRun(args interface{}) {
 		go func() {
 			for {
 				Url := <-p.CommunicationSingleton
-				t.EnablePlugins(Url, 0., p.HttpsCert, p.HttpsCertKey)
+				t.EnablePluginsALLURL(Url, 0., p.HttpsCert, p.HttpsCertKey)
 			}
 		}()
 	}
