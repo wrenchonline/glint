@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/logrusorgru/aurora"
 	"github.com/thoas/go-funk"
 )
 
@@ -27,13 +26,13 @@ func Test_Crawler(t *testing.T) {
 	TaskConfig.TabRunTimeout = 20 * time.Second
 	var Results []*crawler.Result
 	ctx, _ := context.WithCancel(context.Background())
-	actx, acancel := context.WithTimeout(ctx, TaskConfig.TabRunTimeout)
-	defer acancel()
+	// actx, acancel := context.WithTimeout(ctx, TaskConfig.TabRunTimeout)
+	// defer acancel()
 	err := config.ReadTaskConf("config.yaml", &TaskConfig)
 	if err != nil {
 		t.Errorf("test ReadTaskConf() fail")
 	}
-	murl, _ := url.Parse("https://www.bilibili.com")
+	murl, _ := url.Parse("http://www.dachenglaw.com/")
 	Headers := make(map[string]interface{})
 	targets := &model.Request{
 		URL:           &model.URL{URL: *murl},
@@ -41,7 +40,7 @@ func Test_Crawler(t *testing.T) {
 		FasthttpProxy: TaskConfig.Proxy,
 		Headers:       Headers,
 	}
-	task, err := crawler.NewCrawlerTask(&actx, targets, TaskConfig)
+	task, err := crawler.NewCrawlerTask(&ctx, targets, TaskConfig)
 	if err != nil {
 		t.Errorf("create crawler task failed.")
 		os.Exit(-1)
@@ -54,9 +53,9 @@ func Test_Crawler(t *testing.T) {
 	go task.Run()
 	task.Waitforsingle()
 	result := task.Result
-	for _, rest := range result.AllReqList {
-		fmt.Println(aurora.Red(rest))
-	}
+	// for _, rest := range result.AllReqList {
+	// 	fmt.Println(aurora.Red(rest))
+	// }
 	ReqList := make(map[string][]ast.JsonUrl)
 
 	//ALLURLS := make(map[string][]interface{})
@@ -83,7 +82,7 @@ func Test_Crawler(t *testing.T) {
 		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
 		return false
 	})
-	util.SaveCrawOutPut(ReqList, "result2.json")
+	util.SaveCrawOutPut(ReqList, "./json_file/apperror.json")
 }
 
 func Test_filter(t *testing.T) {

@@ -26,6 +26,7 @@ const (
 	CORS      Plugin_type = "rj-008-0001"
 	SQL       Plugin_type = "rj-009-0001"
 	TLS       Plugin_type = "rj-010-0001"
+	APPERROR  Plugin_type = "rj-010-0001"
 )
 
 type Plugin struct {
@@ -48,16 +49,17 @@ type Plugin struct {
 }
 
 type PluginOption struct {
-	PluginWg     *sync.WaitGroup
-	Progress     *float64 //此任务进度
-	Totalprog    float64  //此插件占有的总进度
-	IsSocket     bool
-	Data         map[string]interface{}
-	SingelMsg    *chan map[string]interface{}
-	TaskId       int    //该插件所属的taskid
-	Bstripurl    bool   //是否分开groupurl
-	HttpsCert    string //
-	HttpsCertKey string //
+	PluginWg      *sync.WaitGroup
+	Progress      *float64 //此任务进度
+	Totalprog     float64  //此插件占有的总进度
+	IsSocket      bool
+	Data          map[string]interface{}
+	SingelMsg     *chan map[string]interface{}
+	TaskId        int    //该插件所属的taskid
+	Bstripurl     bool   //是否分开groupurl
+	HttpsCert     string //
+	HttpsCertKey  string //
+	IsAllUrlsEval bool   //是否传递所有URLS给当前某个漏洞插件传递。适合用于一个漏洞报告所有同域名的URLS
 	// XssTimeOut   time.Duration //xss扫描总超时
 }
 
@@ -135,11 +137,31 @@ func (p *Plugin) Run(args PluginOption) error {
 		ur := urlinters.([]interface{})
 		// fmt.Println(len(urlinters))
 		p.threadwg.Add(len(ur))
-		for _, urlinter := range ur {
-			go func(type_name string, urlinter interface{}) {
+		if !args.IsAllUrlsEval {
+			for _, urlinter := range ur {
+				go func(type_name string, urlinter interface{}) {
+					data := GroupData{
+						GroupType:    type_name,
+						GroupUrls:    urlinter,
+						Spider:       p.Spider,
+						Pctx:         p.Ctx,
+						Pcancel:      p.Cancel,
+						IsSocket:     IsSocket,
+						Msg:          args.SingelMsg,
+						HttpsCert:    args.HttpsCert,
+						HttpsCertKey: args.HttpsCertKey,
+					}
+					err = p.Pool.Invoke(data)
+					if err != nil {
+						logger.Error(err.Error())
+					}
+				}(type_name, urlinter)
+			}
+		} else {
+			go func(type_name string, ur interface{}) {
 				data := GroupData{
 					GroupType:    type_name,
-					GroupUrls:    urlinter,
+					GroupUrls:    ur,
 					Spider:       p.Spider,
 					Pctx:         p.Ctx,
 					Pcancel:      p.Cancel,
@@ -152,8 +174,9 @@ func (p *Plugin) Run(args PluginOption) error {
 				if err != nil {
 					logger.Error(err.Error())
 				}
-			}(type_name, urlinter)
+			}(type_name, ur)
 		}
+
 		p.threadwg.Wait()
 	}
 

@@ -1,7 +1,12 @@
 package apperror
 
 import (
+	"encoding/json"
+	"glint/fastreq"
+	"glint/plugin"
+	"glint/util"
 	"regexp"
+	"time"
 
 	"github.com/thoas/go-funk"
 )
@@ -258,4 +263,52 @@ func Test_Application_error(body string) bool {
 		}
 	}
 	return false
+}
+
+var DefaultProxy = ""
+var cert string
+var mkey string
+
+func Application_startTest(args interface{}) (*util.ScanResult, error) {
+	util.Setup()
+	group := args.(plugin.GroupData)
+	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
+	ctx := *group.Pctx
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
+	session := group.GroupUrls.(map[string]interface{})
+	url := session["url"].(string)
+	method := session["method"].(string)
+	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	body := []byte(session["data"].(string))
+	cert = group.HttpsCert
+	mkey = group.HttpsCertKey
+	sess := fastreq.GetSessionByOptions(
+		&fastreq.ReqOptions{
+			Timeout:       2 * time.Second,
+			AllowRedirect: true,
+			Proxy:         DefaultProxy,
+			Cert:          cert,
+			PrivateKey:    mkey,
+		})
+
+	var hostid int64
+	if value, ok := session["hostid"].(int64); ok {
+		hostid = value
+	}
+
+	if value, ok := session["hostid"].(json.Number); ok {
+		hostid, _ = value.Int64()
+	}
+
+	var ContentType string = "None"
+	if value, ok := headers["Content-Type"]; ok {
+		ContentType = value
+	}
+
 }
