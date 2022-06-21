@@ -20,7 +20,7 @@ var DefaultProxy = ""
 // var cert string
 // var mkey string
 
-func Sslverify(args interface{}) (*util.ScanResult, error) {
+func Sslverify(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	var hostid int64
 
@@ -30,7 +30,7 @@ func Sslverify(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -102,7 +102,7 @@ func Sslverify(args interface{}) (*util.ScanResult, error) {
 				[]string{string("")},
 				"high",
 				hostid)
-			return Result, nil
+			return Result, true, nil
 		}
 		if funk.Contains(buf.String(), "TLSv1.1") {
 			Result := util.VulnerableTcpOrUdpResult(url,
@@ -111,8 +111,8 @@ func Sslverify(args interface{}) (*util.ScanResult, error) {
 				[]string{string("")},
 				"middle",
 				hostid)
-			return Result, nil
+			return Result, true, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, false, errors.New("not found")
 }

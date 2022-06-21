@@ -1670,7 +1670,7 @@ func (bsql *classBlindSQLInj) startTesting() bool {
 var Cert string
 var Mkey string
 
-func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
+func Sql_inject_Vaild(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	var variations *util.PostData
 	var ContentType string
@@ -1684,7 +1684,7 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 	session := group.GroupUrls.(map[string]interface{})
@@ -1736,7 +1736,7 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 			[]string{string(BlindSQL.trueFeatures.Response.String())},
 			"high",
 			hostid)
-		return Result, err
+		return Result, true, err
 	} else {
 		errtester := ClassSQLErrorMessages{
 			TargetUrl:  url,
@@ -1751,10 +1751,10 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, error) {
 				[]string{string(errtester.trueFeatures.Response.String())},
 				"high",
 				hostid)
-			return Result, err
+			return Result, true, err
 		}
 
 	}
 
-	return nil, err
+	return nil, false, err
 }

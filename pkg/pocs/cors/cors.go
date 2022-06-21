@@ -75,7 +75,7 @@ type cors_payload struct {
 	msg    string
 }
 
-func Cors_Valid(args interface{}) (*util.ScanResult, error) {
+func Cors_Valid(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	// var blastIters interface{}
 	util.Setup()
@@ -85,7 +85,7 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -106,7 +106,7 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 	}
 
 	if _, ok := headers["Origin"]; !ok {
-		return nil, errors.New("not found cors")
+		return nil, false, errors.New("not found cors")
 	}
 
 	if !strings.HasSuffix(Url, "/") {
@@ -204,11 +204,11 @@ func Cors_Valid(args interface{}) (*util.ScanResult, error) {
 					[]string{string(body)},
 					"high",
 					hostid)
-				return Result, nil
+				return Result, true, nil
 			}
 		}
 
 	}
 
-	return nil, errors.New("not found cors")
+	return nil, false, errors.New("not found cors")
 }

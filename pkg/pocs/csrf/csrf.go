@@ -50,7 +50,7 @@ var DefaultProxy string = ""
 var cert string = ""
 var mkey string = ""
 
-func Csrfeval(args interface{}) (*util.ScanResult, error) {
+func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 
 	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://192.168.166.8/vulnerabilities/csrf`
@@ -59,7 +59,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -99,20 +99,20 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 		params, err := util.ParseUri(url, body, "POST", ContentType)
 		if err != nil {
 			logger.Error(err.Error())
-			return nil, fmt.Errorf(err.Error())
+			return nil, false, fmt.Errorf(err.Error())
 		}
 		if params.Len() == 0 {
-			return nil, fmt.Errorf("post the url have no params")
+			return nil, false, fmt.Errorf("post the url have no params")
 		}
 
 		_, resp1, errs := sess.Post(url, headers, []byte(body))
 		if errs != nil {
-			return nil, errs
+			return nil, false, errs
 		}
 		b1 := resp1.Body()
 		if resp1.StatusCode() != 200 {
 			errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
-			return nil, errors.New(errstr)
+			return nil, false, errors.New(errstr)
 		}
 		headers["Origin"] = ORIGIN_URL
 		req2, resp2, errs := sess.Post(url, headers, []byte(body))
@@ -125,24 +125,24 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				[]string{string(b2)},
 				"middle",
 				hostid)
-			return Result, errs
+			return Result, true, errs
 		}
 
 		REFERER_URL := `http://192.168.166.8/vulnerabilities/csrf`
 		ctx := *group.Pctx
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, false, ctx.Err()
 		default:
 		}
 		_, resp1, errs = sess.Post(url, headers, []byte(body))
 		if errs != nil {
-			return nil, errs
+			return nil, false, errs
 		}
 		b1 = resp1.Body()
 		if resp1.StatusCode() != 200 {
 			errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
-			return nil, errors.New(errstr)
+			return nil, false, errors.New(errstr)
 		}
 		headers["Referer"] = REFERER_URL
 		req2, resp2, errs = sess.Post(url, headers, []byte(body))
@@ -155,13 +155,13 @@ func Csrfeval(args interface{}) (*util.ScanResult, error) {
 				[]string{string(b2)},
 				"middle",
 				hostid)
-			return Result, errs
+			return Result, true, errs
 		}
-		return nil, errs
+		return nil, false, errs
 
 	}
 
-	return nil, errors.New("these is get method or params errors")
+	return nil, false, errors.New("these is get method or params errors")
 }
 
 // func Referer(args interface{}) (*util.ScanResult, error) {

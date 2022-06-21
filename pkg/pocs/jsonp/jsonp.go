@@ -173,14 +173,14 @@ func CheckJsRespAst(content string, funcName string) (bool, error) {
 
 var DefaultProxy = ""
 
-func JsonpValid(args interface{}) (*util.ScanResult, error) {
+func JsonpValid(args interface{}) (*util.ScanResult, bool, error) {
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	ctx := *group.Pctx
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -200,12 +200,12 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 	}
 
 	if strings.ToUpper(method) != "GET" {
-		return nil, nil
+		return nil, false, nil
 	}
 	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
 	isvul, info, err := CheckSenseJsonp(url, headers)
 	if err != nil {
-		return nil, fmt.Errorf("check jsonp error: %v", err)
+		return nil, false, fmt.Errorf("check jsonp error: %v", err)
 	}
 
 	if isvul {
@@ -215,7 +215,7 @@ func JsonpValid(args interface{}) (*util.ScanResult, error) {
 			[]string{string(info.Response.String())},
 			"middle",
 			hostid)
-		return Result, err
+		return Result, true, err
 	}
-	return nil, errors.New("jsonp vulnerability not found")
+	return nil, false, errors.New("jsonp vulnerability not found")
 }

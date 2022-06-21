@@ -526,13 +526,13 @@ func DoCheckXss(
 	return nil, errors.New("no found xss vulnerabilities")
 }
 
-func CheckXss(args interface{}) (*util.ScanResult, error) {
+func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 
 	groups := args.(plugin.GroupData)
 	Spider := groups.Spider
 	ctx := *groups.Pctx
 	session := groups.GroupUrls.(map[string]interface{})
-
+	// var isVuln = false
 	var hostid int64
 	var Result *util.ScanResult
 	var err error
@@ -545,7 +545,7 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 	Spider.TaskCtx = &ctx
 	tab, err := brohttp.NewTab(Spider)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer tab.Close()
 
@@ -586,12 +586,12 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 		}
 
 		if !bflag {
-			return nil, errors.New("xss:: not found")
+			return nil, false, err
 		}
 
 		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	} else {
 
@@ -617,13 +617,13 @@ func CheckXss(args interface{}) (*util.ScanResult, error) {
 			}
 		}
 		if !bflag {
-			return nil, errors.New("xss::not found")
+			return nil, false, err
 		}
 		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 quit:
-	return Result, nil
+	return Result, true, nil
 }

@@ -1,7 +1,9 @@
 package apperror
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"glint/fastreq"
 	"glint/logger"
 	"glint/plugin"
@@ -251,27 +253,46 @@ var regexArray = []string{
 }
 
 //这个就在主要插件中调用回调会好点。
-func Test_Application_error(body string) bool {
+func Test_Application_error(body string) (bool, string) {
+	//var MatchString string
 	for _, plain := range plainArray {
 		if funk.Contains(body, plain) {
-			return true
+			return true, plain
 		}
 	}
 	for _, regex := range regexArray {
 		r, _ := regexp.Compile(regex)
 		C := r.FindAllStringSubmatch(body, -1)
 		if len(C) != 0 {
-			return true
+			return true, C[0][0]
 		}
 	}
-	return false
+	return false, ""
 }
 
 var DefaultProxy = ""
 var cert string
 var mkey string
 
-func Application_startTest(args interface{}) (*util.ScanResult, error) {
+type ErrorVulnDetail struct {
+	Url         string `json:"url"`
+	MatchString string `json:"matchString"`
+}
+
+type ErrorVulnDetails struct {
+	VulnerableList []ErrorVulnDetail
+}
+
+func (e *ErrorVulnDetails) String() string {
+	var buf bytes.Buffer
+	for _, v := range e.VulnerableList {
+		buf.WriteString(fmt.Sprintf("Url:%s\n", v.Url))
+		buf.WriteString(fmt.Sprintf("%s\n", v.MatchString))
+	}
+	return buf.String()
+}
+
+func Application_startTest(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
@@ -279,11 +300,14 @@ func Application_startTest(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 	IsVuln := false
-
+	var hostid int64
+	var VulnURl = ""
+	var VulnList = ErrorVulnDetails{}
+	var err error
 	if sessions, ok := group.GroupUrls.([]interface{}); ok {
 		for _, session := range sessions {
 			newsess := session.(map[string]interface{})
@@ -303,37 +327,37 @@ func Application_startTest(args interface{}) (*util.ScanResult, error) {
 					PrivateKey:    mkey,
 				})
 
-			var hostid int64
-			if value, ok := newsess["hostid"].(int64); ok {
-				hostid = value
+			if hostid == 0 {
+				if value, ok := newsess["hostid"].(int64); ok {
+					hostid = value
+				}
+				if value, ok := newsess["hostid"].(json.Number); ok {
+					hostid, _ = value.Int64()
+				}
 			}
-
-			if value, ok := newsess["hostid"].(json.Number); ok {
-				hostid, _ = value.Int64()
-			}
-
-			// var ContentType string = "None"
-			// if value, ok := headers["Content-Type"]; ok {
-			// 	ContentType = value
-			// }
 			_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
 			if err != nil {
 				logger.Error("%s", err.Error())
 			}
-			if Test_Application_error(resp.String()) {
+			if isVuln, matchstr := Test_Application_error(resp.String()); isVuln {
 				IsVuln = true
+				if VulnURl == "" {
+					VulnURl = url
+				}
+				VulnInfo := ErrorVulnDetail{Url: url, MatchString: matchstr}
+				VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
 			}
 		}
 
 	}
 	if IsVuln {
-		Result := util.VulnerableTcpOrUdpResult(url,
-			"CRLF Vulnerable",
-			[]string{string(r)},
-			[]string{resp1.String()},
+		Result := util.VulnerableTcpOrUdpResult(VulnURl,
+			VulnList.String(),
+			[]string{""},
+			[]string{""},
 			"middle",
 			hostid)
-		return Result, err
+		return Result, true, err
 	}
-
+	return nil, false, err
 }

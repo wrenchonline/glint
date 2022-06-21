@@ -114,14 +114,14 @@ func cmd_mkdir(url string, method string, headers map[string]string, body []byte
 	return nil, nil, errors.New("not found cmd1 inject")
 }
 
-func CmdValid(args interface{}) (*util.ScanResult, error) {
+func CmdValid(args interface{}) (*util.ScanResult, bool, error) {
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
 	ctx := *group.Pctx
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -139,7 +139,7 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 
 	req, resp, err := cmd_mkdir(url, method, headers, body, ContentType)
 	if err != nil {
-		return nil, fmt.Errorf("check jsonp error: %v", err)
+		return nil, false, fmt.Errorf("check jsonp error: %v", err)
 	}
 	if req != nil && resp != nil {
 		Result := util.VulnerableTcpOrUdpResult(url,
@@ -149,7 +149,7 @@ func CmdValid(args interface{}) (*util.ScanResult, error) {
 			"high",
 			session["hostid"].(int64))
 
-		return Result, err
+		return Result, false, err
 	}
-	return nil, errors.New("jsonp vulnerability not found")
+	return nil, false, errors.New("jsonp vulnerability not found")
 }

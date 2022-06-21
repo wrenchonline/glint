@@ -82,42 +82,45 @@ func (p *Plugin) Init() {
 		defer p.threadwg.Done()
 		data := args.(GroupData)
 		for _, f := range p.Callbacks {
-			scanresult, err := f(data)
+			scanresult, isVuln, err := f(data)
 			if err != nil {
 				logger.Debug("plugin::error %s", err.Error())
 			} else {
-				//在这里保存,在这里抛出信息给web前端
-				if scanresult != nil {
-					p.mu.Lock()
-					p.ScanResult = append(p.ScanResult, scanresult)
-					p.mu.Unlock()
-					Element := make(map[string]interface{})
+				if isVuln {
+					//在这里保存,在这里抛出信息给web前端
+					if scanresult != nil {
+						p.mu.Lock()
+						p.ScanResult = append(p.ScanResult, scanresult)
+						p.mu.Unlock()
+						Element := make(map[string]interface{})
 
-					if p.InstallDB {
-						Result_id, _ = p.Dm.SaveScanResult(
-							p.Taskid,
-							string(p.PluginId),
-							scanresult.Vulnerable,
-							scanresult.Target,
-							// s.Output,1
-							base64.StdEncoding.EncodeToString([]byte(scanresult.ReqMsg[0])),
-							base64.StdEncoding.EncodeToString([]byte(scanresult.RespMsg[0])),
-							int(scanresult.Hostid),
-						)
-					}
+						if p.InstallDB {
+							Result_id, _ = p.Dm.SaveScanResult(
+								p.Taskid,
+								string(p.PluginId),
+								scanresult.Vulnerable,
+								scanresult.Target,
+								// s.Output,1
+								base64.StdEncoding.EncodeToString([]byte(scanresult.ReqMsg[0])),
+								base64.StdEncoding.EncodeToString([]byte(scanresult.RespMsg[0])),
+								int(scanresult.Hostid),
+							)
+						}
 
-					Element["status"] = 3
-					Element["vul"] = p.PluginId
-					Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
-					Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
-					Element["deail"] = scanresult.Output
-					Element["url"] = scanresult.Target
-					Element["vul_level"] = scanresult.VulnerableLevel
-					Element["result_id"] = Result_id
-					if data.IsSocket {
-						(*data.Msg) <- Element
+						Element["status"] = 3
+						Element["vul"] = p.PluginId
+						Element["request"] = scanresult.ReqMsg[0]   //base64.StdEncoding.EncodeToString([]byte())
+						Element["response"] = scanresult.RespMsg[0] //base64.StdEncoding.EncodeToString([]byte())
+						Element["deail"] = scanresult.Output
+						Element["url"] = scanresult.Target
+						Element["vul_level"] = scanresult.VulnerableLevel
+						Element["result_id"] = Result_id
+						if data.IsSocket {
+							(*data.Msg) <- Element
+						}
 					}
 				}
+
 			}
 		}
 	})
@@ -126,7 +129,7 @@ func (p *Plugin) Init() {
 	p.Cancel = &cancel
 }
 
-type PluginCallback func(args interface{}) (*util.ScanResult, error)
+type PluginCallback func(args interface{}) (*util.ScanResult, bool, error)
 
 func (p *Plugin) Run(args PluginOption) error {
 	defer args.PluginWg.Done()

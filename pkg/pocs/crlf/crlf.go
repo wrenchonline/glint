@@ -33,7 +33,7 @@ var payload_template = []string{
 	`%c4%8d%c4%8aSomeCustomInjectedHeader:%20injected_by_wvs`,
 }
 
-func Crlf(args interface{}) (*util.ScanResult, error) {
+func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	var hostid int64
 	// var buf bufio{}
@@ -45,7 +45,7 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -83,7 +83,7 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			npl := url + pl
 			req1, resp1, errs := sess.Get(npl, headers)
 			if errs != nil {
-				return nil, errs
+				return nil, false, errs
 			}
 
 			Text := string(resp1.Header.Header())
@@ -92,7 +92,7 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 			r, err := regexp.Compile(RegexRule)
 			if err != nil {
 				logger.Error("%s", err.Error())
-				return nil, errs
+				return nil, false, errs
 			}
 
 			C := r.FindAllStringSubmatch(Text, -1)
@@ -104,13 +104,13 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 					[]string{resp1.String()},
 					"middle",
 					hostid)
-				return Result, err
+				return Result, true, err
 			}
 
 		} else {
 			req1, resp1, errs := sess.Post(url, headers, []byte(Body+pl))
 			if errs != nil {
-				return nil, errs
+				return nil, false, errs
 			}
 
 			// body := string(resp1.Body())
@@ -122,10 +122,10 @@ func Crlf(args interface{}) (*util.ScanResult, error) {
 					[]string{resp1.String()},
 					"middle",
 					session["hostid"].(int64))
-				return Result, errs
+				return Result, false, errs
 			}
 		}
 	}
 
-	return nil, err
+	return nil, false, err
 }

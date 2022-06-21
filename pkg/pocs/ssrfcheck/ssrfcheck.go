@@ -16,7 +16,7 @@ var DefaultProxy = ""
 var cert string
 var mkey string
 
-func Ssrf(args interface{}) (*util.ScanResult, error) {
+func Ssrf(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
@@ -24,7 +24,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -61,7 +61,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
 		logger.Error(err.Error())
-		return nil, err
+		return nil, false, err
 	}
 
 	reverse := reverse2.NewReverse1()
@@ -73,7 +73,7 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 		for _, body := range payloads {
 			req1, resp1, errs := sess.Post(url, headers, []byte(body))
 			if errs != nil {
-				return nil, errs
+				return nil, false, errs
 			}
 			r1 := resp1.Body()
 			if reverse2.ReverseCheck(reverse, 5) {
@@ -83,15 +83,15 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					[]string{string(r1)},
 					"middle",
 					hostid)
-				return Result, errs
+				return Result, true, errs
 			}
 		}
-		return nil, errors.New("params errors")
+		return nil, false, errors.New("params errors")
 	} else {
 		for _, uri := range payloads {
 			req1, resp1, errs := sess.Get(uri, headers)
 			if errs != nil {
-				return nil, errs
+				return nil, false, errs
 			}
 			r1 := resp1.Body()
 			if reverse2.ReverseCheck(reverse, 5) {
@@ -101,10 +101,10 @@ func Ssrf(args interface{}) (*util.ScanResult, error) {
 					[]string{string(r1)},
 					"middle",
 					hostid)
-				return Result, errs
+				return Result, true, errs
 			}
 		}
 	}
 
-	return nil, errors.New("params errors")
+	return nil, false, errors.New("params errors")
 }

@@ -26,7 +26,7 @@ var reverse_template = []string{
 	`<!DOCTYPE uuu SYSTEM "%s">`,
 }
 
-func Xxe(args interface{}) (*util.ScanResult, error) {
+func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	// var blastIters interface{}
 	util.Setup()
@@ -36,7 +36,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, false, ctx.Err()
 	default:
 	}
 
@@ -92,7 +92,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 			if strings.ToUpper(method) == "POST" {
 				req1, resp1, errs := sess.Post(url, headers, []byte(pl))
 				if errs != nil {
-					return nil, errs
+					return nil, false, errs
 				}
 				body := string(resp1.Body())
 				if funk.Contains(body, "root:[x*]:0:0:") {
@@ -102,7 +102,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 						[]string{string(body)},
 						"high",
 						hostid)
-					return Result, errs
+					return Result, true, errs
 				}
 			}
 		}
@@ -154,7 +154,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 				if strings.ToUpper(method) == "POST" {
 					req1, resp1, errs := sess.Post(url, headers, []byte(npl))
 					if errs != nil {
-						return nil, errs
+						return nil, false, errs
 					}
 					body := string(resp1.Body())
 					if funk.Contains(body, "for 16-bit app") {
@@ -164,7 +164,7 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 							[]string{string(body)},
 							"high",
 							session["hostid"].(int64))
-						return Result, errs
+						return Result, true, errs
 					}
 				}
 			}
@@ -174,5 +174,5 @@ func Xxe(args interface{}) (*util.ScanResult, error) {
 	//如果都没有报出漏洞的话，尝试Blind测试
 	//首先，开启两个
 
-	return nil, err
+	return nil, false, err
 }
