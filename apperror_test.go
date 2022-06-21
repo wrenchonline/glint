@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"glint/brohttp"
 	"glint/config"
 	"glint/logger"
-	"glint/pkg/pocs/xsschecker"
+	"glint/pkg/pocs/apperror"
 	"glint/plugin"
 	"regexp"
 	"sync"
@@ -31,23 +30,18 @@ func TestAppError(t *testing.T) {
 	// 	}
 	// }()
 
-	Spider := brohttp.Spider{}
+	//Spider := brohttp.Spider{}
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
-	err := Spider.Init(taskconfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/xss_test2.json")
+	data, _ := config.ReadResultConf("./json_file/apperror.json")
 	myfunc := []plugin.PluginCallback{}
-	myfunc = append(myfunc, xsschecker.CheckXss)
+	myfunc = append(myfunc, apperror.Application_startTest)
 
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	pluginInternal := plugin.Plugin{
 		PluginName:   "APPERR",
-		PluginId:     plugin.Xss,
+		PluginId:     plugin.APPERROR,
 		MaxPoolCount: 1,
 		// Callbacks:    myfunc,
 		Spider:  nil,
@@ -58,11 +52,12 @@ func TestAppError(t *testing.T) {
 	PluginWg.Add(1)
 	Progress := 0.0
 	args := plugin.PluginOption{
-		PluginWg: &PluginWg,
-		Progress: &Progress,
-		IsSocket: false,
-		Data:     data,
-		TaskId:   999,
+		PluginWg:      &PluginWg,
+		Progress:      &Progress,
+		IsSocket:      false,
+		Data:          data,
+		TaskId:        999,
+		IsAllUrlsEval: true,
 		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {
