@@ -288,7 +288,7 @@ func (t *Task) EnablePluginsByUri(originUrls map[string]interface{}, percentage 
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "tls":
-			t.AddPlugins("TlS", plugin.TLS, nmapSsl.Sslverify, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("TlS", plugin.TLS, nmapSsl.Sslverify, originUrls, true, true, percentage, false, HttpsCert, HttpsCertKey)
 		}
 	}
 }
@@ -298,23 +298,23 @@ func (t *Task) EnablePluginsALLURL(originUrls map[string]interface{}, percentage
 	for _, PluginName := range StartPlugins {
 		switch strings.ToLower(PluginName) {
 		case "csrf":
-			t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("CSRF", plugin.Csrf, csrf.Csrfeval, originUrls, false, true, percentage, false, HttpsCert, HttpsCertKey)
 		case "xss":
-			t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, originUrls, true, percentage, true, HttpsCert, HttpsCertKey)
+			t.AddPlugins("XSS", plugin.Xss, xsschecker.CheckXss, originUrls, false, true, percentage, true, HttpsCert, HttpsCertKey)
 		case "ssrf":
-			t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("SSRF", plugin.Ssrf, ssrfcheck.Ssrf, originUrls, false, true, percentage, false, HttpsCert, HttpsCertKey)
 		case "jsonp":
-			t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("JSONP", plugin.Jsonp, jsonp.JsonpValid, originUrls, false, true, percentage, false, HttpsCert, HttpsCertKey)
 		case "cmdinject":
-			t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, originUrls, true, percentage, false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("CMDINJECT", plugin.CmdInject, cmdinject.CmdValid, originUrls, false, true, percentage, false, HttpsCert, HttpsCertKey)
 		case "xxe":
-			t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("XXE", plugin.Xxe, xxe.Xxe, originUrls, false, true, 0., false, HttpsCert, HttpsCertKey)
 		case "crlf":
-			t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("CRLF", plugin.Crlf, crlf.Crlf, originUrls, false, true, 0., false, HttpsCert, HttpsCertKey)
 		case "cors":
-			t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("CORS", plugin.CORS, cors.Cors_Valid, originUrls, false, true, 0., false, HttpsCert, HttpsCertKey)
 		case "sql":
-			t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, originUrls, true, 0., false, HttpsCert, HttpsCertKey)
+			t.AddPlugins("SQL", plugin.SQL, sql.Sql_inject_Vaild, originUrls, false, true, 0., false, HttpsCert, HttpsCertKey)
 		}
 	}
 }
@@ -326,6 +326,7 @@ func (t *Task) AddPlugins(
 	callback plugin.PluginCallback,
 	ReqList map[string]interface{},
 	installDb bool,
+	isAllUrlEval bool,
 	percentage float64,
 	bpayloadbrower bool,
 	HttpsCert string,
@@ -440,8 +441,8 @@ func (t *Task) dostartTasks(config tconfig) error {
 	)
 
 	ALLURLS := make(map[string][]interface{})
-	ALLURI := make(map[string][]interface{})
 	URLSList := make(map[string]interface{})
+	ALLURI := make(map[string][]interface{})
 	URISList := make(map[string]interface{})
 	JSONALLURLS := make(map[string][]ast.JsonUrl)
 

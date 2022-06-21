@@ -26,7 +26,7 @@ const (
 	CORS      Plugin_type = "rj-008-0001"
 	SQL       Plugin_type = "rj-009-0001"
 	TLS       Plugin_type = "rj-010-0001"
-	APPERROR  Plugin_type = "rj-010-0001"
+	APPERROR  Plugin_type = "rj-011-0001"
 )
 
 type Plugin struct {

@@ -58,6 +58,9 @@ func Test_Crawler(t *testing.T) {
 	// }
 	ReqList := make(map[string][]ast.JsonUrl)
 
+	ALLURLS := make(map[string][]interface{})
+	URLSList := make(map[string]interface{})
+
 	//ALLURLS := make(map[string][]interface{})
 	ALLURI := make(map[string][]interface{})
 	// URLSList := make(map[string]interface{})
@@ -83,6 +86,11 @@ func Test_Crawler(t *testing.T) {
 		return false
 	})
 	util.SaveCrawOutPut(ReqList, "./json_file/apperror.json")
+	CrawlerConvertToMap(Results, &ALLURLS, nil, false)
+	for s, v := range ReqList {
+		URLSList[s] = v
+	}
+	fmt.Println("PASS")
 }
 
 func Test_filter(t *testing.T) {

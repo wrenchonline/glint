@@ -3,9 +3,11 @@ package apperror
 import (
 	"encoding/json"
 	"glint/fastreq"
+	"glint/logger"
 	"glint/plugin"
 	"glint/util"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -280,35 +282,58 @@ func Application_startTest(args interface{}) (*util.ScanResult, error) {
 		return nil, ctx.Err()
 	default:
 	}
+	IsVuln := false
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
-			Timeout:       2 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
-		})
+	if sessions, ok := group.GroupUrls.([]interface{}); ok {
+		for _, session := range sessions {
+			newsess := session.(map[string]interface{})
 
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
+			url := newsess["url"].(string)
+			method := newsess["method"].(string)
+			headers, _ := util.ConvertHeaders(newsess["headers"].(map[string]interface{}))
+			body := []byte(newsess["data"].(string))
+			cert = group.HttpsCert
+			mkey = group.HttpsCertKey
+			sess := fastreq.GetSessionByOptions(
+				&fastreq.ReqOptions{
+					Timeout:       2 * time.Second,
+					AllowRedirect: true,
+					Proxy:         DefaultProxy,
+					Cert:          cert,
+					PrivateKey:    mkey,
+				})
+
+			var hostid int64
+			if value, ok := newsess["hostid"].(int64); ok {
+				hostid = value
+			}
+
+			if value, ok := newsess["hostid"].(json.Number); ok {
+				hostid, _ = value.Int64()
+			}
+
+			// var ContentType string = "None"
+			// if value, ok := headers["Content-Type"]; ok {
+			// 	ContentType = value
+			// }
+			_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
+			if err != nil {
+				logger.Error("%s", err.Error())
+			}
+			if Test_Application_error(resp.String()) {
+				IsVuln = true
+			}
+		}
+
 	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	var ContentType string = "None"
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
+	if IsVuln {
+		Result := util.VulnerableTcpOrUdpResult(url,
+			"CRLF Vulnerable",
+			[]string{string(r)},
+			[]string{resp1.String()},
+			"middle",
+			hostid)
+		return Result, err
 	}
 
 }
