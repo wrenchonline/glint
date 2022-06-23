@@ -141,7 +141,7 @@ func CmdValid(args interface{}) (*util.ScanResult, bool, error) {
 	if err != nil {
 		return nil, false, fmt.Errorf("check jsonp error: %v", err)
 	}
-	if req != nil && resp != nil {
+	if req != nil && resp.StatusCode() == 200 {
 		Result := util.VulnerableTcpOrUdpResult(url,
 			"cmd inject vulnerability found",
 			[]string{string(req.String())},
