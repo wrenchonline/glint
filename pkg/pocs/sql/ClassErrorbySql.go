@@ -110,7 +110,7 @@ type ClassSQLErrorMessages struct {
 	regexArray               []string
 	FalsePositivesPlainArray []string
 	LastJob                  *layers.LastJob
-	variations               *util.PostData
+	variations               *util.Variations
 	trueFeatures             layers.MFeatures
 	// layer                    *layers.Plreq
 }

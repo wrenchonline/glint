@@ -193,7 +193,7 @@ type Header struct {
 }
 
 // PostData describes posted data on a request.
-type PostData struct {
+type Variations struct {
 	// MimeType is the MIME type of the posted data.
 	MimeType string `json:"mimeType"`
 	// Params is a list of posted parameters (in case of URL encoded parameters).
@@ -238,7 +238,7 @@ type Request struct {
 	// QueryString is a list of query parameters.
 	QueryString []QueryString `json:"queryString"`
 	// PostData is the posted data information.
-	PostData *PostData `json:"postData,omitempty"`
+	PostData *Variations `json:"postData,omitempty"`
 	// HeaderSize is the Total number of bytes from the start of the HTTP request
 	// message until (and including) the double CLRF before the body. Set to -1
 	// if the info is not available.
@@ -291,21 +291,21 @@ type Response struct {
 }
 
 //Len()
-func (p PostData) Len() int {
+func (p Variations) Len() int {
 	return len(p.Params)
 }
 
 //Less(): 顺序有低到高排序
-func (p PostData) Less(i, j int) bool {
+func (p Variations) Less(i, j int) bool {
 	return p.Params[i].Index < p.Params[j].Index
 }
 
 //Swap()
-func (p PostData) Swap(i, j int) {
+func (p Variations) Swap(i, j int) {
 	p.Params[i], p.Params[j] = p.Params[j], p.Params[i]
 }
 
-func (p *PostData) Release() string {
+func (p *Variations) Release() string {
 
 	var buf bytes.Buffer
 	mjson := make(map[string]interface{})
@@ -330,7 +330,7 @@ func (p *PostData) Release() string {
 	return buf.String()
 }
 
-func (p PostData) Set(key string, value string) error {
+func (p Variations) Set(key string, value string) error {
 	for i, Param := range p.Params {
 		if Param.Name == key {
 			p.Params[i].Value = value
@@ -342,7 +342,7 @@ func (p PostData) Set(key string, value string) error {
 
 const MIN_SEND_COUNT = 5
 
-func (p *PostData) SetPayload(uri string, payload string, method string) []string {
+func (p *Variations) SetPayload(uri string, payload string, method string) []string {
 	var result []string
 	if strings.ToUpper(method) == "POST" {
 		for idx, kv := range p.Params {
@@ -372,7 +372,7 @@ func (p *PostData) SetPayload(uri string, payload string, method string) []strin
 	return result
 }
 
-func (p *PostData) SetPayloadByindex(index int, uri string, payload string, method string) string {
+func (p *Variations) SetPayloadByindex(index int, uri string, payload string, method string) string {
 	var result string
 	if strings.ToUpper(method) == "POST" {
 		for idx, kv := range p.Params {
@@ -412,11 +412,11 @@ func (p *PostData) SetPayloadByindex(index int, uri string, payload string, meth
 	return result
 }
 
-func ParseUri(uri string, body []byte, method string, content_type string) (*PostData, error) {
+func ParseUri(uri string, body []byte, method string, content_type string) (*Variations, error) {
 	var (
 		err      error
 		index    int
-		Postinfo PostData
+		Postinfo Variations
 	)
 
 	json_map := make(map[string]interface{})

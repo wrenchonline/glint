@@ -55,7 +55,7 @@ func (p *PassiveProxy) ModifyRequest(req *http.Request) error {
 	return p.RecordRequest(id, req)
 }
 
-func postData(req *http.Request, logBody bool) (*util.PostData, error) {
+func postData(req *http.Request, logBody bool) (*util.Variations, error) {
 	// If the request has no body (no Content-Length and Transfer-Encoding isn't
 	// chunked), skip the post data.
 	if req.ContentLength <= 0 && len(req.TransferEncoding) == 0 {
@@ -69,7 +69,7 @@ func postData(req *http.Request, logBody bool) (*util.PostData, error) {
 		mt = ct
 	}
 
-	pd := &util.PostData{
+	pd := &util.Variations{
 		MimeType: mt,
 		Params:   []util.Param{},
 	}

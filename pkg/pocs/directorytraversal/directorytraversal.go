@@ -1,7 +1,9 @@
 package directorytraversal
 
 import (
+	"glint/logger"
 	"glint/pkg/layers"
+	"glint/util"
 	"regexp"
 	"strings"
 )
@@ -18,12 +20,13 @@ type TInjectionValidator struct {
 type classDirectoryTraversal struct {
 	scheme               string
 	InjectionPatterns    classInjectionPatterns
-	targetUrl            string
+	TargetUrl            string
 	inputIndex           int
 	reflectionPoint      int
 	disableSensorBased   bool
 	currentVariation     int
 	foundVulnOnVariation bool
+	variations           *util.Variations
 	lastJob              layers.LastJob
 	lastJobProof         interface{}
 	injectionValidator   TInjectionValidator
@@ -68,13 +71,32 @@ func (c *classInjectionPatterns) searchOnText(text string) (bool, string) {
 	return false, ""
 }
 
-func (c *classDirectoryTraversal) testInjection(value string, dontEncode string) bool {
+//在响应中查找链接并验证他们
+func (c *classDirectoryTraversal) verifyLinksForTraversal(varIndex int, value string, dontEncode bool) bool
+
+//dontEncode 是否编码
+func (c *classDirectoryTraversal) testInjection(varIndex int, value string, dontEncode bool) bool {
 	var job = c.lastJob
 	b, matchedText := c.InjectionPatterns.searchOnText(job.Features.Response.String())
 	if b {
 		// here we need to make sure it's not a false positive
 		// mix up the value to cause the injection to fail, the patterns should not be present in response
-
+		Feature, err := c.lastJob.RequestByIndex(varIndex, c.TargetUrl, util.RandStr(5))
+		if err != nil {
+			logger.Error("%s", err.Error())
+			return false
+		}
+		var confirmed, _ = c.InjectionPatterns.searchOnText(Feature.Response.String())
+		if confirmed {
+			return true
+		}
+		// if isUnix || isUnknown {
+		// 	if value == `/etc/passwd` {
+		// 		if c.verifyLinksForTraversal(job, `passwd`, value) {
+		// 			return false
+		// 		}
+		// 	}
+		// }
 	}
 	return false
 }

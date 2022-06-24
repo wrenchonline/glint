@@ -80,7 +80,7 @@ type classBlindSQLInj struct {
 	scheme                        string
 	TargetUrl                     string
 	inputIndex                    int
-	variations                    *util.PostData
+	variations                    *util.Variations
 	foundVulnOnVariation          bool
 	scanningAnInternalIP          bool
 	scanningATestWebsite          bool
@@ -1672,7 +1672,7 @@ var Mkey string
 
 func Sql_inject_Vaild(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
-	var variations *util.PostData
+	var variations *util.Variations
 	var ContentType string
 	var BlindSQL classBlindSQLInj
 	var hostid int64
