@@ -100,7 +100,7 @@ func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o
 
 	origin, err := util.ParseUri(originUrl, P.Layer.Body, P.Layer.Method, P.Layer.ContentType)
 	if err != nil {
-		panic(err)
+		return feature, err
 	}
 
 	originpayload := origin.SetPayloadByindex(idx, originUrl, paramValue, P.Layer.Method)
