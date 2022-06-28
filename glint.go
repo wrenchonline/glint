@@ -112,7 +112,7 @@ func main() {
 			//设置配置文件路径
 			&cli.StringFlag{
 				Name: "config",
-				// Aliases:     []string{"c"},
+				Aliases:     []string{},
 				Usage:       "Scan Profile, Example `-c config.yaml`",
 				Value:       DefaultConfigPath,
 				Destination: &ConfigpPath,
@@ -120,7 +120,7 @@ func main() {
 			//设置需要开启的插件
 			&cli.StringSliceFlag{
 				Name: "plugin",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "Vulnerable Plugin, Example `--plugin xss csrf ..., The same moudle`",
 				Value:       DefaultPlugins,
 				Destination: &Plugins,
@@ -129,7 +129,7 @@ func main() {
 			//设置websocket地址
 			&cli.StringFlag{
 				Name: "websocket",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "Websocket Communication Address. Example `--websocket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
 				Destination: &WebSocket,
@@ -138,35 +138,35 @@ func main() {
 			//设置socket地址
 			&cli.StringFlag{
 				Name: "socket",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "socket Communication Address. Example `--socket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
 				Destination: &Socket,
 			},
 			&cli.BoolFlag{
 				Name: "passiveproxy",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "start passiveproxy",
 				Value:       false,
 				Destination: &PassiveProxy,
 			},
 			&cli.BoolFlag{
 				Name: "generate-ca-cert",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "generate CA certificate and private key for MITM",
 				Value:       false,
 				Destination: &GenerateCA,
 			},
 			&cli.StringFlag{
 				Name: "cert",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "import certificate path",
 				Value:       "",
 				Destination: &Cert,
 			},
 			&cli.StringFlag{
 				Name: "key",
-				// Aliases:     []string{"p"},
+				Aliases:     []string{},
 				Usage:       "import certificate private key path",
 				Value:       "",
 				Destination: &PrivateKey,
@@ -174,7 +174,7 @@ func main() {
 
 			&cli.BoolFlag{
 				Name: "dbconnect",
-				// Aliases:     []string{"c"},
+				Aliases:     []string{},
 				Usage:       "Wherever Database Connect",
 				Value:       false,
 				Destination: &Dbconect,
