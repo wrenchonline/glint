@@ -21,6 +21,10 @@ type Plreq struct {
 	Index       int
 }
 
+type Scheme struct {
+	Path string
+}
+
 type LastJob struct {
 	Layer            Plreq
 	Features         MFeatures

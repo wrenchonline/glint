@@ -19,12 +19,8 @@ type TInjectionValidator struct {
 	EndMask   string
 }
 
-type Scheme struct {
-	Path string
-}
-
 type classDirectoryTraversal struct {
-	scheme                 Scheme
+	scheme                 layers.Scheme
 	InjectionPatterns      classInjectionPatterns
 	TargetUrl              string
 	inputIndex             int

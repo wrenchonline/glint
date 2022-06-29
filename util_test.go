@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"glint/logger"
 	"glint/util"
+	"regexp"
 	"testing"
 )
 
@@ -24,4 +25,12 @@ func Test_For(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		fmt.Printf("%d", i)
 	}
+}
+
+func Test_Regex(t *testing.T) {
+	var tsr = `我的邮箱 ljl260435988@gmail.com`
+	var regexemails = `(?i)([_a-z\d\-\.]+@([_a-z\d\-]+(\.[a-z]+)+))`
+	re, _ := regexp.Compile(regexemails)
+	result := re.FindString(tsr)
+	fmt.Println(result)
 }
