@@ -3,6 +3,8 @@ package contentsearch
 import (
 	"glint/pkg/layers"
 	"glint/util"
+	"regexp"
+	"strings"
 
 	"github.com/thoas/go-funk"
 )
@@ -26,6 +28,53 @@ type classcontentsearch struct {
 	isWindows              bool
 	isJava                 bool
 	isUnknown              bool
+}
+
+func VaildEmail(email string) bool {
+	var skippedEndings = []string{
+		"@example.com",
+		".example.com",
+		"@sample.com",
+		"@email.tst",
+		"@domain.com",
+		"@sitename.com",
+		"@php.net",
+		"@httpd.apache.org",
+		"@magento.com",
+		"@email.com",
+		".png",
+		".jpeg",
+		".gif",
+		".jpg",
+		".bmp",
+		".tif",
+		".svg",
+	}
+	var skippedEmails = []string{
+		"webmaster@", "hostmaster@", "info@", "support@", "sales@", "marketing@", "news@", "contact@", "helpdesk@", "help@", "sample@", "postmaster@", "security@", "root@",
+		"sysadmin@", "abuse@",
+		"admin@", "administrator@",
+		"noreply@", "no-reply@",
+		"your@", "your@friend.com",
+	}
+	if email != "" {
+		regstr := "(?i)(^u00[a-f0-9]{2})"
+		re, _ := regexp.Compile(regstr)
+		if re.Match([]byte(email)) {
+			return false
+		}
+		for _, v := range skippedEndings {
+			if strings.HasSuffix(strings.ToLower(email), v) {
+				return false
+			}
+		}
+		for _, v := range skippedEmails {
+			if strings.HasPrefix(strings.ToLower(email), v) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (s *classcontentsearch) CheckForEmailAddr(responseBody string, contentType string) bool {
