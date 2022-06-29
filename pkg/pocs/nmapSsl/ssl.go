@@ -9,6 +9,7 @@ import (
 	"glint/plugin"
 	"glint/util"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/Ullaakut/nmap/v2"
@@ -19,6 +20,8 @@ var DefaultProxy = ""
 
 // var cert string
 // var mkey string
+
+var threadwg sync.WaitGroup //同步线程
 
 func Sslverify(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()

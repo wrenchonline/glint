@@ -10,6 +10,7 @@ import (
 	"glint/util"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -292,6 +293,8 @@ func (e *ErrorVulnDetails) String() string {
 	return buf.String()
 }
 
+var threadwg sync.WaitGroup //同步线程
+
 func Application_startTest(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	group := args.(plugin.GroupData)
@@ -309,46 +312,49 @@ func Application_startTest(args interface{}) (*util.ScanResult, bool, error) {
 	var VulnList = ErrorVulnDetails{}
 	var err error
 	if sessions, ok := group.GroupUrls.([]interface{}); ok {
-		for _, session := range sessions {
-			newsess := session.(map[string]interface{})
+		threadwg.Add(len(sessions))
+		go func() {
+			for _, session := range sessions {
+				newsess := session.(map[string]interface{})
+				url := newsess["url"].(string)
+				method := newsess["method"].(string)
+				headers, _ := util.ConvertHeaders(newsess["headers"].(map[string]interface{}))
+				body := []byte(newsess["data"].(string))
+				cert = group.HttpsCert
+				mkey = group.HttpsCertKey
+				sess := fastreq.GetSessionByOptions(
+					&fastreq.ReqOptions{
+						Timeout:       2 * time.Second,
+						AllowRedirect: true,
+						Proxy:         DefaultProxy,
+						Cert:          cert,
+						PrivateKey:    mkey,
+					})
 
-			url := newsess["url"].(string)
-			method := newsess["method"].(string)
-			headers, _ := util.ConvertHeaders(newsess["headers"].(map[string]interface{}))
-			body := []byte(newsess["data"].(string))
-			cert = group.HttpsCert
-			mkey = group.HttpsCertKey
-			sess := fastreq.GetSessionByOptions(
-				&fastreq.ReqOptions{
-					Timeout:       2 * time.Second,
-					AllowRedirect: true,
-					Proxy:         DefaultProxy,
-					Cert:          cert,
-					PrivateKey:    mkey,
-				})
-
-			if hostid == 0 {
-				if value, ok := newsess["hostid"].(int64); ok {
-					hostid = value
+				if hostid == 0 {
+					if value, ok := newsess["hostid"].(int64); ok {
+						hostid = value
+					}
+					if value, ok := newsess["hostid"].(json.Number); ok {
+						hostid, _ = value.Int64()
+					}
 				}
-				if value, ok := newsess["hostid"].(json.Number); ok {
-					hostid, _ = value.Int64()
+				_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
+				if err != nil {
+					logger.Error("%s", err.Error())
 				}
-			}
-			_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
-			if err != nil {
-				logger.Error("%s", err.Error())
-			}
-			if isVuln, matchstr := Test_Application_error(resp.String()); isVuln {
-				IsVuln = true
-				if VulnURl == "" {
-					VulnURl = url
+				if isVuln, matchstr := Test_Application_error(resp.String()); isVuln {
+					IsVuln = true
+					if VulnURl == "" {
+						VulnURl = url
+					}
+					VulnInfo := ErrorVulnDetail{Url: url, MatchString: matchstr}
+					VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
 				}
-				VulnInfo := ErrorVulnDetail{Url: url, MatchString: matchstr}
-				VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
+				threadwg.Done()
 			}
-		}
-
+		}()
+		threadwg.Wait()
 	}
 	if IsVuln {
 		Result := util.VulnerableTcpOrUdpResult(VulnURl,
