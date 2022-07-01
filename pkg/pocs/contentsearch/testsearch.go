@@ -227,3 +227,52 @@ func (s *classcontentsearch) CheckForDatabaseConnectionStringDisclosure(response
 	}
 	return "", false
 }
+func (s *classcontentsearch) CheckForUsernameOrPasswordDisclosure(responseBody string) (string, bool) {
+	r1 := regexp.MustCompile(`(?i)(?m)(['"]?(db[\-_])?(uid|user|username)['"]?\s?(:|=)\s*['"]?([A-Za-z0-9_\-@$!%*#?&]){3,}['"]?[,]?([\r\n]+)\s*['"]?(db[\-_])?(pass|pwd|passwd|password)['"]?\s?(:|=)\s*['"]?([A-Za-z0-9_\-@$!%*#?&]){6,}['"]?([,\r\n]|$))`)
+	m := r1.FindAllString(responseBody, -1)
+	if len(m) != 0 {
+		return m[0], true
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForPathDisclosure(responseBody string, fullPath string) (string, bool) {
+	// Windows
+	r1 := regexp.MustCompile(`(?i)([a-z])\:\\(program files|windows|inetpub|php|document and settings|www|winnt|xampp|wamp|temp|websites|apache|apache2|site|sites|htdocs|web|http|appserv)[\\\w]+(\.\w+)?`)
+	m := r1.FindAllString(responseBody, -1)
+	if len(m) != 0 {
+		return m[0], true
+	}
+	// Unix
+	r2 := regexp.MustCompile(`[\s\t:><|\(\)\[\}](\/(var|www|usr|Users|user|tmp|etc|home|mnt|mount|root|proc)\/[\w\/\.]*(\.\w+)?)`)
+	m2 := r2.FindAllString(responseBody, -1)
+	if len(m2) != 0 {
+		if strings.HasSuffix(m2[0], fullPath) {
+			return "", false
+		}
+		fileExts := strings.Split(m2[0], ".")
+		if len(fileExts) != 0 {
+			fExt := fileExts[len(fileExts)-1]
+			if fExt == "js" {
+				return "", false
+			}
+		}
+
+		DIRS := strings.Split(m2[0], "/")
+		if len(DIRS) < 3 {
+			return "", false
+		}
+
+		return m[0], true
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForDjangoDebugMode(responseBody string) (string, bool) {
+	r1 := regexp.MustCompile(`(?i)(?m)<th>Django Version:<\/th>[\S\s]*<th>Exception Type:<\/th>`)
+	m := r1.FindAllString(responseBody, -1)
+	if len(m) != 0 {
+		return m[0], true
+	}
+	return "", false
+}

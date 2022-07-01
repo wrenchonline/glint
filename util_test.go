@@ -39,4 +39,11 @@ func Test_Regex(t *testing.T) {
 	RE, _ := regexp.Compile(regexIp)
 	ips := RE.FindAllString(tsrs, -1)
 	fmt.Println(ips)
+
+	var tsrss = `"Db_user"="1221"
+	"Db_pass"='20sdasdasd'`
+	regexx := `(?i)(?m)(['"]?(db[\-_])?(uid|user|username)['"]?\s?(:|=)\s*['"]?([A-Za-z0-9_\-@$!%*#?&]){3,}['"]?[,]?([\r\n]+)\s*['"]?(db[\-_])?(pass|pwd|passwd|password)['"]?\s?(:|=)\s*['"]?([A-Za-z0-9_\-@$!%*#?&]){6,}['"]?([,\r\n]|$))`
+	RE1, _ := regexp.Compile(regexx)
+	m := RE1.FindAllString(tsrss, -1)
+	fmt.Println(m)
 }
