@@ -276,3 +276,120 @@ func (s *classcontentsearch) CheckForDjangoDebugMode(responseBody string) (strin
 	}
 	return "", false
 }
+
+func (s *classcontentsearch) CheckForWhenRegexMatch(regex string, responseBody string) (string, bool) {
+	r1 := regexp.MustCompile(`regex`)
+	m := r1.FindAllString(responseBody, -1)
+	if len(m) != 0 {
+		return m[0], true
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForStackTraces(responseBody string) (string, bool) {
+	//foundIssues := false
+	var MatchInfo string
+	var IsVuln bool
+	// ASP.NET Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<b>Stack Trace:<\/b> <br><br>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// ColdFusion Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<td class="struct" onClick="cfdump_toggleRow\(this\);" style="[^"]*" title="click to collapse">StackTrace<\/td>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Python Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<td class="struct" onClick="cfdump_toggleRow\(this\);" style="[^"]*" title="click to collapse">StackTrace<\/td>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Ruby Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<p id="explanation">You're seeing this error because you have`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`onclick="toggleBacktrace\(\); return false">\(expand\)<\/a><\/p>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<h3 id="env-info">Rack ENV<\/h3>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Tomcat Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<b>exception<\/b> <pre>[\S\s]*<\/pre><\/p><p><b>root cause<\/b> <pre>[\S\s]*javax\.servlet\.http`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<b>note<\/b>\s*<u>The full stack trace of the root cause is available in the Apache Tomcat\/`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Grails Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<h1>Grails Runtime Exception<\/h1> <h2>Error Details<\/h2>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Apache MyFaces Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<h1>An Error Occurred:<\/h1>[\n\r ]*<div id="error" class="grayBox" style="[\s\S]*-<\/span> Stack Trace<\/a><\/h2>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+
+	// Laravel Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<h1>Whoops, looks like something went wrong\.<\/h1>\s*<h2 class="block_exception clear_fix">`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+
+	//  RoR Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<title>Action Controller: Exception caught<\/title>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+
+	// CakePHP Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<div id="stack-frame-0" style="display:none;" class="stack-details">`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+
+	// CherryPy Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<pre id="traceback">.+<\/pre>\r?\n.+<div id="powered_by">\r?\n.+<span>\r?\n.+Powered by <a href="http:\/\/www.cherrypy.org"><\/a>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForelmahInfoDisclosure(responseBody string) (string, bool) {
+	var MatchInfo string
+	var IsVuln bool
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<th class="host-col"[^\>]*>Host<\/th>\s*<th class="code-col"[^\>]*>Code<\/th>\s*<th class="type-col"[^\>]*>Type<\/th>\s*<th class="error-col"[^\>]*>Error<\/th>\s*<th class="user-col"[^\>]*>User<\/th>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Apache MyFaces Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<li><a href="\/elmah.axd" title="List of logged errors">Errors<\/a><\/li><li><a href="http:\/\/elmah.googlecode.com\/" title="Documentation, discussions, issues and more">Help<\/a>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForSQLDatabaseDump(responseBody string) (string, bool) {
+	var MatchInfo string
+	var IsVuln bool
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<th class="host-col"[^\>]*>Host<\/th>\s*<th class="code-col"[^\>]*>Code<\/th>\s*<th class="type-col"[^\>]*>Type<\/th>\s*<th class="error-col"[^\>]*>Error<\/th>\s*<th class="user-col"[^\>]*>User<\/th>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	// Apache MyFaces Stack Trace
+	MatchInfo, IsVuln = s.CheckForWhenRegexMatch(`<li><a href="\/elmah.axd" title="List of logged errors">Errors<\/a><\/li><li><a href="http:\/\/elmah.googlecode.com\/" title="Documentation, discussions, issues and more">Help<\/a>`, responseBody)
+	if IsVuln {
+		return MatchInfo, IsVuln
+	}
+	return "", false
+}
