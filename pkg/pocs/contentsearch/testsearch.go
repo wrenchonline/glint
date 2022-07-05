@@ -393,3 +393,48 @@ func (s *classcontentsearch) CheckForSQLDatabaseDump(responseBody string) (strin
 	}
 	return "", false
 }
+
+func (s *classcontentsearch) CheckForStrutsDevMode(responseBody string) (string, bool) {
+	var MatchInfo string
+	var IsMatch bool
+	MatchInfo, IsMatch = s.CheckForWhenRegexMatch(`<title>Struts Problem Report<\/title>`, responseBody)
+	if IsMatch {
+		patternStr := `You are seeing this page because development mode is enabled.  Development mode, or devMode, enables extra`
+		if funk.Contains(responseBody, patternStr) {
+			return MatchInfo, true
+		}
+
+	}
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForWordPressDBCredentials(responseBody string) (string, bool) {
+
+	if funk.Contains(responseBody, `/** The name of the database for WordPress */`) &&
+		funk.Contains(responseBody, `/** MySQL database username */`) &&
+		funk.Contains(responseBody, `/** MySQL database password */`) {
+		patternStr := "define( 'DB_PASSWORD', '"
+		if funk.Contains(responseBody, patternStr) {
+			return patternStr, true
+		}
+	}
+
+	return "", false
+}
+
+func (s *classcontentsearch) CheckForErrorMessages(responseBody string) (string, bool) {
+
+	for _, plain := range layers.ErrorMessagesPlainText {
+		if funk.Contains(responseBody, plain) {
+			return plain, true
+		}
+	}
+	for _, regex := range layers.ErrorMessagesRegexes {
+		r, _ := regexp.Compile(regex)
+		C := r.FindAllStringSubmatch(responseBody, -1)
+		if len(C) != 0 {
+			return C[0][0], true
+		}
+	}
+	return "", false
+}
