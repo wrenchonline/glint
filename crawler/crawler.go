@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"glint/config"
 	config2 "glint/config"
 	"glint/logger"
 	model2 "glint/model"
@@ -50,6 +52,12 @@ const (
 	GroupsNormal GroupsType = "Normal"
 	GroupsEmtry  GroupsType = ""
 )
+
+type bindingCallPayload struct {
+	Name string   `json:"name"`
+	Seq  int      `json:"seq"`
+	Args []string `json:"args"`
+}
 
 type BrowserHttpInfo struct {
 	Request  *http.Request
@@ -446,6 +454,11 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 		case *page.EventFrameRequestedNavigation:
 			logger.Debug("开始请求的导航 FrameID:%s url %s , 导航类型 type: %s  导航请求理由：%s ",
 				ev.FrameID, ev.URL, ev.Disposition, ev.Reason)
+			// handle expose function
+		case *runtime.EventBindingCalled:
+			tab.WG.Add(1)
+			go tab.HandleBindingCalled(ev)
+
 		}
 
 	})
@@ -561,6 +574,23 @@ func (tab *Tab) DetectCharset() {
 	}
 }
 
+/**
+处理回调
+*/
+func (tab *Tab) HandleBindingCalled(event *runtime.EventBindingCalled) {
+	defer tab.WG.Done()
+	payload := []byte(event.Payload)
+	var bcPayload bindingCallPayload
+	_ = json.Unmarshal(payload, &bcPayload)
+	if bcPayload.Name == "addLink" && len(bcPayload.Args) > 1 {
+		tab.AddResultUrl(config.GET, bcPayload.Args[0], bcPayload.Args[1])
+	}
+	if bcPayload.Name == "Test" {
+		fmt.Println(bcPayload.Args)
+	}
+	tab.Evaluate(fmt.Sprintf(DeliverResultJS, bcPayload.Name, bcPayload.Seq, "s"))
+}
+
 func (tab *Tab) EncodeAllURLWithCharset() {
 	if tab.PageCharset == "" || tab.PageCharset == "UTF-8" {
 		return
@@ -589,7 +619,16 @@ func (tab *Tab) Crawler(extends interface{}) error {
 		// 开启网络层API
 		network.Enable(),
 		// 开启请求拦截API
-		fetch.Enable(),
+		fetch.Enable().WithHandleAuthRequests(true),
+		// 初始化执行JS
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			_, err = page.AddScriptToEvaluateOnNewDocument(TabInitJS).Do(ctx)
+			if err != nil {
+				return err
+			}
+			return nil
+		}),
 		// 设置标签头
 		chromedp.ActionFunc(func(c context.Context) error {
 			network.SetExtraHTTPHeaders(network.Headers(tab.ExtraHeaders)).Do(c)

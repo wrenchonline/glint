@@ -117,7 +117,7 @@ const TabInitJS = `
 	function dom0_listener_hook(that, event_name) {
 		let name = "<" + that.tagName + "> " + that.id + that.name + that.getAttribute("class") + "|" + event_name;
 		// console.log(name);
-		// 对每个事件设定最大的添加次数，防止无限触发，最大次数为5
+		// 对每个事件设定最大的添加次数,防止无限触发,最大次数为5
 		if (!window.add_even_listener_count_sec_auto.hasOwnProperty(name)) {
 			window.add_even_listener_count_sec_auto[name] = 1;
 		} else if (window.add_even_listener_count_sec_auto[name] == 5) {
@@ -159,15 +159,15 @@ const TabInitJS = `
 	})
 	
 	// hook window.open 
-	window.open = function (url) {
-		console.log("trying to open window.");
-		window.addLink(url, "OpenWindow");
-	}
-	Object.defineProperty(window,"open",{"writable": false, "configurable": false});
+	// window.open = function (url) {
+	// 	console.log("trying to open window.");
+	// 	window.addLink(url, "OpenWindow");
+	// }
+	// Object.defineProperty(window,"open",{"writable": false, "configurable": false});
 	
-	// hook window close
-	window.close = function() {console.log("trying to close page.");};
-	Object.defineProperty(window,"close",{"writable": false, "configurable": false});
+	// // hook window close
+	// window.close = function() {console.log("trying to close page.");};
+	// Object.defineProperty(window,"close",{"writable": false, "configurable": false});
 	
 	// hook setTimeout
 	//window.__originalSetTimeout = window.setTimeout;
@@ -185,7 +185,7 @@ const TabInitJS = `
 	};
 	Object.defineProperty(window,"setInterval",{"writable": false, "configurable": false});
 	
-	// 劫持原生ajax，并对每个请求设置最大请求次数
+	// 劫持原生ajax,并对每个请求设置最大请求次数
 	window.ajax_req_count_sec_auto = {};
 	XMLHttpRequest.prototype.__originalOpen = XMLHttpRequest.prototype.open;
 	XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
