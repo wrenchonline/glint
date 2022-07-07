@@ -4,7 +4,7 @@ DBUser: "newitop"
 DBName: "itop"
 DBPassWord: "rjjsoft+0591"
 
-FilterMode: "simple"
+FilterMode: "smart"
 
 ExtraHeaders:
  

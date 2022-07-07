@@ -965,6 +965,7 @@ func (tab *Tab) AddResultUrl(method string, _url string, source string) {
 		PostData: "",
 	}
 	referer := navUrl.String()
+	logger.Debug("pre add url: %s", url.String())
 	// 处理Host绑定
 	if host, ok := tab.NavigateReq.Headers["Host"]; ok {
 		if host != navUrl.Hostname() && url.Hostname() == host {

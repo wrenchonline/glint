@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"glint/logger"
 	"net/url"
 	"path"
 	"regexp"
@@ -33,6 +34,7 @@ func UrlParse(sourceUrl string) (*url.URL, error) {
 
 func GetUrl(_url string, parentUrls ...URL) (*URL, error) {
 	// 补充解析URL为完整格式
+	logger.Debug("url %s", _url)
 	var u URL
 	_url, err := u.parse(_url, parentUrls...)
 	if err != nil {
@@ -41,6 +43,7 @@ func GetUrl(_url string, parentUrls ...URL) (*URL, error) {
 
 	if len(parentUrls) == 0 {
 		_u, err := UrlParse(_url)
+
 		if err != nil {
 			return nil, err
 		}
@@ -50,6 +53,13 @@ func GetUrl(_url string, parentUrls ...URL) (*URL, error) {
 		}
 	} else {
 		pUrl := parentUrls[0]
+		//判断是路径
+		if strings.HasPrefix(_url, "/") {
+			//去掉\r \n \s
+			r := regexp.MustCompile(`(\r|\n|\s+)`)
+			_url = r.ReplaceAllString(_url, "")
+			pUrl.Path = _url
+		}
 		_u, err := pUrl.Parse(_url)
 		if err != nil {
 			return nil, err

@@ -213,7 +213,7 @@ func (s *SmartFilter) Init() {
 func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	// 首先过滤掉静态资源、基础的去重、过滤其它的域名
 	if s.SimpleFilter.DoFilter(req) {
-		logger.Debug("filter req by simplefilter: %s", req.URL.RequestURI())
+		// logger.Debug("filter req by simplefilter: %s", req.URL.RequestURI())
 		return true
 	}
 
@@ -243,7 +243,6 @@ func (s *SmartFilter) DoFilter(req *model.Request) bool {
 	if req.Method == config.GET || req.Method == config.DELETE || req.Method == config.HEAD || req.Method == config.OPTIONS {
 		// 对超过阈值的GET请求进行标记
 		s.overCountMark(req)
-
 		// 重新计算 QueryMapId
 		req.Filter.QueryMapId = getParamMapID(req.Filter.MarkedQueryMap)
 		// 重新计算 PathId
