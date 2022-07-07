@@ -11,6 +11,7 @@ import (
 )
 
 type Filter struct {
+	FragmentID        string
 	MarkedQueryMap    map[string]interface{}
 	QueryKeysId       string
 	QueryMapId        string
@@ -27,12 +28,13 @@ type Options struct {
 }
 
 type Request struct {
-	URL             *URL
-	DomainId        int64 //域名id
-	Method          string
-	Headers         map[string]interface{}
-	PostData        string
-	Filter          Filter
+	URL      *URL
+	DomainId int64 //域名id
+	Method   string
+	Headers  map[string]interface{}
+	PostData string
+	Filter   Filter
+
 	Source          string
 	RedirectionFlag bool
 	FasthttpProxy   string

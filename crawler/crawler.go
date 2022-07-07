@@ -263,6 +263,37 @@ func (tab *Tab) triggerJavascriptProtocol() {
 }
 
 /**
+触发内联事件
+*/
+func (tab *Tab) triggerInlineEvents() {
+	defer tab.loadedWG.Done()
+	logger.Debug("triggerInlineEvents start")
+	tab.Evaluate(fmt.Sprintf(TriggerInlineEventJS, tab.config.EventTriggerInterval.Seconds()*1000))
+	logger.Debug("triggerInlineEvents end")
+}
+
+/**
+触发DOM2级事件
+*/
+func (tab *Tab) triggerDom2Events() {
+	defer tab.loadedWG.Done()
+	logger.Debug("triggerDom2Events start")
+	tab.Evaluate(fmt.Sprintf(TriggerDom2EventJS, tab.config.EventTriggerInterval.Seconds()*1000))
+	logger.Debug("triggerDom2Events end")
+}
+
+/**
+移除DOM节点变化监听
+*/
+func (tab *Tab) RemoveDOMListener() {
+	defer tab.removeLis.Done()
+	logger.Debug("RemoveDOMListener start")
+	// 移除DOM节点变化监听
+	tab.Evaluate(RemoveDOMListenerJS)
+	logger.Debug("RemoveDOMListener end")
+}
+
+/**
 在页面Loaded之后执行
 同时等待 afterDOMRun 之后执行
 */
@@ -270,8 +301,8 @@ func (tab *Tab) AfterLoadedRun() {
 	defer tab.WG.Done()
 	logger.Success("afterLoadedRun start")
 	tab.formSubmitWG.Add(2)
-	tab.loadedWG.Add(1)
-	// tab.removeLis.Add(1)
+	tab.loadedWG.Add(3)
+	tab.removeLis.Add(1)
 
 	logger.Success("formSubmit start")
 	go tab.CommitBySubmit()
@@ -281,8 +312,8 @@ func (tab *Tab) AfterLoadedRun() {
 
 	// if tab.config.EventTriggerMode == config.EventTriggerAsync {
 	go tab.triggerJavascriptProtocol()
-	// 	go tab.triggerInlineEvents()
-	// 	go tab.triggerDom2Events()
+	go tab.triggerInlineEvents()
+	go tab.triggerDom2Events()
 	tab.loadedWG.Wait()
 	// } else if tab.config.EventTriggerMode == config.EventTriggerSync {
 	// 	tab.triggerInlineEvents()
@@ -295,7 +326,7 @@ func (tab *Tab) AfterLoadedRun() {
 	// 事件触发之后 需要等待一点时间让浏览器成功发出ajax请求 更新DOM
 	time.Sleep(2 * time.Second)
 
-	// go tab.RemoveDOMListener()
+	go tab.RemoveDOMListener()
 	// tab.removeLis.Wait()
 	logger.Success("afterLoadedRun end")
 }

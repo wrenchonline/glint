@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 type URL struct {
@@ -137,17 +140,20 @@ func (u *URL) NavigationUrl() string {
 */
 func (u *URL) RootDomain() string {
 	domain := u.Hostname()
-	if strings.Count(domain, ".") == 1 {
-		return domain
-	}
-
-	parts := strings.Split(domain, ".")
-	if len(parts) >= 2 {
-		parts = parts[len(parts)-2:]
-		return strings.Join(parts, ".")
-	} else {
+	suffix, icann := publicsuffix.PublicSuffix(strings.ToLower(domain))
+	// 如果不是 icann 的域名，返回空字符串
+	if !icann {
 		return ""
 	}
+	i := len(domain) - len(suffix) - 1
+	// 如果域名错误
+	if i <= 0 {
+		return ""
+	}
+	if domain[i] != '.' {
+		return ""
+	}
+	return domain[1+strings.LastIndex(domain[:i], "."):]
 }
 
 /**
@@ -167,12 +173,12 @@ func (u *URL) FileName() string {
 文件扩展名
 */
 func (u *URL) FileExt() string {
-	fileName := u.FileName()
-	if fileName == "" {
-		return ""
+	parts := path.Ext(u.Path)
+	// 第一个字符会带有 "."
+	if len(parts) > 0 {
+		return strings.ToLower(parts[1:])
 	}
-	parts := strings.Split(fileName, ".")
-	return strings.ToLower(parts[len(parts)-1])
+	return parts
 }
 
 /**

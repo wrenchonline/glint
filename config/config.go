@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"gopkg.in/yaml.v2"
 )
 
@@ -86,6 +87,7 @@ var StaticSuffix = []string{
 	"gz2", "apk", "crt", "woff", "map", "woff2", "webp", "less", "dmg", "bz2", "otf", "swf",
 	"flv", "mpeg", "dat", "xsl", "csv", "cab", "exif", "wps", "m4v", "rmvb",
 }
+var StaticSuffixSet mapset.Set
 
 var ScriptSuffix = []string{
 	"php", "asp", "jsp", "asa",
