@@ -46,4 +46,10 @@ func Test_Regex(t *testing.T) {
 	RE1, _ := regexp.Compile(regexx)
 	m := RE1.FindAllString(tsrss, -1)
 	fmt.Println(m)
+
+	tsrsss := "/cn/about\r\n\r\r\n   "
+	r := regexp.MustCompile(`(\r|\n|\s+)`)
+	_url := r.ReplaceAllString(tsrsss, "")
+	fmt.Println(_url)
+
 }

@@ -47,6 +47,7 @@ func TestAppError(t *testing.T) {
 		Spider:  nil,
 		Timeout: time.Second * 999,
 	}
+
 	pluginInternal.Init()
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)

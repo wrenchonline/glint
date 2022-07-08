@@ -111,7 +111,7 @@ func main() {
 		Flags: []cli.Flag{
 			//设置配置文件路径
 			&cli.StringFlag{
-				Name: "config",
+				Name:        "config",
 				Aliases:     []string{},
 				Usage:       "Scan Profile, Example `-c config.yaml`",
 				Value:       DefaultConfigPath,
@@ -119,7 +119,7 @@ func main() {
 			},
 			//设置需要开启的插件
 			&cli.StringSliceFlag{
-				Name: "plugin",
+				Name:        "plugin",
 				Aliases:     []string{},
 				Usage:       "Vulnerable Plugin, Example `--plugin xss csrf ..., The same moudle`",
 				Value:       DefaultPlugins,
@@ -128,7 +128,7 @@ func main() {
 
 			//设置websocket地址
 			&cli.StringFlag{
-				Name: "websocket",
+				Name:        "websocket",
 				Aliases:     []string{},
 				Usage:       "Websocket Communication Address. Example `--websocket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
@@ -137,35 +137,35 @@ func main() {
 
 			//设置socket地址
 			&cli.StringFlag{
-				Name: "socket",
+				Name:        "socket",
 				Aliases:     []string{},
 				Usage:       "socket Communication Address. Example `--socket 127.0.0.1:8081`",
 				Value:       DefaultSocket,
 				Destination: &Socket,
 			},
 			&cli.BoolFlag{
-				Name: "passiveproxy",
+				Name:        "passiveproxy",
 				Aliases:     []string{},
 				Usage:       "start passiveproxy",
 				Value:       false,
 				Destination: &PassiveProxy,
 			},
 			&cli.BoolFlag{
-				Name: "generate-ca-cert",
+				Name:        "generate-ca-cert",
 				Aliases:     []string{},
 				Usage:       "generate CA certificate and private key for MITM",
 				Value:       false,
 				Destination: &GenerateCA,
 			},
 			&cli.StringFlag{
-				Name: "cert",
+				Name:        "cert",
 				Aliases:     []string{},
 				Usage:       "import certificate path",
 				Value:       "",
 				Destination: &Cert,
 			},
 			&cli.StringFlag{
-				Name: "key",
+				Name:        "key",
 				Aliases:     []string{},
 				Usage:       "import certificate private key path",
 				Value:       "",
@@ -173,7 +173,7 @@ func main() {
 			},
 
 			&cli.BoolFlag{
-				Name: "dbconnect",
+				Name:        "dbconnect",
 				Aliases:     []string{},
 				Usage:       "Wherever Database Connect",
 				Value:       false,
@@ -648,7 +648,7 @@ func WebSocketHandler(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("listening on http://%v", l.Addr())
+	logger.Info("WebSocket listening on ws://%v", l.Addr())
 
 	cs, err := NewTaskServer("websocket")
 	if err != nil {

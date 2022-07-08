@@ -17,7 +17,6 @@
                 "server.pem",
                 "--key",
                 "server.key",
-                "--dbconnect",
             ],
         }
     ]
