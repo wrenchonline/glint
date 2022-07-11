@@ -269,3 +269,8 @@ func (errsql *ClassSQLErrorMessages) startTesting() bool {
 
 	return false
 }
+
+func (errsql *ClassSQLErrorMessages) testInjectionSensor(startMark string, stopMark string, value string) bool {
+
+	return false
+}
