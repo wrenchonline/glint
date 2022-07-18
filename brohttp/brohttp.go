@@ -228,7 +228,7 @@ func (t *Tab) ListenTarget() {
 					t.RequestsStr = string(array)
 				}
 				if err := req.Do(ctx); err != nil {
-					logger.Printf("fetch.EventRequestPaused Failed to continue request: %v", err)
+					logger.Debug("fetch.EventRequestPaused Failed to continue request: %v", err)
 				}
 
 				// network.GetRequestPostData()
