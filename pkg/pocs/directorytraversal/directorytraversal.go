@@ -93,7 +93,7 @@ func (c *classDirectoryTraversal) testInjection(varIndex int, value string, dont
 		// mix up the value to cause the injection to fail, the patterns should not be present in response
 		Feature, err := c.lastJob.RequestByIndex(varIndex, c.TargetUrl, util.RandStr(5))
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 			return false
 		}
 		var confirmed, _ = c.InjectionPatterns.searchOnText(Feature.Response.String())
@@ -139,7 +139,7 @@ func (c *classDirectoryTraversal) shouldRunAllTests(index int, origValue string)
 	// make a request with the original value again
 	body_Feature, err := c.lastJob.RequestByIndex(index, c.TargetUrl, origValue)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Debug("RequestByIndex error:%s", err.Error())
 		return false
 	}
 	// if (!c.(origValue, false)) return true;
@@ -173,7 +173,7 @@ func (c *classDirectoryTraversal) shouldRunAllTests(index int, origValue string)
 	// make the request for the false value
 	falseFeatures, err := c.lastJob.RequestByIndex(index, c.TargetUrl, falseValue)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Debug("RequestByIndex error:%s", err.Error())
 		return false
 	}
 
@@ -185,7 +185,7 @@ func (c *classDirectoryTraversal) shouldRunAllTests(index int, origValue string)
 	// make the request for the true value
 	trueFeatures, err := c.lastJob.RequestByIndex(index, c.TargetUrl, trueValue)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Debug("RequestByIndex error:%s", err.Error())
 		return false
 	}
 

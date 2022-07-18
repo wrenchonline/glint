@@ -157,7 +157,7 @@ func (p *Plugin) Run(args PluginOption) error {
 					}
 					err = p.Pool.Invoke(data)
 					if err != nil {
-						logger.Error(err.Error())
+						logger.Debug(err.Error())
 					}
 				}(type_name, urlinter)
 			}
@@ -176,7 +176,7 @@ func (p *Plugin) Run(args PluginOption) error {
 				}
 				err = p.Pool.Invoke(data)
 				if err != nil {
-					logger.Error(err.Error())
+					logger.Debug(err.Error())
 				}
 			}(type_name, ur)
 		}

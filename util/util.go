@@ -357,7 +357,7 @@ func (p *Variations) SetPayload(uri string, payload string, method string) []str
 	} else if strings.ToUpper(method) == "GET" {
 		u, err := url.Parse(uri)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Debug(err.Error())
 			return nil
 		}
 		v := u.Query()

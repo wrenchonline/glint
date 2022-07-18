@@ -138,7 +138,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	s := time.Now()
 	Feature, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("checkIfResponseIsStable RequestByIndex error:%s", err.Error())
 	}
 	Time1 = time.Since(s)
 	//发送目标值
@@ -157,7 +157,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	Feature2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, bsql.origValue)
 	Time2 = time.Since(s2)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("checkIfResponseIsStable error: %s", err.Error())
 	}
 	body2 := bsql.filterBody(Feature2.Response.String(), bsql.origValue)
 	body2Features := Feature2
@@ -193,7 +193,7 @@ func (bsql *classBlindSQLInj) checkIfResponseIsStable(varIndex int) bool {
 	Feature3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, newValue)
 	Time3 = time.Since(s3)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("checkIfResponseIsStable error: %s", err.Error())
 		return false
 	}
 	body3Features := Feature3
@@ -256,7 +256,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody}, &[]layers.MFeatures{bsql.origFeatures}) {
 		logger.Debug("failed OR test 1")
@@ -274,7 +274,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody1}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed OR test 2")
@@ -291,7 +291,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody2}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed OR test 3")
@@ -307,7 +307,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testbody3}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed OR test 4")
@@ -325,7 +325,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	truebody = testbody4
 
@@ -338,7 +338,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody5}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed complex test 2")
@@ -355,7 +355,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody6}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed complex test 3")
@@ -371,7 +371,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testbody7}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed complex test 4")
@@ -387,7 +387,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testbody8}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed complex test 4")
@@ -404,7 +404,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR(varIndex int,
 
 	testbody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testbody9}, &[]layers.MFeatures{truebody}) {
 		logger.Debug("failed complex test 5")
@@ -452,7 +452,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 	if bsql.isNumeric {
 		origValueAsInt, err := strconv.Atoi(parseInt(bsql.origValue))
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 			return false
 		}
 		// test 1 TRUE  -------------------------------------------------------------
@@ -460,7 +460,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 1")
@@ -472,7 +472,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody1}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 2")
@@ -484,7 +484,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody2}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 3")
@@ -496,7 +496,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody3}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 4")
@@ -508,7 +508,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody4}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 5")
@@ -520,7 +520,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody5}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed Number test 6")
@@ -540,7 +540,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 1")
@@ -553,7 +553,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody1}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 2")
@@ -566,7 +566,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody2}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 3")
@@ -579,7 +579,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody3}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 4")
@@ -592,7 +592,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if !layers.CompareFeatures(&[]layers.MFeatures{testbody4}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 5")
@@ -606,7 +606,7 @@ func (bsql *classBlindSQLInj) confirmInjection(varIndex int,
 		logger.Debug("%s", paramValue)
 		testbody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		if layers.CompareFeatures(&[]layers.MFeatures{testbody5}, &[]layers.MFeatures{origFeatures}) {
 			logger.Debug("failed string test 6")
@@ -637,7 +637,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origFeatures}) {
 		logger.Debug("failed Like test 1")
@@ -652,7 +652,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody2}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 2")
@@ -666,7 +666,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody3}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 3")
@@ -680,7 +680,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody4}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 4")
@@ -693,7 +693,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody5}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 4")
@@ -706,7 +706,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithRLIKE(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 4")
@@ -743,7 +743,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origFeatures}) {
 		logger.Debug("failed Like test 1")
@@ -758,7 +758,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody2}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -772,7 +772,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody3}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -785,7 +785,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody4}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -799,7 +799,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	trueBody = testBody5
 	//test 6 FALSE  -------------------------------------------------------------
@@ -808,7 +808,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -822,7 +822,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody7}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -837,7 +837,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody8}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -852,7 +852,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody9}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -866,7 +866,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOR2(varIndex int,
 	logger.Debug("%s", paramValue)
 	testBody10, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody10}, &[]layers.MFeatures{trueBody}) {
 		logger.Debug("failed Like test 1")
@@ -909,14 +909,14 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	origBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	// test 1 TRUE  -------------------------------------------------------------
 	paramValue = strings.Replace(baseline, "${comparison}", "2+1-1-1=0+0+0+1", 1)
 	logger.Debug("%s", paramValue)
 	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed string test 1")
@@ -929,7 +929,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody2}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed string test 2")
@@ -942,7 +942,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody3}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed string test 3")
@@ -955,7 +955,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody4}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed string test 4")
@@ -968,7 +968,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody5}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 5")
@@ -980,7 +980,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 6")
@@ -992,7 +992,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody7}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 7")
@@ -1005,7 +1005,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody8}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 8")
@@ -1018,7 +1018,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody9}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 9")
@@ -1031,7 +1031,7 @@ func (bsql *classBlindSQLInj) confirmInjectionOrderBy(varIndex int, confirmed bo
 	logger.Debug("%s", paramValue)
 	testBody10, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody10}, &[]layers.MFeatures{origBody}) {
 		logger.Debug("failed common test 10")
@@ -1111,7 +1111,7 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		timeout["timeout"] = string(timeOutSecs)
 		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 			return false
 		}
 		Time1 = float64(bsql.lastJob.ResponseDuration.Seconds())
@@ -1133,7 +1133,7 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		timeout["timeout"] = string(timeOutSecs)
 		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 			return false
 		}
 		Time2 = float64(bsql.lastJob.ResponseDuration.Seconds())
@@ -1155,7 +1155,7 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		timeout["timeout"] = string(timeOutSecs)
 		_, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue, timeout)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 			return false
 		}
 		Time3 = float64(bsql.lastJob.ResponseDuration.Seconds())
@@ -1182,7 +1182,7 @@ func (bsql *classBlindSQLInj) testTiming(varIndex int, paramValue string, dontEn
 		bsql.addToConfirmInjectionHistoryTiming(paramValue, string(int(Time4)))
 		logger.Debug("Time4:", Time4)
 		if err != nil {
-			// logger.Error("%s", err.Error())
+			// logger.Debug("%s", err.Error())
 			return true
 		}
 		if Time4 < veryLongDuration*99/100 {
@@ -1286,7 +1286,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenNumbers(varIndex int, c
 		logger.Debug("paramValue %s", paramValue)
 		testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		bsql.lastJob.Features = testBody7
 		if isEven(i) {
@@ -1324,7 +1324,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEvenStrings(varIndex int, c
 		logger.Debug("paramValue %s", paramValue)
 		testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 		if err != nil {
-			logger.Error("%s", err.Error())
+			logger.Debug("%s", err.Error())
 		}
 		bsql.lastJob.Features = testBody7
 		if isEven(i) {
@@ -1355,7 +1355,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 	logger.Debug("paramValue %s", paramValue)
 	feature, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	bsql.lastJob.Features = feature
 	if !bsql.responseIsInternalServerError() {
@@ -1369,7 +1369,7 @@ func (bsql *classBlindSQLInj) confirmInjectionWithOddEven(varIndex int, confirme
 	logger.Debug("paramValue %s", paramValue)
 	feature1, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	bsql.lastJob.Features = feature1
 
@@ -1402,7 +1402,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody}, &[]layers.MFeatures{origFeatures}) {
 		logger.Debug("failed concat test 1")
@@ -1415,7 +1415,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody2, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody2}, &[]layers.MFeatures{origFeatures}) {
@@ -1429,7 +1429,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody3, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody3}, &[]layers.MFeatures{origFeatures}) {
@@ -1443,7 +1443,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody4, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody4}, &[]layers.MFeatures{origFeatures}) {
@@ -1457,7 +1457,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody5, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody5}, &[]layers.MFeatures{origFeatures}) {
@@ -1471,7 +1471,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody6, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody6}, &[]layers.MFeatures{origFeatures}) {
@@ -1485,7 +1485,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody7, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody7}, &[]layers.MFeatures{origFeatures}) {
@@ -1499,7 +1499,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody8, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if !layers.CompareFeatures(&[]layers.MFeatures{testBody8}, &[]layers.MFeatures{origFeatures}) {
@@ -1513,7 +1513,7 @@ func (bsql *classBlindSQLInj) confirmInjectionStringConcatenation(varIndex int, 
 	logger.Debug("%s", paramValue)
 	testBody9, err := bsql.lastJob.RequestByIndex(varIndex, bsql.TargetUrl, paramValue)
 	if err != nil {
-		logger.Error("%s", err.Error())
+		logger.Debug("%s", err.Error())
 
 	}
 	if layers.CompareFeatures(&[]layers.MFeatures{testBody9}, &[]layers.MFeatures{origFeatures}) {

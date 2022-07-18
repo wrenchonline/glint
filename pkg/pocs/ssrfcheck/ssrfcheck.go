@@ -60,11 +60,11 @@ func Ssrf(args interface{}) (*util.ScanResult, bool, error) {
 
 	params, err := util.ParseUri(url, body, method, ContentType)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Debug(err.Error())
 		return nil, false, err
 	}
-
-	reverse := reverse2.NewReverse1()
+	flag := util.RandLowLetterNumber(8)
+	reverse := reverse2.NewReverse1(flag)
 	_reverse := reverse.(*reverse2.Reverse1)
 	payloads := params.SetPayload(url, _reverse.Url, method)
 	logger.Debug("%v", payloads)

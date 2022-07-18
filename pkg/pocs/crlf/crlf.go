@@ -91,7 +91,7 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 			// println(Text)
 			r, err := regexp.Compile(RegexRule)
 			if err != nil {
-				logger.Error("%s", err.Error())
+				logger.Debug("%s", err.Error())
 				return nil, false, errs
 			}
 

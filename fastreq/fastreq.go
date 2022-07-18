@@ -159,7 +159,7 @@ func (sess *Session) doRequest(verb string, url string, headers map[string]strin
 	}
 
 	if err != nil {
-		logger.Error("fastreq %s", err.Error())
+		logger.Debug("fastreq %s", err.Error())
 		return nil, nil, errors.Wrap(err, "error occurred during request")
 	}
 	// 带Range头后一般webserver响应都是206 PARTIAL CONTENT，修正为200 OK

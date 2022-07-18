@@ -98,7 +98,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 	if strings.ToUpper(method) == "POST" {
 		params, err := util.ParseUri(url, body, "POST", ContentType)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Debug(err.Error())
 			return nil, false, fmt.Errorf(err.Error())
 		}
 		if params.Len() == 0 {

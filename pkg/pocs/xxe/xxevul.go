@@ -142,11 +142,11 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 			if strings.ToUpper(method) == "POST" {
 				doc, err := util.ParseXMl(body)
 				if err != nil {
-					logger.Error("%v", err.Error())
+					logger.Debug("%v", err.Error())
 				}
 				newbody, err := doc.WriteToBytes()
 				if err != nil {
-					logger.Error("%v", err.Error())
+					logger.Debug("%v", err.Error())
 				}
 
 				newbody = []byte(strings.ReplaceAll(string(newbody), "&amp;content", "&content;"))

@@ -504,7 +504,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 		if value, ok := t.Headers["Content-Type"]; ok {
 			params, err := util.ParseUri("", PostData, "POST", value.(string))
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Debug("CheckPayloadLocation request error: %v", err)
 				return nil, "", err
 			}
 			payloads := params.SetPayload("", newpayload, "POST")
@@ -520,7 +520,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 			}
 
 		} else {
-			logger.Error("checkpayloadlocation error: haven't found content type")
+			logger.Debug("checkpayloadlocation error: haven't found content type")
 		}
 		return htmls, req_str, nil
 	}

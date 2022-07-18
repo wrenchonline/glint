@@ -55,14 +55,14 @@ func (P *LastJob) RequestAll(originUrl string, paramValue string) ([]MFeatures, 
 	var features []MFeatures
 	origin, err := util.ParseUri(originUrl, P.Layer.Body, P.Layer.Method, P.Layer.ContentType)
 	if err != nil {
-		logger.Error("Plreq request error: %v", err)
+		logger.Debug("Plreq request error: %v", err)
 	}
 	originpayloads := origin.SetPayload(originUrl, paramValue, P.Layer.Method)
 	if strings.ToUpper(P.Layer.Method) == "POST" {
 		for i, v := range originpayloads {
 			req, resp, err := P.Layer.Sess.Post(originUrl, P.Layer.Headers, []byte(v))
 			if err != nil {
-				logger.Error("Plreq request error: %v", err)
+				logger.Debug("Plreq request error: %v", err)
 				return nil, err
 			}
 			f := new(MFeatures)
@@ -75,7 +75,7 @@ func (P *LastJob) RequestAll(originUrl string, paramValue string) ([]MFeatures, 
 		for i, v := range originpayloads {
 			req, resp, err := P.Layer.Sess.Get(v, P.Layer.Headers)
 			if err != nil {
-				logger.Error("Plreq request error: %v", err)
+				logger.Debug("Plreq request error: %v", err)
 				return nil, err
 			}
 			f := new(MFeatures)
@@ -113,7 +113,7 @@ func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o
 
 		req, resp, err := P.Layer.Sess.Post(originUrl, P.Layer.Headers, []byte(originpayload))
 		if err != nil {
-			logger.Error("Plreq request error: %v", err)
+			logger.Debug("Plreq request error: %v", err)
 			return feature, err
 		}
 
@@ -126,7 +126,7 @@ func (P *LastJob) RequestByIndex(idx int, originUrl string, paramValue string, o
 
 		req, resp, err := P.Layer.Sess.Get(originpayload, P.Layer.Headers)
 		if err != nil {
-			logger.Error("Plreq request error: %v", err)
+			logger.Debug("Plreq request error: %v", err)
 			return feature, err
 		}
 		feature.Index = idx

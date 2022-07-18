@@ -41,9 +41,9 @@ func NewReverse() *proto.Reverse {
 }
 
 // use ceye api
-func NewReverse1() interface{} {
+func NewReverse1(flag string) interface{} {
 	ceyeDomain := "fkuior.ceye.io" //修改过的，建议重新写
-	flag := util.RandLowLetterNumber(8)
+	// flag := util.RandLowLetterNumber(8)
 	if ceyeDomain == "" {
 		return &proto.Reverse{}
 	}

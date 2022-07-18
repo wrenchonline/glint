@@ -84,7 +84,7 @@ func CSPStartTest(args interface{}) (*util.ScanResult, bool, error) {
 			}
 			_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
 			if err != nil {
-				logger.Error("%s", err.Error())
+				logger.Debug("%s", err.Error())
 				return nil, false, err
 			}
 
