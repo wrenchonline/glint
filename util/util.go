@@ -27,9 +27,11 @@ import (
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
+var RRate = Rate{}
+
 func Setup() {
 	// 请求限速 limiter 初始化
-	InitRate()
+	RRate.InitRate(500)
 	// fasthttp client 初始化
 	DownProxy := ""
 	client := &fasthttp.Client{

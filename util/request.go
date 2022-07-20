@@ -28,17 +28,29 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type Rate struct {
+	Limiter *rate.Limiter //速率
+	Index   int           //深度
+	Qps     int           //每秒最大连接数
+	lock    sync.RWMutex  //读写锁
+}
+
 // 限制请求速率
 var limiter *rate.Limiter
 
-func InitRate() {
-	msQps := 5 / 10
+func (r *Rate) InitRate(QPS int) {
+	msQps := QPS / 10
+	r.Qps = msQps
 	limit := rate.Every(100 * time.Millisecond)
 	limiter = rate.NewLimiter(limit, msQps)
 }
 
-func LimitWait() {
+func (r *Rate) LimitWait() {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	r.Index++
 	limiter.Wait(context.Background())
+	r.Index--
 }
 
 type clientDoer interface {
@@ -225,7 +237,7 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 }
 
 func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, error) {
-	LimitWait()
+	RRate.LimitWait()
 	defer fasthttp.ReleaseRequest(req)
 	bodyLen := len(req.Body())
 	if bodyLen > 0 {

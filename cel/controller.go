@@ -132,7 +132,7 @@ func (controller *PocController) DoSingleRuleRequest(rule *Rule) (*proto.Respons
 
 	// 处理multipart
 	contentType := string(fixedFastReq.Header.ContentType())
-	if strings.HasPrefix(strings.ToLower(contentType), "multipart/form-Data") && strings.Contains(rule.Body, "\n\n") {
+	if strings.HasPrefix(strings.ToLower(contentType), strings.ToLower("multipart/form-Data")) && strings.Contains(rule.Body, "\n\n") {
 		multipartBody, err := util.DealMultipart(contentType, rule.Body)
 		if err != nil {
 			return nil, err

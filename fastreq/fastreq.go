@@ -24,6 +24,7 @@ type ReqOptions struct {
 	Proxy         string // proxy settings, support http/https proxy only, e.g. http://127.0.0.1:8080
 	Cert          string // 证书
 	PrivateKey    string //	私钥
+	QPS           uint   // 每秒最大请求数
 }
 
 // 自定义一些函数
