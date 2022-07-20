@@ -66,6 +66,7 @@ type Task struct {
 	Dm            *dbmanager.DbManager
 	ScartTime     time.Time
 	EndTime       time.Time
+	Rate          util.Rate
 	InstallDb     bool
 	Progress      float64
 	DoStartSignal chan bool

@@ -47,6 +47,7 @@ type Plugin struct {
 	Cancel       *context.CancelFunc
 	Timeout      time.Duration
 	Dm           *dbmanager.DbManager //数据库句柄
+	Rate         *util.Rate
 }
 
 type PluginOption struct {
@@ -61,6 +62,7 @@ type PluginOption struct {
 	HttpsCert     string //
 	HttpsCertKey  string //
 	IsAllUrlsEval bool   //是否传递所有URLS给当前某个漏洞插件传递。适合用于一个漏洞报告所有同域名的URLS
+	Rate          *util.Rate
 	// XssTimeOut   time.Duration //xss扫描总超时
 }
 

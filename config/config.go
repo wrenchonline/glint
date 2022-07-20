@@ -172,6 +172,7 @@ type TaskConfig struct {
 	InstallDb               bool                   `yaml:"InstallDb"`
 	EnableCrawler           bool                   `yaml:"EnableCrawler"`
 	ProxyPort               int64                  `yaml:"ProxyPort"`
+	Qps                     uint                   `yaml:"Qps"`
 	//
 }
 

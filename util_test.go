@@ -6,6 +6,8 @@ import (
 	"glint/util"
 	"regexp"
 	"testing"
+	"time"
+	"unsafe"
 )
 
 func Test_Post(t *testing.T) {
@@ -52,4 +54,29 @@ func Test_Regex(t *testing.T) {
 	_url := r.ReplaceAllString(tsrsss, "")
 	fmt.Println(_url)
 
+}
+
+func Test_Rate(t *testing.T) {
+	//测试每秒发送10个链接,测试10秒
+	myRate := util.Rate{}
+	// bShutdown := make(chan bool)
+	myRate.InitRate(20)
+	for i := 0; i < 100; i++ {
+		go func(r *util.Rate, i int) {
+			logger.Info("Start id:%d", i)
+			r.LimitWait()
+			if i == 99 {
+				logger.Info("End id:%d Get Current Count: %d", i, r.GetIndex())
+			}
+		}(&myRate, i)
+	}
+	time.Sleep(time.Second * 20)
+}
+
+func Test_Ts(t *testing.T) {
+	nm := util.NetworkManager{}
+	arrays := unsafe.Sizeof(nm)
+	// consumeGb := 1073741824
+	// Count := consumeGb / arrays
+	fmt.Println(arrays) // 8
 }

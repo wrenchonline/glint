@@ -49,6 +49,7 @@ type Spider struct {
 	Cancel     *context.CancelFunc
 	TabTimeOut int64
 	TaskCtx    *context.Context //存储着任务上下文
+
 }
 
 type RWCount struct {

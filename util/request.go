@@ -28,29 +28,43 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type NetworkManager struct {
+	requestid   uint64        //请求id
+	createdTime time.Duration //创建时间
+	qps         uint          //每毫秒秒最大连接数
+}
+
 type Rate struct {
 	Limiter *rate.Limiter //速率
-	Index   int           //深度
-	Qps     int           //每秒最大连接数
+	index   uint64        //请求数或者叫请求ID，同一个任务逐渐递增，
+	QPS     uint          //每毫秒秒最大连接数
 	lock    sync.RWMutex  //读写锁
 }
 
-// 限制请求速率
-var limiter *rate.Limiter
-
-func (r *Rate) InitRate(QPS int) {
-	msQps := QPS / 10
-	r.Qps = msQps
-	limit := rate.Every(100 * time.Millisecond)
-	limiter = rate.NewLimiter(limit, msQps)
+func (r *Rate) InitRate(QPS uint) {
+	//这个只有uint才是测试准确的，换int强制转换测试时间会有偏差
+	r.Limiter = rate.NewLimiter(rate.Limit(QPS), 1)
 }
 
 func (r *Rate) LimitWait() {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
-	r.Index++
-	limiter.Wait(context.Background())
-	r.Index--
+	r.index++
+	r.Limiter.Wait(context.Background())
+}
+
+func (r *Rate) GetIndex() uint64 {
+	return r.index
+}
+
+func (r *Rate) Reset() {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	r.index = 0
+}
+
+func (r *Rate) Allow() bool {
+	return r.Limiter.Allow()
 }
 
 type clientDoer interface {

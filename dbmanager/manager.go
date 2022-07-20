@@ -61,6 +61,7 @@ type DbTaskConfig struct {
 	CustomFormValuesUuid        sql.NullString `db:"custom_fill_form_id"`
 	CustomFormKeywordValuesUuid sql.NullString `db:"custom_fill_keyword_id"`
 	XssPayloadsUuid             sql.NullString `db:"xss_paloads_id"`
+	Qps                         sql.NullInt64  `db:"qps"`
 }
 
 type ExtraHeaders struct {
@@ -360,6 +361,7 @@ func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (confi
 	TaskConfig.CustomFormValues = Dm.UuidToMap(dbTaskConfig.CustomFormValuesUuid.String, "CustomFormValues")
 	TaskConfig.CustomFormKeywordValues = Dm.UuidToMap(dbTaskConfig.CustomFormKeywordValuesUuid.String, "CustomFormKeywordValues")
 	TaskConfig.XssPayloads = Dm.UuidToMap(dbTaskConfig.XssPayloadsUuid.String, "XssPayloads")
+	TaskConfig.Qps = uint(dbTaskConfig.Qps.Int64)
 	return TaskConfig, nil
 }
 
