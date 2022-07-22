@@ -24,7 +24,7 @@ func TestCSP(t *testing.T) {
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/csp.json")
+	data, _ := config.ReadResultConf("./json_testfile/csp.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, cspnotimplement.CSPStartTest)
 

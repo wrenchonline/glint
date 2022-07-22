@@ -30,7 +30,7 @@ func Test_TLS(t *testing.T) {
 	// }
 	//defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/tls_test.json")
+	data, _ := config.ReadResultConf("./json_testfile/tls_test.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, nmapSsl.Sslverify)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)

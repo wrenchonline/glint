@@ -1,5 +1,6 @@
 package nenet
 
+//这个包主要封装管理浏览器发包
 import (
 	"bytes"
 	"context"

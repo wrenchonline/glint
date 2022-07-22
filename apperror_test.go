@@ -34,7 +34,7 @@ func TestAppError(t *testing.T) {
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/apperror.json")
+	data, _ := config.ReadResultConf("./json_testfile/apperror.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, apperror.Application_startTest)
 

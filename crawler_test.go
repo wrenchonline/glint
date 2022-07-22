@@ -85,7 +85,7 @@ func Test_Crawler(t *testing.T) {
 		ReqList[r.GroupsId] = append(ReqList[r.GroupsId], element)
 		return false
 	})
-	util.SaveCrawOutPut(ReqList, "./json_file/apperror.json")
+	util.SaveCrawOutPut(ReqList, "./json_testfile/apperror.json")
 	CrawlerConvertToMap(Results, &ALLURLS, nil, false)
 	for s, v := range ReqList {
 		URLSList[s] = v

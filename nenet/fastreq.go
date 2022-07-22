@@ -1,5 +1,6 @@
 package nenet
 
+//这个包主要封装管理fasthttp发包
 import (
 	"crypto/tls"
 	"fmt"

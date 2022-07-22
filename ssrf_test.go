@@ -13,7 +13,7 @@ import (
 func Test_ssrf(t *testing.T) {
 
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_file/sql_error.json")
+	data, _ := config.ReadResultConf("./json_testfile/sql_error.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, ssrfcheck.Ssrf)
 	pluginInternal := plugin.Plugin{
