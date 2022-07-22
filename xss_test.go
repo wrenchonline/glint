@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"glint/ast"
-	brohttp "glint/brohttp"
+	"glint/nenet"
+
 	"glint/config"
 	"glint/logger"
 	"glint/model"
@@ -38,7 +39,7 @@ func TestXSS(t *testing.T) {
 	// 	}
 	// }()
 
-	Spider := brohttp.Spider{}
+	Spider := nenet.Spider{}
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	err := Spider.Init(taskconfig)
@@ -84,7 +85,7 @@ func TestXSS(t *testing.T) {
 
 func TestURL(t *testing.T) {
 	logger.DebugEnable(false)
-	Spider := brohttp.Spider{}
+	Spider := nenet.Spider{}
 
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = ""
@@ -99,7 +100,7 @@ func TestURL(t *testing.T) {
 		MetHod:  "GET",
 		Headers: Headers,
 	}
-	tab, _ := brohttp.NewTab(&Spider)
+	tab, _ := nenet.NewTab(&Spider)
 	tab.CopyRequest(a)
 	tab.Send()
 	time.Sleep(5 * time.Second)
