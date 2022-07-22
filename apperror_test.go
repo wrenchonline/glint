@@ -6,6 +6,7 @@ import (
 	"glint/logger"
 	"glint/pkg/pocs/apperror"
 	"glint/plugin"
+	"glint/util"
 	"regexp"
 	"sync"
 	"testing"
@@ -31,6 +32,7 @@ func TestAppError(t *testing.T) {
 	// }()
 
 	//Spider := brohttp.Spider{}
+
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	var PluginWg sync.WaitGroup
@@ -52,6 +54,8 @@ func TestAppError(t *testing.T) {
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
 	Progress := 0.0
+	Ratelimite := util.Rate{}
+	Ratelimite.InitRate(500)
 	args := plugin.PluginOption{
 		PluginWg:      &PluginWg,
 		Progress:      &Progress,
@@ -59,6 +63,7 @@ func TestAppError(t *testing.T) {
 		Data:          data,
 		TaskId:        999,
 		IsAllUrlsEval: true,
+		Rate:          &Ratelimite,
 		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {

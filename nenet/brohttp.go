@@ -309,6 +309,11 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	spider.Cancel = &cancel
 	spider.Ctx = &ctx
 	spider.TabTimeOut = int64(TaskConfig.TabRunTimeout * time.Second)
+	if spider.Ratelimite == nil {
+		spider.Ratelimite = &util.Rate{}
+		spider.Ratelimite.InitRate(TaskConfig.Qps)
+	}
+
 	err := chromedp.Run(
 		*spider.Ctx,
 		fetch.Enable(),

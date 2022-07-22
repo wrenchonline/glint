@@ -5,6 +5,7 @@ import (
 	"glint/config"
 	"glint/pkg/pocs/crlf"
 	"glint/plugin"
+	"glint/util"
 	"sync"
 	"testing"
 	"time"
@@ -25,13 +26,16 @@ func Test_Crlf(t *testing.T) {
 	pluginInternal.Init()
 	PluginWg.Add(1)
 	Progress := 0.
+	Ratelimite := util.Rate{}
+	Ratelimite.InitRate(500)
 	args := plugin.PluginOption{
 		PluginWg: &PluginWg,
 		Progress: &Progress,
 		IsSocket: false,
 		Data:     data,
 		TaskId:   999,
-		// Sendstatus: &PliuginsMsg,
+		Rate:     &Ratelimite,
+		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {
 		pluginInternal.Run(args)

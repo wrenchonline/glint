@@ -6,6 +6,7 @@ import (
 	"glint/logger"
 	"glint/pkg/pocs/nmapSsl"
 	"glint/plugin"
+	"glint/util"
 	"net/http"
 	"sync"
 	"testing"
@@ -46,12 +47,15 @@ func Test_TLS(t *testing.T) {
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
 	Progress := 0.0
+	Ratelimite := util.Rate{}
+	Ratelimite.InitRate(500)
 	args := plugin.PluginOption{
 		PluginWg: &PluginWg,
 		Progress: &Progress,
 		IsSocket: false,
 		Data:     data,
 		TaskId:   999,
+		Rate:     &Ratelimite,
 		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {

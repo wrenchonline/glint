@@ -22,6 +22,8 @@ PathByFuzz: false
 
 Proxy: ""
 
+Qps: 500
+
 
 
 

@@ -10,6 +10,7 @@ import (
 	"glint/model"
 	"glint/pkg/pocs/xsschecker"
 	"glint/plugin"
+	"glint/util"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
@@ -63,12 +64,15 @@ func TestXSS(t *testing.T) {
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
 	Progress := 0.0
+	Ratelimite := util.Rate{}
+	Ratelimite.InitRate(500)
 	args := plugin.PluginOption{
 		PluginWg: &PluginWg,
 		Progress: &Progress,
 		IsSocket: false,
 		Data:     data,
 		TaskId:   999,
+		Rate:     &Ratelimite,
 		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
 	go func() {

@@ -6,6 +6,7 @@ import (
 	"glint/logger"
 	"glint/pkg/pocs/cspnotimplement"
 	"glint/plugin"
+	"glint/util"
 	"sync"
 	"testing"
 	"time"
@@ -41,6 +42,9 @@ func TestCSP(t *testing.T) {
 	pluginInternal.Callbacks = myfunc
 	PluginWg.Add(1)
 	Progress := 0.0
+
+	Ratelimite := util.Rate{}
+	Ratelimite.InitRate(500)
 	args := plugin.PluginOption{
 		PluginWg:      &PluginWg,
 		Progress:      &Progress,
@@ -48,8 +52,10 @@ func TestCSP(t *testing.T) {
 		Data:          data,
 		TaskId:        999,
 		IsAllUrlsEval: true,
+		Rate:          &Ratelimite,
 		// Sendstatus: &pluginInternal.PliuginsMsg,
 	}
+
 	go func() {
 		pluginInternal.Run(args)
 	}()

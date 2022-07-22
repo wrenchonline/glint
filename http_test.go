@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"glint/ast"
-	brohttp "glint/brohttp"
+
 	"glint/config"
 	"glint/logger"
+	"glint/nenet"
 	"net/url"
 	"testing"
 
@@ -14,13 +15,13 @@ import (
 
 func TestCheckPayloadNormal(t *testing.T) {
 	var err error
-	Spider := brohttp.Spider{}
+	Spider := nenet.Spider{}
 	logger.DebugEnable(true)
 	var taskconfig config.TaskConfig
 	taskconfig.Proxy = "127.0.0.1:7777"
 	Spider.Init(taskconfig)
 	defer Spider.Close()
-	tab, err := brohttp.NewTab(&Spider)
+	tab, err := nenet.NewTab(&Spider)
 	tab.ReqMode = "GET"
 	// Spider.PostData = []byte("txtName=ecrrgaowle&mtxMessage=Crawl&user_token=873c33f5ece8c8308071890f478ded0b")
 	tab.Url, err = url.Parse("https://challenge-1121.intigriti.io/challenge/index.php?s=111")

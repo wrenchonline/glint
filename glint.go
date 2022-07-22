@@ -369,6 +369,7 @@ func (t *Task) AddPlugins(
 		Totalprog:    percentage,
 		HttpsCert:    HttpsCert,
 		HttpsCertKey: HttpsCertKey,
+		Rate:         &t.Rate,
 	}
 	go func() {
 		pluginInternal.Run(args)
