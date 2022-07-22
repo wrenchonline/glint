@@ -128,6 +128,7 @@ type Tab struct {
 	removeLis     sync.WaitGroup //移除事件监听
 	domWG         sync.WaitGroup //DOMContentLoaded 的等待计数
 	fillFormWG    sync.WaitGroup //填充表单任务
+	Ratelimite    *util.Rate
 }
 
 type TabConfig struct {
@@ -141,6 +142,8 @@ type TabConfig struct {
 	Proxy                   string
 	CustomFormValues        map[string]interface{}
 	CustomFormKeywordValues map[string]interface{}
+	Ratelimite              *util.Rate
+	//QPS                     uint //每秒请求速率
 }
 
 /**
@@ -357,6 +360,7 @@ func (tab *Tab) ListenTarget(extends interface{}) {
 					ev.ResourceType == network.ResourceTypeXHR ||
 					ev.Request.URL == Domain1 {
 					//XHR 允许AJAX 代码更新请求，因为它不刷新页面,有可能只刷新dom节点
+					tab.Ratelimite.LimitWait()
 					a = fetch.ContinueRequest(ev.RequestID)
 				} else {
 					logger.Info("FailRequest:%s", ev.Request.URL)
@@ -566,6 +570,8 @@ func NewTab(spider *Spider, navigateReq model2.Request, config TabConfig) (*Tab,
 	tab.Eventchanel.ButtonRep = make(chan string)
 	tab.Eventchanel.SubmitRep = make(chan string)
 	tab.Eventchanel.exit = make(chan int)
+	tab.Ratelimite = config.Ratelimite
+	// tab.Ratelimite.InitRate(config.QPS)
 	tab.ListenTarget(nil)
 	return &tab, nil
 }

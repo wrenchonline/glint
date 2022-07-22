@@ -1,4 +1,4 @@
-package fastreq
+package nenet
 
 import (
 	"crypto/tls"

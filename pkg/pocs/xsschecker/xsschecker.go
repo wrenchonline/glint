@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"glint/ast"
-	"glint/brohttp"
 	"glint/logger"
+	"glint/nenet"
 	"glint/payload"
 	"glint/plugin"
 	"glint/util"
@@ -333,7 +333,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	}
 	//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
 	if methods == CheckConsoleLog {
-		ev := extension.(*brohttp.Tab)
+		ev := extension.(*nenet.Tab)
 		select {
 		case responseS := <-ev.Responses:
 			for _, response := range responseS {
@@ -361,7 +361,7 @@ type xssOcc struct {
 func DoCheckXss(
 	GroupUrlsReponseInfo []map[int]interface{},
 	flag string,
-	tab *brohttp.Tab,
+	tab *nenet.Tab,
 	ctx context.Context,
 	hostid int64) (*util.ScanResult, error) {
 	g := new(Generator)
@@ -393,7 +393,7 @@ func DoCheckXss(
 
 		vlen := len(v)
 		for i := 0; i < vlen; i++ {
-			urlocc := v[i].(brohttp.UrlOCC)
+			urlocc := v[i].(nenet.UrlOCC)
 			nodes := urlocc.OCC
 			logger.Info("url %s nodes %d", urlocc.Request.Url, len(nodes))
 			if len(nodes) != 0 {
@@ -439,7 +439,7 @@ func DoCheckXss(
 				}
 				info := stf{mode: Evalmode, Tag: tag}
 				payloadinfo[payload] = info
-				urlocc := v[i].(brohttp.UrlOCC)
+				urlocc := v[i].(nenet.UrlOCC)
 				if len(urlocc.OCC) > 0 {
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
 					tab.CopyRequest(urlocc.Request)
@@ -543,7 +543,7 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		hostid, _ = value.Int64()
 	}
 	Spider.TaskCtx = &ctx
-	tab, err := brohttp.NewTab(Spider)
+	tab, err := nenet.NewTab(Spider)
 	if err != nil {
 		return nil, false, err
 	}

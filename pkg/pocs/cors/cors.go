@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"glint/fastreq"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"net/http"
@@ -41,8 +41,8 @@ func origin_accepted(url string, orginal string, certs string, certkey string) (
 	util.Setup()
 	cert = certs
 	mkey = certkey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

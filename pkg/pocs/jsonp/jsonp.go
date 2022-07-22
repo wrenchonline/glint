@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"io"
@@ -97,8 +97,8 @@ func CheckIsSensitiveKey(key string) (bool, error) {
 
 func GetJsResponse(jsUrl string, headers map[string]string) (string, *Jsonpinfo, error) {
 
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

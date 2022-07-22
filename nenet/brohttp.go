@@ -1,4 +1,4 @@
-package brohttp
+package nenet
 
 import (
 	"bytes"
@@ -49,7 +49,7 @@ type Spider struct {
 	Cancel     *context.CancelFunc
 	TabTimeOut int64
 	TaskCtx    *context.Context //存储着任务上下文
-
+	Ratelimite *util.Rate
 }
 
 type RWCount struct {
@@ -91,6 +91,7 @@ type Tab struct {
 	Reports       []ReportMsg
 	mu            sync.Mutex //
 	RequestsStr   string
+	Ratelimite    *util.Rate //每秒请求速率
 }
 
 type ReportMsg struct {
@@ -164,6 +165,7 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.TaskCtx = spider.TaskCtx
 	tab.ListenTarget()
 	tab.Sendlimit.Set(1) //最大只能发送一次
+	tab.Ratelimite = spider.Ratelimite
 	return &tab, nil
 }
 
@@ -322,6 +324,7 @@ func (t *Tab) Send() ([]string, string, error) {
 	t.PackCtx = &pctx
 	t.PackCancel = &pcancel
 	t.mu.Unlock()
+	t.Ratelimite.LimitWait()
 
 	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*120)
 	err := chromedp.Run(

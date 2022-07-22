@@ -3,8 +3,8 @@ package cmdinject
 import (
 	"errors"
 	"fmt"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"net/http"
@@ -59,8 +59,8 @@ func fast_send_poc(payloads []string,
 	req1 *fasthttp.Request,
 	resp1 *fasthttp.Response,
 	err error) {
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

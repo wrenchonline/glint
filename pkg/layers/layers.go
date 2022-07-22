@@ -2,8 +2,8 @@ package layers
 
 import (
 	"glint/ast"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/util"
 	"strconv"
 	"strings"
@@ -13,7 +13,7 @@ import (
 )
 
 type Plreq struct {
-	Sess        *fastreq.Session
+	Sess        *nenet.Session
 	Method      string
 	Headers     map[string]string
 	Body        []byte
@@ -39,8 +39,8 @@ type MFeatures struct {
 
 func (P *LastJob) Init(Proxy string, Cert string, PrivateKey string) {
 	util.Setup()
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       5 * time.Second,
 			AllowRedirect: true,
 			Proxy:         Proxy,

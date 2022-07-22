@@ -3,8 +3,8 @@ package ssrfcheck
 import (
 	"encoding/json"
 	"errors"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	reverse2 "glint/reverse"
 	"glint/util"
@@ -35,8 +35,8 @@ func Ssrf(args interface{}) (*util.ScanResult, bool, error) {
 	body := []byte(session["data"].(string))
 	cert = group.HttpsCert
 	mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

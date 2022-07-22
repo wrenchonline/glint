@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"glint/ast"
-	"glint/brohttp"
 	"glint/config"
 	"glint/crawler"
 	"glint/dbmanager"
 	"glint/logger"
 	"glint/model"
+	"glint/nenet"
 	"glint/pkg/pocs/cmdinject"
 	"glint/pkg/pocs/cors"
 	"glint/pkg/pocs/crlf"
@@ -55,7 +55,7 @@ var Dbconect bool
 type Task struct {
 	TaskId        int
 	HostIds       []int
-	XssSpider     brohttp.Spider
+	XssSpider     nenet.Spider
 	Targets       []*model.Request
 	TaskConfig    config.TaskConfig
 	PluginWg      sync.WaitGroup
@@ -334,8 +334,9 @@ func (t *Task) AddPlugins(
 	HttpsCertKey string) {
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, callback)
-	var Payloadcarrier *brohttp.Spider
+	var Payloadcarrier *nenet.Spider
 	if bpayloadbrower {
+		t.XssSpider.Ratelimite = &t.Rate
 		Payloadcarrier = &t.XssSpider
 	} else {
 		Payloadcarrier = nil
@@ -523,6 +524,7 @@ func (t *Task) dostartTasks(config tconfig) error {
 		for s, v := range ALLURLS {
 			URLSList[s] = v
 		}
+
 		for s, v := range ALLURI {
 			URISList[s] = v
 		}

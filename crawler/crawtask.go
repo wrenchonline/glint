@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"glint/brohttp"
 	"glint/config"
 	"glint/logger"
 	"glint/model"
+	"glint/nenet"
+	"glint/util"
 	"sync"
 
 	"github.com/panjf2000/ants/v2"
@@ -27,7 +28,7 @@ type CrawlerTask struct {
 	Browser       *Spider             // 爬虫浏览器
 	HostName      string              // 收集Uri
 	Scheme        string              //
-	PluginBrowser *brohttp.Spider     // 插件浏览器
+	PluginBrowser *nenet.Spider       // 插件浏览器
 	RootDomain    string              // 当前爬取根域名 用于子域名收集
 	Targets       []*model.Request    // 输入目标
 	Result        *Result             // 最终结果
@@ -40,6 +41,7 @@ type CrawlerTask struct {
 	TaskCtx       *context.Context    // 任务上下文，这个存储的是任务分配的CTX
 	Cancel        *context.CancelFunc // 取消当前上下文
 	Ctx           *context.Context    // 当前上下文
+	QPS           uint                //每秒请求速率
 }
 
 type tabTask struct {
@@ -47,6 +49,7 @@ type tabTask struct {
 	browser     *Spider
 	req         *model.Request
 	pool        *ants.Pool
+	Ratelimite  util.Rate
 }
 
 // 过滤模式
@@ -65,6 +68,7 @@ func (t *CrawlerTask) generateTabTask(req *model.Request) *tabTask {
 		browser:     t.Browser,
 		req:         req,
 	}
+	task.Ratelimite.InitRate(t.QPS)
 	return &task
 }
 
@@ -131,6 +135,7 @@ func (t *CrawlerTask) addTask2Pool(req *model.Request) {
 
 	t.taskWG.Add(1)
 	task := t.generateTabTask(req)
+
 	go func() {
 		err := t.Pool.Submit(task.Task)
 		if err != nil {
@@ -170,6 +175,7 @@ func (t *tabTask) Task() {
 		IgnoreKeywords:          t.crawlerTask.Config.IgnoreKeywords,
 		CustomFormValues:        t.crawlerTask.Config.CustomFormValues,
 		CustomFormKeywordValues: t.crawlerTask.Config.CustomFormKeywordValues,
+		Ratelimite:              &t.Ratelimite,
 	}
 	tab, _ := NewTab(t.browser, *t.req, config)
 
@@ -289,6 +295,7 @@ func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config
 	crawlerTask.RootDomain = target.URL.RootDomain()
 	crawlerTask.HostName = target.URL.Hostname()
 	crawlerTask.Scheme = target.URL.Scheme
+	crawlerTask.QPS = taskConf.Qps
 	crawlerTask.smartFilter.Init()
 
 	// 创建协程池

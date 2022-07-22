@@ -2,8 +2,8 @@ package crlf
 
 import (
 	"encoding/json"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"regexp"
@@ -56,8 +56,8 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 	Body := session["data"].(string)
 	cert = group.HttpsCert
 	mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: false,
 			Proxy:         DefaultProxy,

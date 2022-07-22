@@ -3,9 +3,9 @@ package plugin
 import (
 	"context"
 	"encoding/base64"
-	"glint/brohttp"
 	"glint/dbmanager"
 	"glint/logger"
+	"glint/nenet"
 	"glint/util"
 	"sync"
 	"time"
@@ -41,7 +41,7 @@ type Plugin struct {
 	ScanResult   []*util.ScanResult
 	mu           sync.Mutex
 	Progperc     float64 //总进度百分多少
-	Spider       *brohttp.Spider
+	Spider       *nenet.Spider
 	InstallDB    bool //是否插入数据库
 	Ctx          *context.Context
 	Cancel       *context.CancelFunc
@@ -69,7 +69,7 @@ type PluginOption struct {
 type GroupData struct {
 	GroupType    string
 	GroupUrls    interface{}
-	Spider       *brohttp.Spider
+	Spider       *nenet.Spider
 	Pctx         *context.Context
 	Pcancel      *context.CancelFunc
 	IsSocket     bool

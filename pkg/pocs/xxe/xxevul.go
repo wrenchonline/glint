@@ -2,8 +2,8 @@ package xxe
 
 import (
 	"encoding/json"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"regexp"
@@ -47,8 +47,8 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 	body := []byte(session["data"].(string))
 	Cert = group.HttpsCert
 	Mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       2 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

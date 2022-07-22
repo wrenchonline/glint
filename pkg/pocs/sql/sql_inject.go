@@ -2,8 +2,8 @@ package sql
 
 import (
 	"encoding/json"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
@@ -1694,8 +1694,8 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, bool, error) {
 	body := []byte(session["data"].(string))
 	Cert = group.HttpsCert
 	Mkey = group.HttpsCertKey
-	sess := fastreq.GetSessionByOptions(
-		&fastreq.ReqOptions{
+	sess := nenet.GetSessionByOptions(
+		&nenet.ReqOptions{
 			Timeout:       10 * time.Second,
 			AllowRedirect: true,
 			Proxy:         DefaultProxy,

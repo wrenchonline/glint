@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/plugin"
 	"glint/util"
 	"strings"
@@ -65,8 +65,8 @@ func CSPStartTest(args interface{}) (*util.ScanResult, bool, error) {
 			body := []byte(newsess["data"].(string))
 			cert = group.HttpsCert
 			mkey = group.HttpsCertKey
-			sess := fastreq.GetSessionByOptions(
-				&fastreq.ReqOptions{
+			sess := nenet.GetSessionByOptions(
+				&nenet.ReqOptions{
 					Timeout:       3 * time.Second,
 					AllowRedirect: true,
 					Proxy:         DefaultProxy,

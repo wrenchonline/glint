@@ -3,9 +3,9 @@ package crawler
 import (
 	"context"
 	"fmt"
-	"glint/fastreq"
 	"glint/logger"
 	model2 "glint/model"
+	"glint/nenet"
 	"glint/util"
 	"regexp"
 	"strings"
@@ -52,8 +52,8 @@ func GetPathsFromRobots(navReq model2.Request) []*model2.Request {
 	navReq.URL.Path = "/"
 	url := navReq.URL.NoQueryUrl() + "robots.txt"
 	headers, _ := util.ConvertHeaders(navReq.Headers)
-	_, resp, err := fastreq.Get(url, headers,
-		&fastreq.ReqOptions{AllowRedirect: false,
+	_, resp, err := nenet.Get(url, headers,
+		&nenet.ReqOptions{AllowRedirect: false,
 			Timeout: 5 * time.Second,
 			Proxy:   navReq.FasthttpProxy})
 	if err != nil {
@@ -154,8 +154,8 @@ func (s singleFuzz) doRequest() {
 	}
 	url := fmt.Sprintf(`%s://%s/%s`, s.navReq.URL.Scheme, s.navReq.URL.Host, s.path)
 	headers, _ := util.ConvertHeaders(s.navReq.Headers)
-	_, resp, errs := fastreq.Get(url, headers,
-		&fastreq.ReqOptions{Timeout: 2 * time.Second, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
+	_, resp, errs := nenet.Get(url, headers,
+		&nenet.ReqOptions{Timeout: 2 * time.Second, AllowRedirect: true, Proxy: s.navReq.FasthttpProxy})
 	if errs != nil {
 		// logger.Info("doRequest err: %s", errs.Error())
 		return

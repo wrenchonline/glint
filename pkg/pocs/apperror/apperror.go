@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"glint/fastreq"
 	"glint/logger"
+	"glint/nenet"
 	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
@@ -86,8 +86,8 @@ func Application_startTest(args interface{}) (*util.ScanResult, bool, error) {
 				body := []byte(newsess["data"].(string))
 				cert = group.HttpsCert
 				mkey = group.HttpsCertKey
-				sess := fastreq.GetSessionByOptions(
-					&fastreq.ReqOptions{
+				sess := nenet.GetSessionByOptions(
+					&nenet.ReqOptions{
 						Timeout:       2 * time.Second,
 						AllowRedirect: true,
 						Proxy:         DefaultProxy,
