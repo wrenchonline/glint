@@ -176,6 +176,35 @@ type TaskConfig struct {
 	//
 }
 
+type TaskJsonConfig struct {
+	Exweb_scan_param  Exweb_scan_param       `json:"exweb_scan_param"`
+	Exweb_target_info map[string]interface{} `json:"exweb_target_info"`
+	Exweb_task_info   map[string]interface{} `json:"exweb_task_info"`
+}
+
+type Exweb_scan_param struct {
+	Anti_chain_platform   string      `json:"anti_chain_platform"`
+	Api_token             string      `json:"api_token"`
+	Cookie                string      `json:"cookie"`
+	Domain_identificate   string      `json:"domain_identificate"`
+	Forbit_domain         string      `json:"forbit_domain"`
+	Forbit_path           string      `json:"forbit_path"`
+	Forbit_port           string      `json:"forbit_port"`
+	Http_proxy            string      `json:"http_proxy"`
+	Http_response_timeout json.Number `json:"http_response_timeout"`
+	Max_redirect_times    json.Number `json:"max_redirect_times"`
+	Qps                   json.Number `json:"qps"`
+	Max_wait_request      json.Number `json:"max_wait_request"`
+	Param_model_id        json.Number `json:"param_model_id"`
+	Plugin_thread_num     json.Number `json:"plugin_thread_num"`
+	Rsponse_size          json.Number `json:"response_size"`
+	Scan_depth            json.Number `json:"scan_depth"`
+	Task_id               json.Number `json:"task_id"`
+	Tcp_conn_timeout      json.Number `json:"tcp_conn_timeout"`
+	User_agent            json.Number `json:"user_agent"`
+	Web_param_id          json.Number `json:"web_param_id"`
+}
+
 //数据库配置203
 const (
 	UserName = "newitop"

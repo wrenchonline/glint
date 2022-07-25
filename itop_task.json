@@ -1,0 +1,46 @@
+{
+    "exweb_scan_param": {
+        "anti_chain_platform": "CEYE",
+        "api_token": "",
+        "cookie": "cookie",
+        "domain_identificate": "",
+        "forbit_domain": "",
+        "forbit_path": "",
+        "forbit_port": "",
+        "http_proxy": "",
+        "http_response_timeout": 3,
+        "max_redirect_times": 5,
+        "qps": 5,
+        "max_wait_request": 5,
+        "param_model_id": 0,
+        "plugin_thread_num": 12,
+        "response_size": 5,
+        "scan_depth": 5,
+        "task_id": 40,
+        "tcp_conn_timeout": 3,
+        "user_agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36",
+        "web_param_id": 31
+    },
+    "exweb_target_info": [
+        {
+            "scan_target": 0,
+            "target_id": 78,
+            "target_order": 0,
+            "task_id": 40
+        },
+        {
+            "scan_target": 0,
+            "target_id": 79,
+            "target_order": 1,
+            "task_id": 40
+        }
+    ],
+    "exweb_task_info": {
+        "create_time": "2022-07-22T10:41:19",
+        "end_time": "",
+        "scan_time": "",
+        "start_time": "",
+        "task_id": 40,
+        "task_name": "p"
+    }
+}
