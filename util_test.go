@@ -90,3 +90,9 @@ func Test_AES_CBC_SHA256(t *testing.T) {
 	decryptCode := util.AesDecrypt(encryptCode, key)
 	fmt.Println("解密结果：", decryptCode)
 }
+
+func Test_runFunc(t *testing.T) {
+	i := 0
+	fmt.Println("i =", i)
+	logger.Success("53")
+}
