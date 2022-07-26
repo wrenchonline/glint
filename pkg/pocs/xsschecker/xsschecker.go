@@ -333,7 +333,7 @@ func (g *Generator) evaluate(locations []ast.Occurence, methods Checktype, check
 	}
 	//判断执行的payload是否存在闭合标签，目前是用console.log(flag)要捕获控制台输出，你可以改别的好判断
 	if methods == CheckConsoleLog {
-		ev := extension.(*nenet.Tab)
+		ev := extension.(*nenet.Tabs)
 		select {
 		case responseS := <-ev.Responses:
 			for _, response := range responseS {
@@ -361,7 +361,7 @@ type xssOcc struct {
 func DoCheckXss(
 	GroupUrlsReponseInfo []map[int]interface{},
 	flag string,
-	tab *nenet.Tab,
+	tab *nenet.Tabs,
 	ctx context.Context,
 	hostid int64) (*util.ScanResult, error) {
 	g := new(Generator)
@@ -543,11 +543,11 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		hostid, _ = value.Int64()
 	}
 	Spider.TaskCtx = &ctx
-	tab, err := nenet.NewTab(Spider)
+	tabs_obj, err := nenet.NewTabsOBJ(Spider)
 	if err != nil {
 		return nil, false, err
 	}
-	defer tab.Close()
+	defer tabs_obj.Close()
 
 	// if _, ok := (*Spider.Ctx).Deadline(); ok {
 	// 	logger.Warning("xss spider has dead")
@@ -575,9 +575,9 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		tab.CopyRequest(groups.GroupUrls)
+		tabs_obj.CopyRequest(groups.GroupUrls)
 		// println("pre", Spider.Url.String())
-		b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
+		b, Occ := tabs_obj.CheckRandOnHtmlS(flag, groups.GroupUrls)
 		// Spider.CopyRequest(Urlinfo)
 		// println("post", Spider.Url.String())
 		if b {
@@ -589,7 +589,7 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 			return nil, false, err
 		}
 
-		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
+		Result, err = DoCheckXss(resources, flag, tabs_obj, ctx, hostid)
 		if err != nil {
 			return nil, false, err
 		}
@@ -607,9 +607,9 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
 		{
-			tab.CopyRequest(groups.GroupUrls)
+			tabs_obj.CopyRequest(groups.GroupUrls)
 			// logger.Debug("pre", Spider.Url.String())
-			b, Occ := tab.CheckRandOnHtmlS(flag, groups.GroupUrls)
+			b, Occ := tabs_obj.CheckRandOnHtmlS(flag, groups.GroupUrls)
 			if b {
 				logger.Debug("flag存在")
 				bflag = true
@@ -619,7 +619,7 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		if !bflag {
 			return nil, false, err
 		}
-		Result, err = DoCheckXss(resources, flag, tab, ctx, hostid)
+		Result, err = DoCheckXss(resources, flag, tabs_obj, ctx, hostid)
 		if err != nil {
 			return nil, false, err
 		}

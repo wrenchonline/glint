@@ -101,11 +101,11 @@ func TestURL(t *testing.T) {
 		MetHod:  "GET",
 		Headers: Headers,
 	}
-	tab, _ := nenet.NewTab(&Spider)
-	tab.CopyRequest(a)
-	tab.Send()
+	tabs_obj, _ := nenet.NewTabsOBJ(&Spider)
+	tabs_obj.CopyRequest(a)
+	tabs_obj.Send()
 	time.Sleep(5 * time.Second)
-	tab.Send()
+	tabs_obj.Send()
 	time.Sleep(5 * time.Second)
 }
 func Test_JS(t *testing.T) {

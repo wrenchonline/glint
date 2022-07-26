@@ -72,27 +72,28 @@ func (r *RWCount) Set(count int) {
 }
 
 //这个Tab几乎代表单线程所以很多情况不是很担心数据抢占的问题。
-type Tab struct {
-	TaskCtx       *context.Context //存储着任务上下文
-	Ctx           *context.Context
-	Cancel        *context.CancelFunc
-	PackCtx       *context.Context
-	PackCancel    *context.CancelFunc
-	Responses     chan []map[string]string
-	ReqMode       string
-	PostData      []byte
-	Standardlen   int //爬虫请求的长度
-	ReqUrlresplen int
-	Sendlimit     RWCount
-	Url           *url.URL
-	Headers       map[string]interface{} //请求头
-	Isreponse     bool
-	Source        chan string //当前爬虫的html的源码
-	RespDone      chan bool
-	Reports       []ReportMsg
-	mu            sync.Mutex //
-	RequestsStr   string
-	Ratelimite    *util.Rate //每秒请求速率
+type Tabs struct {
+	TaskCtx           *context.Context //存储着任务上下文
+	Ctx               *context.Context
+	Cancel            *context.CancelFunc
+	PackCtx           *context.Context
+	PackCancel        *context.CancelFunc
+	Responses         chan []map[string]string
+	ReqMode           string
+	PostData          []byte
+	Standardlen       int //爬虫请求的长度
+	ReqUrlresplen     int
+	Sendlimit         RWCount
+	Url               *url.URL
+	Headers           map[string]interface{} //请求头
+	Isreponse         bool
+	Source            chan string //当前爬虫的html的源码
+	RespDone          chan bool
+	Reports           []ReportMsg
+	mu                sync.Mutex //
+	RequestsStr       string
+	Ratelimite        *util.Rate //每秒请求速率
+	PackageExitsignal chan bool
 }
 
 type ReportMsg struct {
@@ -110,12 +111,12 @@ func (spider *Spider) Close() {
 	// defer chromedp.Cancel(*spider.Ctx)
 }
 
-func (t *Tab) Close() {
+func (t *Tabs) Close() {
 	defer (*t.Cancel)()
 	//defer chromedp.Cancel(*t.Ctx)
 }
 
-func (t *Tab) GetExecutor() context.Context {
+func (t *Tabs) GetExecutor() context.Context {
 	c := chromedp.FromContext(*t.Ctx)
 	ctx := cdp.WithExecutor(*t.Ctx, c.Target)
 	return ctx
@@ -153,8 +154,8 @@ func Processequest(r *fetch.ContinueRequestParams) *http.Request {
 	return req
 }
 
-func NewTab(spider *Spider) (*Tab, error) {
-	var tab Tab
+func NewTabsOBJ(spider *Spider) (*Tabs, error) {
+	var tab Tabs
 	ctx, cancel := chromedp.NewContext(*spider.Ctx)
 	// logger.Info("set timeout for the tab page : %d second", 20)
 	ctx, cancel = context.WithTimeout(ctx, 120*time.Second)
@@ -164,15 +165,15 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.Source = make(chan string)
 	tab.RespDone = make(chan bool)
 	tab.TaskCtx = spider.TaskCtx
-	tab.ListenTarget()
 	tab.Sendlimit.Set(1) //最大只能发送一次
 	tab.Ratelimite = spider.Ratelimite
+	tab.PackageExitsignal = make(chan bool)
 	return &tab, nil
 }
 
-func (t *Tab) ListenTarget() {
+func (t *Tabs) ListenTarget() {
 	//目前有个bug，go 关键字内就是不能用logger模块的日志输出结构体，使用后Listen内部会出现逻辑顺序错乱的情况，怀疑是logger里面的lock锁有关
-	chromedp.ListenTarget(*t.Ctx, func(ev interface{}) {
+	chromedp.ListenTarget(*t.PackCtx, func(ev interface{}) {
 		//var RequestID network.RequestID
 		// logger.Info("%v", reflect.TypeOf(ev))
 		switch ev := ev.(type) {
@@ -192,11 +193,13 @@ func (t *Tab) ListenTarget() {
 		case *runtime.EventExceptionThrown:
 		case *fetch.EventRequestPaused:
 			go func() {
-				c := chromedp.FromContext(*t.Ctx)
-				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				c := chromedp.FromContext(*t.PackCtx)
+				ctx := cdp.WithExecutor(*t.PackCtx, c.Target)
 				// var req *fetch.ContinueRequestParams
 				select {
 				case <-ctx.Done():
+					println("发包超时结束")
+					//close(t.PackageExitsignal)
 					return
 				default:
 				}
@@ -248,21 +251,19 @@ func (t *Tab) ListenTarget() {
 		case *network.EventLoadingFinished:
 
 			go func(ev *network.EventLoadingFinished) {
-				c := chromedp.FromContext(*t.Ctx)
-				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
-				select {
-				case <-(*t.PackCtx).Done():
-					fmt.Printf("超时或者超出次数，取消发包")
-					return
-				default:
-				}
+				c := chromedp.FromContext(*t.PackCtx)
+				ctx := cdp.WithExecutor(*t.PackCtx, c.Target)
+				// select {
+				// case <-(*t.PackCtx).Done():
+				// 	fmt.Printf("超时或者超出次数，取消发包")
+				// 	return
+				// default:
+				// }
 				array, e := network.GetResponseBody(ev.RequestID).Do(ctx)
 				if e != nil {
 					fmt.Printf("network.EventLoadingFinished error: %v", e)
 					return
 				}
-				// responseBody := string(array)
-				//logger.Info("network.EventLoadingFinished  RequestID:=%s body:%s", ev.RequestID, string(array))
 				t.Source <- string(array)
 			}(ev)
 
@@ -273,8 +274,8 @@ func (t *Tab) ListenTarget() {
 			// Response[string(ev.Type)] = strings.ReplaceAll(ev.Message, "\"", "")
 			// Responses = append(Responses, Response)
 			go func() {
-				c := chromedp.FromContext(*t.Ctx)
-				ctx := cdp.WithExecutor(*t.Ctx, c.Target)
+				c := chromedp.FromContext(*t.PackCtx)
+				ctx := cdp.WithExecutor(*t.PackCtx, c.Target)
 				//关闭弹窗
 				page.HandleJavaScriptDialog(false).Do(ctx)
 				// t.Responses <- Responses
@@ -285,7 +286,7 @@ func (t *Tab) ListenTarget() {
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
@@ -322,19 +323,34 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	return err
 }
 
-//Sendreq 发送请求 url为空使用爬虫装载的url
-func (t *Tab) Send() ([]string, string, error) {
-	var htmls []string
-	pctx, pcancel := context.WithCancel(context.Background())
-	t.mu.Lock()
-	t.PackCtx = &pctx
-	t.PackCancel = &pcancel
-	t.mu.Unlock()
-	t.Ratelimite.LimitWait()
+// func (tab *Tab) GetExecutor() context.Context {
+// 	c := chromedp.FromContext(*tab.Ctx)
+// 	ctx := cdp.WithExecutor(*tab.Ctx, c.Target)
+// 	return ctx
+// }
+func (t *Tabs) newSpiderTab() (context.Context, context.CancelFunc) {
+	ctx, cancel := chromedp.NewContext(*t.Ctx)
+	return ctx, cancel
+}
 
-	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*120)
+//Sendreq 发送请求 url为空使用爬虫装载的url
+func (t *Tabs) Send() ([]string, string, error) {
+	var htmls []string
+	//var btimeout bool
+	t.Ratelimite.LimitWait()
+	ctx, cancel := t.newSpiderTab()
+	ctx, cancel = context.WithTimeout(ctx, time.Second*10)
+	// pctx, pcancel := context.WithCancel(context.Background())
+	t.mu.Lock()
+	t.PackCtx = &ctx
+	t.PackCancel = &cancel
+	t.mu.Unlock()
+	//ctx := t.GetExecutor()
+	t.ListenTarget()
+
+	// ACtx, _ := context.WithTimeout(*t.Ctx, time.Second*120)
 	err := chromedp.Run(
-		Ctx,
+		*t.PackCtx,
 		fetch.Enable(),
 		chromedp.Navigate(t.Url.String()),
 		//chromedp.OuterHTML("html", &res, chromedp.BySearch),
@@ -350,14 +366,15 @@ func (t *Tab) Send() ([]string, string, error) {
 	}
 
 	// for
-	tctx, tcancel := context.WithTimeout(context.Background(), time.Duration(time.Second*2))
+	tctx, tcancel := context.WithTimeout(*t.Ctx, time.Duration(time.Second*2))
 	defer tcancel()
 	for {
 		select {
 		case html := <-t.Source:
 			htmls = append(htmls, html)
 		case <-tctx.Done():
-			(*t.PackCancel)()
+			//btimeout = true
+			cancel()
 			goto quit
 		case <-(*t.TaskCtx).Done():
 			logger.Warning("xss插件收到任务过期,中断发包")
@@ -367,10 +384,10 @@ func (t *Tab) Send() ([]string, string, error) {
 quit:
 	Str := t.RequestsStr
 	t.RequestsStr = ""
-	return htmls, Str, err
+	return htmls, Str, nil
 }
 
-func (t *Tab) GetRequrlparam() (url.Values, error) {
+func (t *Tabs) GetRequrlparam() (url.Values, error) {
 	if len(t.Url.String()) == 0 {
 		panic("request url is emtry")
 	}
@@ -383,7 +400,7 @@ func (t *Tab) GetRequrlparam() (url.Values, error) {
 }
 
 //GetReqLensByHtml 二度获取请求的长度
-func (t *Tab) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
+func (t *Tabs) GetReqLensByHtml(JsonUrls *ast.JsonUrl) error {
 	if len(t.Url.String()) == 0 {
 		panic("request url is emtry")
 	}
@@ -442,7 +459,7 @@ func (g *BuildPayload) GetPayloadValue() (string, error) {
 }
 
 //PayloadHandle payload处理,把payload根据请求方式的不同修改 paramname
-func (t *Tab) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
+func (t *Tabs) PayloadHandle(payload string, reqmod string, paramname string, Getparams url.Values) error {
 	t.ReqMode = reqmod
 
 	if reqmod == "GET" {
@@ -462,7 +479,7 @@ func (t *Tab) PayloadHandle(payload string, reqmod string, paramname string, Get
 }
 
 //这个要改一下加速发包速度
-func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) {
+func (t *Tabs) CheckPayloadLocation(newpayload string) ([]string, string, error) {
 	var (
 		htmls    []string
 		req_str  string
@@ -536,7 +553,7 @@ func (t *Tab) CheckPayloadLocation(newpayload string) ([]string, string, error) 
 	}
 }
 
-func (t *Tab) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
+func (t *Tabs) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, map[int]interface{}) {
 	var urlocc UrlOCC
 	ReponseInfo := make(map[int]interface{})
 	htmls, _, err := t.CheckPayloadLocation(playload)
@@ -558,7 +575,7 @@ func (t *Tab) CheckRandOnHtmlS(playload string, urlrequst interface{}) (bool, ma
 	return bOnhtml, ReponseInfo
 }
 
-func (t *Tab) CopyRequest(data interface{}) {
+func (t *Tabs) CopyRequest(data interface{}) {
 	var lock sync.Mutex
 	lock.Lock()
 	defer lock.Unlock()
@@ -576,7 +593,7 @@ func (t *Tab) CopyRequest(data interface{}) {
 	}
 }
 
-func (t *Tab) ReqtoJson() ast.JsonUrl {
+func (t *Tabs) ReqtoJson() ast.JsonUrl {
 	var data ast.JsonUrl
 	data.MetHod = t.ReqMode
 	data.Url = t.Url.String()

@@ -21,22 +21,22 @@ func TestCheckPayloadNormal(t *testing.T) {
 	taskconfig.Proxy = "127.0.0.1:7777"
 	Spider.Init(taskconfig)
 	defer Spider.Close()
-	tab, err := nenet.NewTab(&Spider)
-	tab.ReqMode = "GET"
+	tabs_obj, err := nenet.NewTabsOBJ(&Spider)
+	tabs_obj.ReqMode = "GET"
 	// Spider.PostData = []byte("txtName=ecrrgaowle&mtxMessage=Crawl&user_token=873c33f5ece8c8308071890f478ded0b")
-	tab.Url, err = url.Parse("https://challenge-1121.intigriti.io/challenge/index.php?s=111")
+	tabs_obj.Url, err = url.Parse("https://challenge-1121.intigriti.io/challenge/index.php?s=111")
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 	playload := "<ScRiPt>e6X1fe54</sCrIpT>"
-	htmls, _, _ := tab.CheckPayloadLocation(playload)
+	htmls, _, _ := tabs_obj.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		ast.SearchInputInResponse(playload, v)
 		// fmt.Println(aurora.Red(OCC))
 	}
 
-	htmls, _, _ = tab.CheckPayloadLocation(playload)
+	htmls, _, _ = tabs_obj.CheckPayloadLocation(playload)
 	for _, v := range htmls {
 		OCC := ast.SearchInputInResponse(playload, v)
 		fmt.Println(aurora.Red(OCC))
