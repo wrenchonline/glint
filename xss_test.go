@@ -41,7 +41,7 @@ func TestXSS(t *testing.T) {
 
 	Spider := nenet.Spider{}
 	var taskconfig config.TaskConfig
-	taskconfig.Qps = 5000
+	taskconfig.Qps = 500
 	taskconfig.Proxy = "127.0.0.1:7777" //taskconfig.Proxy = "127.0.0.1:7777"
 	err := Spider.Init(taskconfig)
 	if err != nil {

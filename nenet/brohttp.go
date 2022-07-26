@@ -286,7 +286,7 @@ func (t *Tabs) ListenTarget() {
 
 func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 	options := []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-web-security", true),
 		chromedp.Flag("disable-xss-auditor", true),
