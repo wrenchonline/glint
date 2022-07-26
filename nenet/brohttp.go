@@ -165,15 +165,8 @@ func NewTab(spider *Spider) (*Tab, error) {
 	tab.RespDone = make(chan bool)
 	tab.TaskCtx = spider.TaskCtx
 	tab.ListenTarget()
-	//tab.Sendlimit.Set(1) //最大只能发送一次
+	tab.Sendlimit.Set(1) //最大只能发送一次
 	tab.Ratelimite = spider.Ratelimite
-
-	pctx, pcancel := context.WithTimeout(*tab.Ctx, time.Second*120)
-	//t.mu.Lock()
-	tab.PackCtx = &pctx
-	tab.PackCancel = &pcancel
-	//t.mu.Unlock()
-
 	return &tab, nil
 }
 
@@ -332,10 +325,16 @@ func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
 //Sendreq 发送请求 url为空使用爬虫装载的url
 func (t *Tab) Send() ([]string, string, error) {
 	var htmls []string
-
+	pctx, pcancel := context.WithCancel(context.Background())
+	t.mu.Lock()
+	t.PackCtx = &pctx
+	t.PackCancel = &pcancel
+	t.mu.Unlock()
 	t.Ratelimite.LimitWait()
+
+	Ctx, _ := context.WithTimeout(*t.Ctx, time.Second*120)
 	err := chromedp.Run(
-		*t.PackCtx,
+		Ctx,
 		fetch.Enable(),
 		chromedp.Navigate(t.Url.String()),
 		//chromedp.OuterHTML("html", &res, chromedp.BySearch),

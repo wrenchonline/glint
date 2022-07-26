@@ -49,7 +49,7 @@ func TestXSS(t *testing.T) {
 	}
 	defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_testfile/xss_test2.json")
+	data, _ := config.ReadResultConf("./json_testfile/xss_test.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 
@@ -60,7 +60,7 @@ func TestXSS(t *testing.T) {
 		MaxPoolCount: 1,
 		// Callbacks:    myfunc,
 		Spider:  &Spider,
-		Timeout: time.Second * 999,
+		Timeout: time.Second * 9999,
 	}
 	pluginInternal.Init()
 	pluginInternal.Callbacks = myfunc
