@@ -141,6 +141,11 @@ var InputTextMap = map[string]map[string]interface{}{
 	},
 }
 
+type TaskConfig struct {
+	Yaml TaskYamlConfig
+	Json TaskJsonConfig
+}
+
 type TaskYamlConfig struct {
 	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
 	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict

@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/base64"
+	"glint/config"
 	"glint/dbmanager"
 	"glint/logger"
 	"glint/nenet"
@@ -63,6 +64,7 @@ type PluginOption struct {
 	HttpsCertKey  string //
 	IsAllUrlsEval bool   //是否传递所有URLS给当前某个漏洞插件传递。适合用于一个漏洞报告所有同域名的URLS
 	Rate          *util.Rate
+	Config        *config.TaskConfig
 	// XssTimeOut   time.Duration //xss扫描总超时
 }
 
@@ -76,6 +78,8 @@ type GroupData struct {
 	Msg          *chan map[string]interface{}
 	HttpsCert    string //
 	HttpsCertKey string //
+	Config       *config.TaskConfig
+	Rate         *util.Rate
 	// XssTimeOut   time.Duration //xss扫描总超时
 }
 
@@ -156,6 +160,8 @@ func (p *Plugin) Run(args PluginOption) error {
 						Msg:          args.SingelMsg,
 						HttpsCert:    args.HttpsCert,
 						HttpsCertKey: args.HttpsCertKey,
+						Config:       args.Config,
+						Rate:         args.Rate,
 					}
 					err = p.Pool.Invoke(data)
 					if err != nil {
@@ -175,6 +181,7 @@ func (p *Plugin) Run(args PluginOption) error {
 					Msg:          args.SingelMsg,
 					HttpsCert:    args.HttpsCert,
 					HttpsCertKey: args.HttpsCertKey,
+					Config:       args.Config,
 				}
 				err = p.Pool.Invoke(data)
 				if err != nil {

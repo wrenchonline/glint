@@ -1,9 +1,10 @@
 package crlf
 
 import (
-	"encoding/json"
+	"errors"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"regexp"
@@ -36,52 +37,25 @@ var payload_template = []string{
 func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	var hostid int64
-	// var buf bufio{}
-	// var blastIters interface{}
-	util.Setup()
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	var Param layers.PluginParam
+	Param.ParsePluginParams(args.(plugin.GroupData))
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	Body := session["data"].(string)
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
 	sess := nenet.GetSessionByOptions(
 		&nenet.ReqOptions{
-			Timeout:       2 * time.Second,
+			Timeout:       time.Duration(Param.Timeout) * time.Second,
 			AllowRedirect: false,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
+			Proxy:         Param.UpProxy,
+			Cert:          Param.Cert,
+			PrivateKey:    Param.CertKey,
 		})
 
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	// var ContentType string = "None"
-	// if value, ok := headers["Content-Type"]; ok {
-	// 	ContentType = value
-	// }
-
 	for _, pl := range payload_template {
-		if strings.ToUpper(method) == "GET" {
-			npl := url + pl
-			req1, resp1, errs := sess.Get(npl, headers)
+		if strings.ToUpper(Param.Method) == "GET" {
+			npl := Param.Url + pl
+			req1, resp1, errs := sess.Get(npl, Param.Headers)
 			if errs != nil {
 				return nil, false, errs
 			}
@@ -98,7 +72,7 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 			C := r.FindAllStringSubmatch(Text, -1)
 			if len(C) != 0 {
 				r := req1.String()
-				Result := util.VulnerableTcpOrUdpResult(url,
+				Result := util.VulnerableTcpOrUdpResult(Param.Url,
 					"CRLF Vulnerable",
 					[]string{string(r)},
 					[]string{resp1.String()},
@@ -108,7 +82,7 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 			}
 
 		} else {
-			req1, resp1, errs := sess.Post(url, headers, []byte(Body+pl))
+			req1, resp1, errs := sess.Post(Param.Url, Param.Headers, []byte(Param.Body+pl))
 			if errs != nil {
 				return nil, false, errs
 			}
@@ -116,12 +90,12 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 			// body := string(resp1.Body())
 			Header_str := string(resp1.Header.Header())
 			if str, _ := regexp.MatchString(RegexRule, Header_str); str {
-				Result := util.VulnerableTcpOrUdpResult(url,
+				Result := util.VulnerableTcpOrUdpResult(Param.Url,
 					"CRLF Vulnerable",
 					[]string{string(req1.String())},
 					[]string{resp1.String()},
 					"middle",
-					session["hostid"].(int64))
+					Param.Hostid)
 				return Result, false, errs
 			}
 		}
