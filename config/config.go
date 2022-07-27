@@ -177,9 +177,25 @@ type TaskConfig struct {
 }
 
 type TaskJsonConfig struct {
-	Exweb_scan_param  Exweb_scan_param       `json:"exweb_scan_param"`
-	Exweb_target_info map[string]interface{} `json:"exweb_target_info"`
-	Exweb_task_info   map[string]interface{} `json:"exweb_task_info"`
+	Exweb_scan_param  Exweb_scan_param    `json:"exweb_scan_param"`
+	Exweb_target_info []Exweb_target_info `json:"exweb_target_info"`
+	Exweb_task_info   Exweb_task_info     `json:"exweb_task_info"`
+}
+
+type Exweb_target_info struct {
+	Scan_target  json.Number `json:"scan_target"`
+	Target_id    json.Number `json:"target_id"`
+	Target_order json.Number `json:"target_order"`
+	Task_id      json.Number `json:"task_id"`
+}
+
+type Exweb_task_info struct {
+	Create_time string      `json:"create_time"`
+	End_time    string      `json:"end_time"`
+	Scan_time   string      `json:"scan_time"`
+	Start_time  string      `json:"start_time"`
+	Task_id     json.Number `json:"task_id"`
+	Task_name   string      `json:"task_name"`
 }
 
 type Exweb_scan_param struct {
@@ -201,7 +217,7 @@ type Exweb_scan_param struct {
 	Scan_depth            json.Number `json:"scan_depth"`
 	Task_id               json.Number `json:"task_id"`
 	Tcp_conn_timeout      json.Number `json:"tcp_conn_timeout"`
-	User_agent            json.Number `json:"user_agent"`
+	User_agent            string      `json:"user_agent"`
 	Web_param_id          json.Number `json:"web_param_id"`
 }
 

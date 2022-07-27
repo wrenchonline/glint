@@ -20,6 +20,8 @@ func Test_Config(t *testing.T) {
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	JsonObj := config.TaskJsonConfig{}
+	// a := make(map[string]interface{})
+	// json.Unmarshal(byteValue, &a)
 	d := json.NewDecoder(bytes.NewReader(byteValue))
 	d.UseNumber()
 	d.Decode(&JsonObj)
