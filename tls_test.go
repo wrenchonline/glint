@@ -23,7 +23,7 @@ func Test_TLS(t *testing.T) {
 	}()
 
 	//Spider := brohttp.Spider{}
-	var taskconfig config.TaskConfig
+	var taskconfig config.TaskYamlConfig
 	taskconfig.Proxy = ""
 	//err := Spider.Init(taskconfig)
 	// if err != nil {

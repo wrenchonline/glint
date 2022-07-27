@@ -81,7 +81,7 @@ type PublishState struct {
 
 //Init 初始化mysql数据库
 func (Dm *DbManager) Init() error {
-	TaskConfig := config.TaskConfig{}
+	TaskConfig := config.TaskYamlConfig{}
 	err := config.ReadTaskConf("config.yaml", &TaskConfig)
 	if err != nil {
 		panic(err)
@@ -330,8 +330,8 @@ func (Dm *DbManager) InstallHttpsReqStatus(State *PublishState) error {
 	return err
 }
 
-func (Dm *DbManager) ConvertDbTaskConfigToJson(dbTaskConfig DbTaskConfig) (config.TaskConfig, error) {
-	TaskConfig := config.TaskConfig{}
+func (Dm *DbManager) ConvertDbTaskConfigToYaml(dbTaskConfig DbTaskConfig) (config.TaskYamlConfig, error) {
+	TaskConfig := config.TaskYamlConfig{}
 	TaskConfig.MaxTabsCount = int(dbTaskConfig.MaxTabsCount.Int64)
 	TaskConfig.FilterMode = dbTaskConfig.FilterMode.String
 	TaskConfig.ExtraHeaders = Dm.UuidToMap(dbTaskConfig.ExtraHeadersUuid.String, "Headers")

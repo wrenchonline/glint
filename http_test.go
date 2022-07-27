@@ -17,7 +17,7 @@ func TestCheckPayloadNormal(t *testing.T) {
 	var err error
 	Spider := nenet.Spider{}
 	logger.DebugEnable(true)
-	var taskconfig config.TaskConfig
+	var taskconfig config.TaskYamlConfig
 	taskconfig.Proxy = "127.0.0.1:7777"
 	Spider.Init(taskconfig)
 	defer Spider.Close()

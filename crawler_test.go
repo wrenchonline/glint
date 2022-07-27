@@ -20,7 +20,7 @@ import (
 
 func Test_Crawler(t *testing.T) {
 	logger.DebugEnable(true)
-	TaskConfig := config.TaskConfig{}
+	TaskConfig := config.TaskYamlConfig{}
 	TaskConfig.Proxy = ""
 	TaskConfig.NoHeadless = true
 	TaskConfig.TabRunTimeout = 20 * time.Second

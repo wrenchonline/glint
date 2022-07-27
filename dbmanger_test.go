@@ -20,7 +20,7 @@ func Test_GetConfig(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	Dm.ConvertDbTaskConfigToJson(v)
+	Dm.ConvertDbTaskConfigToYaml(v)
 }
 
 func Test_InstallScanResult(t *testing.T) {

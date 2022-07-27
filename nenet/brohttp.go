@@ -284,7 +284,7 @@ func (t *Tabs) ListenTarget() {
 	})
 }
 
-func (spider *Spider) Init(TaskConfig config.TaskConfig) error {
+func (spider *Spider) Init(TaskConfig config.TaskYamlConfig) error {
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),

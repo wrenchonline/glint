@@ -57,7 +57,7 @@ type Task struct {
 	HostIds       []int
 	XssSpider     nenet.Spider
 	Targets       []*model.Request
-	TaskConfig    config.TaskConfig
+	TaskConfig    config.TaskYamlConfig
 	PluginWg      sync.WaitGroup
 	Plugins       []*plugin.Plugin
 	Ctx           *context.Context //当前任务的现场

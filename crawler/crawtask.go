@@ -25,23 +25,23 @@ type Result struct {
 }
 
 type CrawlerTask struct {
-	Browser       *Spider             // 爬虫浏览器
-	HostName      string              // 收集Uri
-	Scheme        string              //
-	PluginBrowser *nenet.Spider       // 插件浏览器
-	RootDomain    string              // 当前爬取根域名 用于子域名收集
-	Targets       []*model.Request    // 输入目标
-	Result        *Result             // 最终结果
-	Config        *config.TaskConfig  // 配置信息
-	smartFilter   SmartFilter         // 过滤对象
-	Pool          *ants.Pool          // 协程池
-	taskWG        sync.WaitGroup      // 等待协程池所有任务结束
-	crawledCount  int                 // 爬取过的数量
-	taskCountLock sync.Mutex          // 已爬取的任务总数锁
-	TaskCtx       *context.Context    // 任务上下文，这个存储的是任务分配的CTX
-	Cancel        *context.CancelFunc // 取消当前上下文
-	Ctx           *context.Context    // 当前上下文
-	QPS           uint                //每秒请求速率
+	Browser       *Spider                // 爬虫浏览器
+	HostName      string                 // 收集Uri
+	Scheme        string                 //
+	PluginBrowser *nenet.Spider          // 插件浏览器
+	RootDomain    string                 // 当前爬取根域名 用于子域名收集
+	Targets       []*model.Request       // 输入目标
+	Result        *Result                // 最终结果
+	Config        *config.TaskYamlConfig // 配置信息
+	smartFilter   SmartFilter            // 过滤对象
+	Pool          *ants.Pool             // 协程池
+	taskWG        sync.WaitGroup         // 等待协程池所有任务结束
+	crawledCount  int                    // 爬取过的数量
+	taskCountLock sync.Mutex             // 已爬取的任务总数锁
+	TaskCtx       *context.Context       // 任务上下文，这个存储的是任务分配的CTX
+	Cancel        *context.CancelFunc    // 取消当前上下文
+	Ctx           *context.Context       // 当前上下文
+	QPS           uint                   //每秒请求速率
 }
 
 type tabTask struct {
@@ -214,7 +214,7 @@ func (t *tabTask) Task() {
 /**
 新建爬虫任务
 */
-func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config.TaskConfig) (*CrawlerTask, error) {
+func NewCrawlerTask(ctx *context.Context, target *model.Request, taskConf config.TaskYamlConfig) (*CrawlerTask, error) {
 	mctx, cancel := context.WithCancel(context.Background())
 	crawlerTask := CrawlerTask{
 		Result: &Result{},

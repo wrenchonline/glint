@@ -33,7 +33,7 @@ func TestAppError(t *testing.T) {
 
 	//Spider := brohttp.Spider{}
 
-	var taskconfig config.TaskConfig
+	var taskconfig config.TaskYamlConfig
 	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
 	var PluginWg sync.WaitGroup
 	data, _ := config.ReadResultConf("./json_testfile/apperror.json")

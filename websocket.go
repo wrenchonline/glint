@@ -402,7 +402,7 @@ func (ts *TaskServer) start(v interface{}, IsGetDatabydatabase bool) (Task, erro
 		if Err != nil {
 			logger.Error(Err.Error())
 		}
-		TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToJson(DBTaskConfig)
+		TaskConfig, Err := ts.Dm.ConvertDbTaskConfigToYaml(DBTaskConfig)
 		if Err != nil {
 			logger.Error(Err.Error())
 		}

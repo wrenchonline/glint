@@ -141,7 +141,7 @@ var InputTextMap = map[string]map[string]interface{}{
 	},
 }
 
-type TaskConfig struct {
+type TaskYamlConfig struct {
 	MaxCrawlCount           int                    `yaml:"MaxCrawlCount"` // 最大爬取的数量
 	FilterMode              string                 `yaml:"FilterMode"`    // simple、smart、strict
 	DBName                  string                 `yaml:"DBName"`        //数据库名
@@ -260,7 +260,7 @@ func ReadResultConf(file string) (map[string]interface{}, error) {
 	return r, err
 }
 
-func ReadTaskConf(file string, TaskConfig *TaskConfig) error {
+func ReadTaskConf(file string, TaskConfig *TaskYamlConfig) error {
 	YamlFile, err := os.Open(file)
 	if err != nil {
 		fmt.Println(err)
