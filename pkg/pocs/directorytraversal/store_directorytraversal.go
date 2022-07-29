@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-var DefaultProxy = ""
-var Cert string
-var Mkey string
+// var DefaultProxy = ""
+// var Cert string
+// var Mkey string
 
 func TraversalVaild(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
@@ -22,6 +22,7 @@ func TraversalVaild(args interface{}) (*util.ScanResult, bool, error) {
 	// var blastIters interface{}
 	util.Setup()
 	var Param layers.PluginParam
+	// layers.Init()
 	ct := layers.CheckType{}
 	Param.ParsePluginParams(args.(plugin.GroupData), ct)
 	if Param.CheckForExitSignal() {
@@ -39,10 +40,10 @@ func TraversalVaild(args interface{}) (*util.ScanResult, bool, error) {
 
 	// variations,err = util.ParseUri(url)
 	// BlindSQL.variations =
-	if value, ok := Param.Headers["Content-Type"]; ok {
-		ContentType = value
-	}
-	variations, err = util.ParseUri(Param.Url, []byte(Param.Body), Param.Method, ContentType)
+	// if value, ok := Param.Headers["Content-Type"]; ok {
+	// 	ContentType = value
+	// }
+	variations, err = util.ParseUri(Param.Url, []byte(Param.Body), Param.Method, Param.ContentType)
 	//赋值
 	DirectoryTraversal.variations = variations
 	DirectoryTraversal.lastJob.Layer.Sess = sess
@@ -51,7 +52,7 @@ func TraversalVaild(args interface{}) (*util.ScanResult, bool, error) {
 	DirectoryTraversal.lastJob.Layer.ContentType = ContentType
 	DirectoryTraversal.lastJob.Layer.Headers = Param.Headers
 	DirectoryTraversal.lastJob.Layer.Body = []byte(Param.Body)
-
+	DirectoryTraversal.lastJob.Init(Param.UpProxy, Param.Cert, Param.CertKey)
 	if DirectoryTraversal.startTesting() {
 		// println(hostid)
 		// println("发现sql漏洞")

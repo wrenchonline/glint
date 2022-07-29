@@ -142,8 +142,8 @@ var InputTextMap = map[string]map[string]interface{}{
 }
 
 type TaskConfig struct {
-	Yaml TaskYamlConfig
-	Json TaskJsonConfig
+	Yaml *TaskYamlConfig
+	Json *TaskJsonConfig
 }
 
 type TaskYamlConfig struct {

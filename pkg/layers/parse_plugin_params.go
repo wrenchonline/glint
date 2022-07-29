@@ -57,8 +57,14 @@ func (p *PluginParam) ParsePluginParams(group plugin.GroupData, ct CheckType) {
 	p.Cert = group.HttpsCert
 	p.CertKey = group.HttpsCertKey
 	if group.Config != nil {
-		p.UpProxy = group.Config.Json.Exweb_scan_param.Http_proxy
-		p.Timeout, _ = group.Config.Json.Exweb_scan_param.Http_response_timeout.Int64()
+		if group.Config.Json != nil {
+			p.UpProxy = group.Config.Json.Exweb_scan_param.Http_proxy
+			p.Timeout, _ = group.Config.Json.Exweb_scan_param.Http_response_timeout.Int64()
+		} else if group.Config.Yaml != nil {
+			p.UpProxy = group.Config.Yaml.Proxy
+			p.Timeout = 5
+
+		}
 	} else {
 		p.UpProxy = ""
 		p.Timeout = 5
