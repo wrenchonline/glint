@@ -1,9 +1,10 @@
 package xxe
 
 import (
-	"encoding/json"
+	"errors"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"regexp"
@@ -28,51 +29,25 @@ var reverse_template = []string{
 
 func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
-	// var blastIters interface{}
-	util.Setup()
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	Cert = group.HttpsCert
-	Mkey = group.HttpsCertKey
 	sess := nenet.GetSessionByOptions(
 		&nenet.ReqOptions{
-			Timeout:       2 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          Cert,
-			PrivateKey:    Mkey,
+			Timeout:       time.Duration(Param.Timeout) * time.Second,
+			AllowRedirect: false,
+			Proxy:         Param.UpProxy,
+			Cert:          Param.Cert,
+			PrivateKey:    Param.CertKey,
 		})
-
-	var ContentType string = "None"
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
-	}
-
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
 
 	var xmlversion bool
 	reg := `^\s*<\?xml`
-	match, _ := regexp.MatchString(reg, string(body))
+	match, _ := regexp.MatchString(reg, Param.Body)
 	if match {
 		xmlversion = true
 	}
@@ -87,21 +62,21 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 	}
 
 	//"application/xml;charset=UTF-8"
-	if funk.Contains(ContentType, "text/xml") {
+	if funk.Contains(Param.ContentType, "text/xml") {
 		for _, pl := range payloads {
-			if strings.ToUpper(method) == "POST" {
-				req1, resp1, errs := sess.Post(url, headers, []byte(pl))
+			if strings.ToUpper(Param.Method) == "POST" {
+				req1, resp1, errs := sess.Post(Param.Url, Param.Headers, []byte(pl))
 				if errs != nil {
 					return nil, false, errs
 				}
 				body := string(resp1.Body())
 				if funk.Contains(body, "root:[x*]:0:0:") {
-					Result := util.VulnerableTcpOrUdpResult(url,
+					Result := util.VulnerableTcpOrUdpResult(Param.Url,
 						"xxe Vulnerable",
 						[]string{string(req1.String())},
 						[]string{string(body)},
 						"high",
-						hostid)
+						Param.Hostid)
 					return Result, true, errs
 				}
 			}
@@ -126,7 +101,7 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 
 	//<?xml version="1.0" encoding="utf-8"?>
 
-	if funk.Contains(ContentType, "application/xml") {
+	if funk.Contains(Param.ContentType, "application/xml") {
 
 		var pl_ string
 		if !xmlversion {
@@ -139,8 +114,8 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 		// }
 
 		for _, pl := range win_pl {
-			if strings.ToUpper(method) == "POST" {
-				doc, err := util.ParseXMl(body)
+			if strings.ToUpper(Param.Method) == "POST" {
+				doc, err := util.ParseXMl([]byte(Param.Body))
 				if err != nil {
 					logger.Debug("%v", err.Error())
 				}
@@ -151,19 +126,19 @@ func Xxe(args interface{}) (*util.ScanResult, bool, error) {
 
 				newbody = []byte(strings.ReplaceAll(string(newbody), "&amp;content", "&content;"))
 				npl := append([]byte(pl), newbody...)
-				if strings.ToUpper(method) == "POST" {
-					req1, resp1, errs := sess.Post(url, headers, []byte(npl))
+				if strings.ToUpper(Param.Method) == "POST" {
+					req1, resp1, errs := sess.Post(Param.Url, Param.Headers, []byte(npl))
 					if errs != nil {
 						return nil, false, errs
 					}
 					body := string(resp1.Body())
 					if funk.Contains(body, "for 16-bit app") {
-						Result := util.VulnerableTcpOrUdpResult(url,
+						Result := util.VulnerableTcpOrUdpResult(Param.Url,
 							"xxe Vulnerable",
 							[]string{string(req1.String())},
 							[]string{string(body)},
 							"high",
-							session["hostid"].(int64))
+							Param.Hostid)
 						return Result, true, errs
 					}
 				}

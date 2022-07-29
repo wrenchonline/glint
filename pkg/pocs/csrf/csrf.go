@@ -1,11 +1,11 @@
 package csrf
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"strings"
@@ -55,48 +55,29 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 	group := args.(plugin.GroupData)
 	ORIGIN_URL := `http://192.168.166.8/vulnerabilities/csrf`
 	// t := time.NewTimer(time.Millisecond * 200)
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
-	}
-
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	// fmt.Printf("url: %s\n", url)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
-
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	var ContentType string = "None"
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
 	sess := nenet.GetSessionByOptions(
 		&nenet.ReqOptions{
-			Timeout:       2 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
+			Timeout:       time.Duration(Param.Timeout) * time.Second,
+			AllowRedirect: false,
+			Proxy:         Param.UpProxy,
+			Cert:          Param.Cert,
+			PrivateKey:    Param.CertKey,
 		})
 
-	if strings.ToUpper(method) == "POST" {
-		params, err := util.ParseUri(url, body, "POST", ContentType)
+	var ContentType string = "None"
+	if value, ok := Param.Headers["Content-Type"]; ok {
+		ContentType = value
+	}
+
+	if strings.ToUpper(Param.Method) == "POST" {
+		params, err := util.ParseUri(Param.Url, []byte(Param.Body), "POST", ContentType)
 		if err != nil {
 			logger.Debug(err.Error())
 			return nil, false, fmt.Errorf(err.Error())
@@ -105,7 +86,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 			return nil, false, fmt.Errorf("post the url have no params")
 		}
 
-		_, resp1, errs := sess.Post(url, headers, []byte(body))
+		_, resp1, errs := sess.Post(Param.Url, Param.Headers, []byte(Param.Body))
 		if errs != nil {
 			return nil, false, errs
 		}
@@ -114,17 +95,17 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 			errstr := fmt.Sprintf("Fake Origin Response Fail. Status code: %d", resp1.StatusCode())
 			return nil, false, errors.New(errstr)
 		}
-		headers["Origin"] = ORIGIN_URL
-		req2, resp2, errs := sess.Post(url, headers, []byte(body))
+		Param.Headers["Origin"] = ORIGIN_URL
+		req2, resp2, errs := sess.Post(Param.Url, Param.Headers, []byte(Param.Body))
 		b2 := resp2.Body()
 		if len(b1) == len(b2) {
 			fmt.Println(aurora.Red("Heuristics reveal endpoint might be VULNERABLE to Origin Base CSRFs..."))
-			Result := util.VulnerableTcpOrUdpResult(url,
+			Result := util.VulnerableTcpOrUdpResult(Param.Url,
 				"csrf Origin Vulnerable",
 				[]string{string(req2.String())},
 				[]string{string(b2)},
 				"middle",
-				hostid)
+				Param.Hostid)
 			return Result, true, errs
 		}
 
@@ -135,7 +116,7 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 			return nil, false, ctx.Err()
 		default:
 		}
-		_, resp1, errs = sess.Post(url, headers, []byte(body))
+		_, resp1, errs = sess.Post(Param.Url, Param.Headers, []byte(Param.Body))
 		if errs != nil {
 			return nil, false, errs
 		}
@@ -144,17 +125,17 @@ func Csrfeval(args interface{}) (*util.ScanResult, bool, error) {
 			errstr := fmt.Sprintf("Fake Origin Referer Fail. Status code: %d", resp1.StatusCode())
 			return nil, false, errors.New(errstr)
 		}
-		headers["Referer"] = REFERER_URL
-		req2, resp2, errs = sess.Post(url, headers, []byte(body))
+		Param.Headers["Referer"] = REFERER_URL
+		req2, resp2, errs = sess.Post(Param.Url, Param.Headers, []byte(Param.Body))
 		b2 = resp2.Body()
 		if len(b1) == len(b2) {
 			logger.Debug("Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...")
-			Result := util.VulnerableTcpOrUdpResult(url,
+			Result := util.VulnerableTcpOrUdpResult(Param.Url,
 				"Heuristics reveal endpoint might be VULNERABLE to Referer CSRFs...",
 				[]string{string(req2.String())},
 				[]string{string(b2)},
 				"middle",
-				hostid)
+				Param.Hostid)
 			return Result, true, errs
 		}
 		return nil, false, errs

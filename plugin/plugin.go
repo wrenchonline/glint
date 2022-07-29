@@ -70,7 +70,8 @@ type PluginOption struct {
 
 type GroupData struct {
 	GroupType    string
-	GroupUrls    interface{}
+	Url          map[string]interface{}
+	GroupUrls    []interface{}
 	Spider       *nenet.Spider
 	Pctx         *context.Context
 	Pcancel      *context.CancelFunc
@@ -149,10 +150,10 @@ func (p *Plugin) Run(args PluginOption) error {
 		p.threadwg.Add(len(ur))
 		if !args.IsAllUrlsEval {
 			for _, urlinter := range ur {
-				go func(type_name string, urlinter interface{}) {
+				go func(type_name string, urlinter map[string]interface{}) {
 					data := GroupData{
 						GroupType:    type_name,
-						GroupUrls:    urlinter,
+						Url:          urlinter,
 						Spider:       p.Spider,
 						Pctx:         p.Ctx,
 						Pcancel:      p.Cancel,
@@ -167,10 +168,10 @@ func (p *Plugin) Run(args PluginOption) error {
 					if err != nil {
 						logger.Debug(err.Error())
 					}
-				}(type_name, urlinter)
+				}(type_name, urlinter.(map[string]interface{}))
 			}
 		} else {
-			go func(type_name string, ur interface{}) {
+			go func(type_name string, ur []interface{}) {
 				data := GroupData{
 					GroupType:    type_name,
 					GroupUrls:    ur,

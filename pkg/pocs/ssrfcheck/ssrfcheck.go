@@ -1,10 +1,10 @@
 package ssrfcheck
 
 import (
-	"encoding/json"
 	"errors"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	reverse2 "glint/reverse"
 	"glint/util"
@@ -12,53 +12,26 @@ import (
 	"time"
 )
 
-var DefaultProxy = ""
-var cert string
-var mkey string
-
 func Ssrf(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
 
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
 	sess := nenet.GetSessionByOptions(
 		&nenet.ReqOptions{
-			Timeout:       2 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          cert,
-			PrivateKey:    mkey,
+			Timeout:       time.Duration(Param.Timeout) * time.Second,
+			AllowRedirect: false,
+			Proxy:         Param.UpProxy,
+			Cert:          Param.Cert,
+			PrivateKey:    Param.CertKey,
 		})
 
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	var ContentType string = "None"
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
-	}
-
-	params, err := util.ParseUri(url, body, method, ContentType)
+	params, err := util.ParseUri(Param.Url, []byte(Param.Body), Param.Method, Param.ContentType)
 	if err != nil {
 		logger.Debug(err.Error())
 		return nil, false, err
@@ -66,41 +39,41 @@ func Ssrf(args interface{}) (*util.ScanResult, bool, error) {
 	flag := util.RandLowLetterNumber(8)
 	reverse := reverse2.NewReverse1(flag)
 	_reverse := reverse.(*reverse2.Reverse1)
-	payloads := params.SetPayload(url, _reverse.Url, method)
+	payloads := params.SetPayload(Param.Url, _reverse.Url, Param.Method)
 	logger.Debug("%v", payloads)
 
-	if strings.ToUpper(method) == "POST" {
+	if strings.ToUpper(Param.Method) == "POST" {
 		for _, body := range payloads {
-			req1, resp1, errs := sess.Post(url, headers, []byte(body))
+			req1, resp1, errs := sess.Post(Param.Url, Param.Headers, []byte(body))
 			if errs != nil {
 				return nil, false, errs
 			}
 			r1 := resp1.Body()
 			if reverse2.ReverseCheck(reverse, 5) {
-				Result := util.VulnerableTcpOrUdpResult(url,
+				Result := util.VulnerableTcpOrUdpResult(Param.Url,
 					"ssrf Vulnerable",
 					[]string{string(req1.String())},
 					[]string{string(r1)},
 					"middle",
-					hostid)
+					Param.Hostid)
 				return Result, true, errs
 			}
 		}
 		return nil, false, errors.New("params errors")
 	} else {
 		for _, uri := range payloads {
-			req1, resp1, errs := sess.Get(uri, headers)
+			req1, resp1, errs := sess.Get(uri, Param.Headers)
 			if errs != nil {
 				return nil, false, errs
 			}
 			r1 := resp1.Body()
 			if reverse2.ReverseCheck(reverse, 5) {
-				Result := util.VulnerableTcpOrUdpResult(url,
+				Result := util.VulnerableTcpOrUdpResult(Param.Url,
 					"ssrf Vulnerable",
 					[]string{string(req1.String())},
 					[]string{string(r1)},
 					"middle",
-					hostid)
+					Param.Hostid)
 				return Result, true, errs
 			}
 		}

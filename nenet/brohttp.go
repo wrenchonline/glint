@@ -209,7 +209,7 @@ func (t *Tabs) ListenTarget() {
 
 				//设置文件头
 				for key, value := range t.Headers {
-					if value != nil {
+					if value != "" {
 						//这里只填写重要的header头
 						for _, h := range headers_importment {
 							if strings.EqualFold(h, key) {
@@ -580,16 +580,24 @@ func (t *Tabs) CopyRequest(data interface{}) {
 	lock.Lock()
 	defer lock.Unlock()
 	switch v := data.(type) {
-	case map[string]interface{}:
-		t.ReqMode = v["method"].(string)
-		t.Url, _ = url.Parse(v["url"].(string))
-		t.PostData = []byte(v["data"].(string))
-		t.Headers = v["headers"].(map[string]interface{})
+	// case map[string]interface{}:
+	// 	t.ReqMode = v["method"].(string)
+	// 	t.Url, _ = url.Parse(v["url"].(string))
+	// 	t.PostData = []byte(v["data"].(string))
+	// 	hev["headers"].(map[string]interface{})
+	// 	t.Headers = v["headers"].(map[string]interface{})
 	case ast.JsonUrl:
 		t.ReqMode = v.MetHod
 		t.Url, _ = url.Parse(v.Url)
 		t.PostData = []byte(v.Data)
 		t.Headers = v.Headers
+	// case layers.PluginParam:
+	// 	t.ReqMode = v.Method
+	// 	t.Url, _ = url.Parse(v.Url)
+	// 	t.PostData = []byte(v.Body)
+	// 	t.Headers = v.Headers
+	default:
+		logger.Fatal("无效参数")
 	}
 }
 

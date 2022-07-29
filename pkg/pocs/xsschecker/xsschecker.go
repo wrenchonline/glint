@@ -3,13 +3,13 @@ package xsschecker
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/ast"
 	"glint/logger"
 	"glint/nenet"
 	"glint/payload"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"math/rand"
@@ -528,20 +528,17 @@ func DoCheckXss(
 
 func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 
-	groups := args.(plugin.GroupData)
-	Spider := groups.Spider
-	ctx := *groups.Pctx
-	session := groups.GroupUrls.(map[string]interface{})
-	// var isVuln = false
-	var hostid int64
-	var Result *util.ScanResult
-	var err error
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
+	xssinfo := args.(plugin.GroupData)
+	Spider := xssinfo.Spider
+	ctx := *xssinfo.Pctx
+	var Vulnreport *util.ScanResult
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
+
 	Spider.TaskCtx = &ctx
 	tabs_obj, err := nenet.NewTabsOBJ(Spider)
 	if err != nil {
@@ -562,7 +559,7 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 	default:
 	}
 
-	if funk.Contains(groups.GroupType, "Button") || funk.Contains(groups.GroupType, "Submit") {
+	if funk.Contains(xssinfo.GroupType, "Button") || funk.Contains(xssinfo.GroupType, "Submit") {
 
 		select {
 		case <-(*Spider.Ctx).Done():
@@ -575,9 +572,9 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		tabs_obj.CopyRequest(groups.GroupUrls)
+		tabs_obj.CopyRequest(Param.Url)
 		// println("pre", Spider.Url.String())
-		b, Occ := tabs_obj.CheckRandOnHtmlS(flag, groups.GroupUrls)
+		b, Occ := tabs_obj.CheckRandOnHtmlS(flag, Param.Url)
 		// Spider.CopyRequest(Urlinfo)
 		// println("post", Spider.Url.String())
 		if b {
@@ -589,7 +586,7 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 			return nil, false, err
 		}
 
-		Result, err = DoCheckXss(resources, flag, tabs_obj, ctx, hostid)
+		Vulnreport, err = DoCheckXss(resources, flag, tabs_obj, ctx, Param.Hostid)
 		if err != nil {
 			return nil, false, err
 		}
@@ -607,9 +604,9 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
 		{
-			tabs_obj.CopyRequest(groups.GroupUrls)
+			tabs_obj.CopyRequest(Param.Url)
 			// logger.Debug("pre", Spider.Url.String())
-			b, Occ := tabs_obj.CheckRandOnHtmlS(flag, groups.GroupUrls)
+			b, Occ := tabs_obj.CheckRandOnHtmlS(flag, Param)
 			if b {
 				logger.Debug("flag存在")
 				bflag = true
@@ -619,11 +616,11 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		if !bflag {
 			return nil, false, err
 		}
-		Result, err = DoCheckXss(resources, flag, tabs_obj, ctx, hostid)
+		Vulnreport, err = DoCheckXss(resources, flag, tabs_obj, ctx, Param.Hostid)
 		if err != nil {
 			return nil, false, err
 		}
 	}
 quit:
-	return Result, true, nil
+	return Vulnreport, true, nil
 }

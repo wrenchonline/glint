@@ -1,11 +1,11 @@
 package jsonp
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"io"
@@ -174,47 +174,39 @@ func CheckJsRespAst(content string, funcName string) (bool, error) {
 var DefaultProxy = ""
 
 func JsonpValid(args interface{}) (*util.ScanResult, bool, error) {
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	util.Setup()
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
+	// sess := nenet.GetSessionByOptions(
+	// 	&nenet.ReqOptions{
+	// 		Timeout:       time.Duration(Param.Timeout) * time.Second,
+	// 		AllowRedirect: false,
+	// 		Proxy:         Param.UpProxy,
+	// 		Cert:          Param.Cert,
+	// 		PrivateKey:    Param.CertKey,
+	// 	})
 
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	if strings.ToUpper(method) != "GET" {
+	if strings.ToUpper(Param.Method) != "GET" {
 		return nil, false, nil
 	}
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	isvul, info, err := CheckSenseJsonp(url, headers)
+
+	isvul, info, err := CheckSenseJsonp(Param.Url, Param.Headers)
 	if err != nil {
 		return nil, false, fmt.Errorf("check jsonp error: %v", err)
 	}
 
 	if isvul {
-		Result := util.VulnerableTcpOrUdpResult(url,
+		Result := util.VulnerableTcpOrUdpResult(Param.Url,
 			"jsonp vulnerability found",
 			[]string{string(info.Request.String())},
 			[]string{string(info.Response.String())},
 			"middle",
-			hostid)
+			Param.Hostid)
 		return Result, true, err
 	}
 	return nil, false, errors.New("jsonp vulnerability not found")

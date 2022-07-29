@@ -36,9 +36,9 @@ var payload_template = []string{
 
 func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
-	var hostid int64
 	var Param layers.PluginParam
-	Param.ParsePluginParams(args.(plugin.GroupData))
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
 	if Param.CheckForExitSignal() {
 		return nil, false, errors.New("receive task exit signal")
 	}
@@ -77,7 +77,7 @@ func Crlf(args interface{}) (*util.ScanResult, bool, error) {
 					[]string{string(r)},
 					[]string{resp1.String()},
 					"middle",
-					hostid)
+					Param.Hostid)
 				return Result, true, err
 			}
 

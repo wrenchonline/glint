@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"net/http"
@@ -115,39 +116,35 @@ func cmd_mkdir(url string, method string, headers map[string]string, body []byte
 }
 
 func CmdValid(args interface{}) (*util.ScanResult, bool, error) {
-	group := args.(plugin.GroupData)
+	//group := args.(plugin.GroupData)
 	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	var ContentType string
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
-	}
-	body := []byte(session["data"].(string))
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
+	// sess := nenet.GetSessionByOptions(
+	// 	&nenet.ReqOptions{
+	// 		Timeout:       time.Duration(Param.Timeout) * time.Second,
+	// 		AllowRedirect: false,
+	// 		Proxy:         Param.UpProxy,
+	// 		Cert:          Param.Cert,
+	// 		PrivateKey:    Param.CertKey,
+	// 	})
 
-	req, resp, err := cmd_mkdir(url, method, headers, body, ContentType)
+	req, resp, err := cmd_mkdir(Param.Url, Param.Method, Param.Headers, []byte(Param.Body), Param.ContentType)
 	if err != nil {
 		return nil, false, fmt.Errorf("check jsonp error: %v", err)
 	}
 	if req != nil && resp.StatusCode() == 200 {
-		Result := util.VulnerableTcpOrUdpResult(url,
+		Result := util.VulnerableTcpOrUdpResult(Param.Url,
 			"cmd inject vulnerability found",
 			[]string{string(req.String())},
 			[]string{string(resp.String())},
 			"high",
-			session["hostid"].(int64))
+			Param.Hostid)
 
 		return Result, false, err
 	}

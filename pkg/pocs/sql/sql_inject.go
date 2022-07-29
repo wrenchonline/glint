@@ -1,7 +1,7 @@
 package sql
 
 import (
-	"encoding/json"
+	"errors"
 	"glint/logger"
 	"glint/nenet"
 	"glint/pkg/layers"
@@ -1675,82 +1675,57 @@ func Sql_inject_Vaild(args interface{}) (*util.ScanResult, bool, error) {
 	var variations *util.Variations
 	var ContentType string
 	var BlindSQL classBlindSQLInj
-	var hostid int64
-	// var blastIters interface{}
-	util.Setup()
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	body := []byte(session["data"].(string))
-	Cert = group.HttpsCert
-	Mkey = group.HttpsCertKey
+
 	sess := nenet.GetSessionByOptions(
 		&nenet.ReqOptions{
-			Timeout:       10 * time.Second,
-			AllowRedirect: true,
-			Proxy:         DefaultProxy,
-			Cert:          Cert,
-			PrivateKey:    Mkey,
+			Timeout:       time.Duration(Param.Timeout) * time.Second,
+			AllowRedirect: false,
+			Proxy:         Param.UpProxy,
+			Cert:          Param.Cert,
+			PrivateKey:    Param.CertKey,
 		})
 
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	// variations,err = util.ParseUri(url)
-	// BlindSQL.variations =
-	if value, ok := headers["Content-Type"]; ok {
-		ContentType = value
-	}
-	variations, err = util.ParseUri(url, body, method, ContentType)
+	variations, err = util.ParseUri(Param.Url, []byte(Param.Body), Param.Method, Param.ContentType)
 	//赋值
 	BlindSQL.variations = variations
 	BlindSQL.lastJob.Layer.Sess = sess
-	BlindSQL.TargetUrl = url
-	BlindSQL.lastJob.Layer.Method = method
+	BlindSQL.TargetUrl = Param.Url
+	BlindSQL.lastJob.Layer.Method = Param.Method
 	BlindSQL.lastJob.Layer.ContentType = ContentType
-	BlindSQL.lastJob.Layer.Headers = headers
-	BlindSQL.lastJob.Layer.Body = body
+	BlindSQL.lastJob.Layer.Headers = Param.Headers
+	BlindSQL.lastJob.Layer.Body = []byte(Param.Body)
 
 	if BlindSQL.startTesting() {
 		// println(hostid)
 		// println("发现sql漏洞")
 		//....................
-		Result := util.VulnerableTcpOrUdpResult(url,
+		Result := util.VulnerableTcpOrUdpResult(Param.Url,
 			"sql inject Vulnerable",
 			[]string{string(BlindSQL.trueFeatures.Request.String())},
 			[]string{string(BlindSQL.trueFeatures.Response.String())},
 			"high",
-			hostid)
+			Param.Hostid)
 		return Result, true, err
 	} else {
 		errtester := ClassSQLErrorMessages{
-			TargetUrl:  url,
+			TargetUrl:  Param.Url,
 			LastJob:    &BlindSQL.lastJob,
 			variations: BlindSQL.variations,
 		}
 		if errtester.startTesting() {
 
-			Result := util.VulnerableTcpOrUdpResult(url,
+			Result := util.VulnerableTcpOrUdpResult(Param.Url,
 				"sql error inject Vulnerable",
 				[]string{string(errtester.trueFeatures.Request.String())},
 				[]string{string(errtester.trueFeatures.Response.String())},
 				"high",
-				hostid)
+				Param.Hostid)
 			return Result, true, err
 		}
 

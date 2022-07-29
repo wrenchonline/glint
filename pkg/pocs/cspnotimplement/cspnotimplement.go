@@ -2,13 +2,14 @@ package cspnotimplement
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"glint/logger"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -40,6 +41,8 @@ var payload_template = []string{
 	`Content-Security-Policy-Report-Only:`,
 }
 
+var threadwg sync.WaitGroup //同步线程
+
 func CSPStartTest(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	group := args.(plugin.GroupData)
@@ -52,40 +55,33 @@ func CSPStartTest(args interface{}) (*util.ScanResult, bool, error) {
 	default:
 	}
 	IsVuln := false
-	var hostid int64
+
 	var VulnURl = ""
 	var VulnList = CSPVulnDetails{}
 	var err error
-	if sessions, ok := group.GroupUrls.([]interface{}); ok {
-		for _, session := range sessions {
-			newsess := session.(map[string]interface{})
-			url := newsess["url"].(string)
-			method := newsess["method"].(string)
-			headers, _ := util.ConvertHeaders(newsess["headers"].(map[string]interface{}))
-			body := []byte(newsess["data"].(string))
-			cert = group.HttpsCert
-			mkey = group.HttpsCertKey
+
+	threadwg.Add(len(group.GroupUrls))
+	go func() {
+		for idx, _ := range group.GroupUrls {
+			defer threadwg.Done()
+			var Param layers.PluginParam
+			ct := layers.CheckType{IsMultipleUrls: true, Urlindex: idx}
+			Param.ParsePluginParams(args.(plugin.GroupData), ct)
+			if Param.CheckForExitSignal() {
+				return
+			}
 			sess := nenet.GetSessionByOptions(
 				&nenet.ReqOptions{
-					Timeout:       3 * time.Second,
-					AllowRedirect: true,
-					Proxy:         DefaultProxy,
-					Cert:          cert,
-					PrivateKey:    mkey,
+					Timeout:       time.Duration(Param.Timeout) * time.Second,
+					AllowRedirect: false,
+					Proxy:         Param.UpProxy,
+					Cert:          Param.Cert,
+					PrivateKey:    Param.CertKey,
 				})
-
-			if hostid == 0 {
-				if value, ok := newsess["hostid"].(int64); ok {
-					hostid = value
-				}
-				if value, ok := newsess["hostid"].(json.Number); ok {
-					hostid, _ = value.Int64()
-				}
-			}
-			_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
+			_, resp, err := sess.Request(strings.ToUpper(Param.Method), Param.Url, Param.Headers, []byte(Param.Body))
 			if err != nil {
 				logger.Debug("%s", err.Error())
-				return nil, false, err
+				return
 			}
 
 			Text := string(resp.Header.Header())
@@ -94,21 +90,23 @@ func CSPStartTest(args interface{}) (*util.ScanResult, bool, error) {
 				if !funk.Contains(strings.ToLower(Text), strings.ToLower(v)) {
 					IsVuln = true
 					if VulnURl == "" {
-						VulnURl = url
+						VulnURl = Param.Url
 					}
-					VulnInfo := CSPVulnDetail{Url: url}
+					VulnInfo := CSPVulnDetail{Url: Param.Url}
 					VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
 				}
 			}
+
 		}
-	}
+	}()
+	threadwg.Wait()
 	if IsVuln {
 		Result := util.VulnerableTcpOrUdpResult(VulnURl,
 			VulnList.String(),
 			[]string{""},
 			[]string{""},
 			"information",
-			hostid)
+			65535)
 		return Result, true, err
 	}
 	return nil, false, err

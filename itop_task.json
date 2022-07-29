@@ -14,7 +14,7 @@
         "max_wait_request": 5,
         "param_model_id": 0,
         "plugin_thread_num": 12,
-        "response_size": 5,
+        "response_size": 102400,
         "scan_depth": 5,
         "task_id": 40,
         "tcp_conn_timeout": 3,

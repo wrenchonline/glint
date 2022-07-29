@@ -2,9 +2,9 @@ package cors
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"glint/nenet"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"net/http"
@@ -39,6 +39,7 @@ func cors_header_in_response(headers map[string]string) bool {
 // make http request, return true if origin accepted
 func origin_accepted(url string, orginal string, certs string, certkey string) (bool, *fasthttp.Request, *fasthttp.Response, error) {
 	util.Setup()
+
 	cert = certs
 	mkey = certkey
 	sess := nenet.GetSessionByOptions(
@@ -79,41 +80,32 @@ func Cors_Valid(args interface{}) (*util.ScanResult, bool, error) {
 	var err error
 	// var blastIters interface{}
 	util.Setup()
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	//group := args.(plugin.GroupData)
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	Url := session["url"].(string)
-	cert = group.HttpsCert
-	mkey = group.HttpsCertKey
-	// method := session["method"].(string)
-	headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
+	// sess := nenet.GetSessionByOptions(
+	// 	&nenet.ReqOptions{
+	// 		Timeout:       time.Duration(Param.Timeout) * time.Second,
+	// 		AllowRedirect: false,
+	// 		Proxy:         Param.UpProxy,
+	// 		Cert:          Param.Cert,
+	// 		PrivateKey:    Param.CertKey,
+	// 	})
 
-	var hostid int64
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
-
-	if _, ok := headers["Origin"]; !ok {
+	if _, ok := Param.Headers["Origin"]; !ok {
 		return nil, false, errors.New("not found cors")
 	}
 
-	if !strings.HasSuffix(Url, "/") {
-		Url = Url + "/"
+	if !strings.HasSuffix(Param.Url, "/") {
+		Param.Url = Param.Url + "/"
 	}
 
-	u, err := url.Parse(Url)
+	u, err := url.Parse(Param.Url)
 	if err != nil {
 		panic(err)
 	}
@@ -121,8 +113,8 @@ func Cors_Valid(args interface{}) (*util.ScanResult, bool, error) {
 	baseOrigin := u.Scheme + "://" + u.Hostname()
 	hostname := u.Hostname()
 	baseHost := u.Host
-	if ok, _, _, _ := origin_accepted(Url, baseOrigin, cert, mkey); ok ||
-		cors_header_in_response(headers) {
+	if ok, _, _, _ := origin_accepted(Param.Url, baseOrigin, cert, mkey); ok ||
+		cors_header_in_response(Param.Headers) {
 		CorsPayloads := []cors_payload{
 			// reflected origin
 			{
@@ -196,14 +188,14 @@ func Cors_Valid(args interface{}) (*util.ScanResult, bool, error) {
 		}
 
 		for _, v := range CorsPayloads {
-			if ok, req1, resp1, _ := origin_accepted(Url, v.origin, cert, mkey); ok {
+			if ok, req1, resp1, _ := origin_accepted(Param.Url, v.origin, cert, mkey); ok {
 				body := resp1.String()
-				Result := util.VulnerableTcpOrUdpResult(Url,
+				Result := util.VulnerableTcpOrUdpResult(Param.Url,
 					v.msg,
 					[]string{string(req1.String())},
 					[]string{string(body)},
 					"high",
-					hostid)
+					Param.Hostid)
 				return Result, true, nil
 			}
 		}

@@ -3,9 +3,9 @@ package nmapSsl
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"glint/pkg/layers"
 	"glint/plugin"
 	"glint/util"
 	"log"
@@ -24,48 +24,28 @@ var DefaultProxy = ""
 var threadwg sync.WaitGroup //同步线程
 
 func Sslverify(args interface{}) (*util.ScanResult, bool, error) {
-	util.Setup()
-	var hostid int64
-
-	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
-
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
+	var Param layers.PluginParam
+	ct := layers.CheckType{}
+	Param.ParsePluginParams(args.(plugin.GroupData), ct)
+	if Param.CheckForExitSignal() {
+		return nil, false, errors.New("receive task exit signal")
 	}
 
-	session := group.GroupUrls.(map[string]interface{})
-	url := session["url"].(string)
-	// method := session["method"].(string)
-	// headers, _ := util.ConvertHeaders(session["headers"].(map[string]interface{}))
-	// body := []byte(session["data"].(string))
-	// cert = group.HttpsCert
-	// mkey = group.HttpsCertKey
 	// sess := nenet.GetSessionByOptions(
 	// 	&nenet.ReqOptions{
-	// 		Timeout:       2 * time.Second,
-	// 		AllowRedirect: true,
-	// 		Proxy:         DefaultProxy,
-	// 		Cert:          cert,
-	// 		PrivateKey:    mkey,
+	// 		Timeout:       time.Duration(Param.Timeout) * time.Second,
+	// 		AllowRedirect: false,
+	// 		Proxy:         Param.UpProxy,
+	// 		Cert:          Param.Cert,
+	// 		PrivateKey:    Param.CertKey,
 	// 	})
-	if value, ok := session["hostid"].(int64); ok {
-		hostid = value
-	}
-
-	if value, ok := session["hostid"].(json.Number); ok {
-		hostid, _ = value.Int64()
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	// Equivalent to `/usr/local/bin/nmap -p 80,443,843 google.com facebook.com youtube.com`,
 	// with a 5 minute timeout.
 	scanner, err := nmap.NewScanner(
-		nmap.WithTargets(url),
+		nmap.WithTargets(Param.Url),
 		nmap.WithPorts("443"),
 		nmap.WithScripts("ssl-enum-ciphers"),
 		nmap.WithContext(ctx),
@@ -99,21 +79,21 @@ func Sslverify(args interface{}) (*util.ScanResult, bool, error) {
 		buf.ReadFrom(rawXml)
 		fmt.Printf("raw XMl:%s", buf.String())
 		if funk.Contains(buf.String(), "TLSv1.0") {
-			Result := util.VulnerableTcpOrUdpResult(url,
+			Result := util.VulnerableTcpOrUdpResult(Param.Url,
 				"TLSV0 has enable",
 				[]string{string("")},
 				[]string{string("")},
 				"high",
-				hostid)
+				Param.Hostid)
 			return Result, true, nil
 		}
 		if funk.Contains(buf.String(), "TLSv1.1") {
-			Result := util.VulnerableTcpOrUdpResult(url,
+			Result := util.VulnerableTcpOrUdpResult(Param.Url,
 				"TLSV1 has enable",
 				[]string{string("")},
 				[]string{string("")},
 				"middle",
-				hostid)
+				Param.Hostid)
 			return Result, true, nil
 		}
 	}

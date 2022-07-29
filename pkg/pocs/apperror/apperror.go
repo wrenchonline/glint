@@ -2,7 +2,6 @@ package apperror
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"glint/logger"
 	"glint/nenet"
@@ -62,64 +61,49 @@ var threadwg sync.WaitGroup //同步线程
 func Application_startTest(args interface{}) (*util.ScanResult, bool, error) {
 	util.Setup()
 	group := args.(plugin.GroupData)
-	// ORIGIN_URL := `http://not-a-valid-origin.xsrfprobe-csrftesting.0xinfection.xyz`
-	ctx := *group.Pctx
 
-	select {
-	case <-ctx.Done():
-		return nil, false, ctx.Err()
-	default:
-	}
 	IsVuln := false
 	var hostid int64
 	var VulnURl = ""
 	var VulnList = ErrorVulnDetails{}
 	var err error
-	if sessions, ok := group.GroupUrls.([]interface{}); ok {
-		threadwg.Add(len(sessions))
-		go func() {
-			for _, session := range sessions {
-				newsess := session.(map[string]interface{})
-				url := newsess["url"].(string)
-				method := newsess["method"].(string)
-				headers, _ := util.ConvertHeaders(newsess["headers"].(map[string]interface{}))
-				body := []byte(newsess["data"].(string))
-				cert = group.HttpsCert
-				mkey = group.HttpsCertKey
-				sess := nenet.GetSessionByOptions(
-					&nenet.ReqOptions{
-						Timeout:       2 * time.Second,
-						AllowRedirect: true,
-						Proxy:         DefaultProxy,
-						Cert:          cert,
-						PrivateKey:    mkey,
-					})
+	// if sessions, ok := group.GroupUrls; ok {
+	threadwg.Add(len(group.GroupUrls))
+	go func() {
+		for idx, _ := range group.GroupUrls {
 
-				if hostid == 0 {
-					if value, ok := newsess["hostid"].(int64); ok {
-						hostid = value
-					}
-					if value, ok := newsess["hostid"].(json.Number); ok {
-						hostid, _ = value.Int64()
-					}
-				}
-				_, resp, err := sess.Request(strings.ToUpper(method), url, headers, body)
-				if err != nil {
-					logger.Debug("%s", err.Error())
-				}
-				if isVuln, matchstr := Test_Application_error(resp.String()); isVuln {
-					IsVuln = true
-					if VulnURl == "" {
-						VulnURl = url
-					}
-					VulnInfo := ErrorVulnDetail{Url: url, MatchString: matchstr}
-					VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
-				}
-				threadwg.Done()
+			var Param layers.PluginParam
+			ct := layers.CheckType{IsMultipleUrls: true, Urlindex: idx}
+			Param.ParsePluginParams(args.(plugin.GroupData), ct)
+			if Param.CheckForExitSignal() {
+				return
 			}
-		}()
-		threadwg.Wait()
-	}
+			sess := nenet.GetSessionByOptions(
+				&nenet.ReqOptions{
+					Timeout:       time.Duration(Param.Timeout) * time.Second,
+					AllowRedirect: false,
+					Proxy:         Param.UpProxy,
+					Cert:          Param.Cert,
+					PrivateKey:    Param.CertKey,
+				})
+
+			_, resp, err := sess.Request(strings.ToUpper(Param.Method), Param.Url, Param.Headers, []byte(Param.Body))
+			if err != nil {
+				logger.Debug("%s", err.Error())
+			}
+			if isVuln, matchstr := Test_Application_error(resp.String()); isVuln {
+				IsVuln = true
+				if VulnURl == "" {
+					VulnURl = Param.Url
+				}
+				VulnInfo := ErrorVulnDetail{Url: Param.Url, MatchString: matchstr}
+				VulnList.VulnerableList = append(VulnList.VulnerableList, VulnInfo)
+			}
+			threadwg.Done()
+		}
+	}()
+	threadwg.Wait()
+	//}
 	if IsVuln {
 		Result := util.VulnerableTcpOrUdpResult(VulnURl,
 			VulnList.String(),
