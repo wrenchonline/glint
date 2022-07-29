@@ -551,3 +551,11 @@ func RandStr(length int) string {
 	ret := `'` + funk.RandomString(length, []rune(strRange)) + `'`
 	return ret
 }
+
+func InterfaceToString(data map[string]string) map[string]interface{} {
+	Variations := make(map[string]interface{})
+	for k, v := range data {
+		Variations[k] = v
+	}
+	return Variations
+}

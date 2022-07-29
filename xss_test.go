@@ -42,14 +42,14 @@ func TestXSS(t *testing.T) {
 	Spider := nenet.Spider{}
 	var taskconfig config.TaskYamlConfig
 	taskconfig.Qps = 500
-	taskconfig.Proxy = "" //taskconfig.Proxy = "127.0.0.1:7777"
+	taskconfig.Proxy = "127.0.0.1:7777" //taskconfig.Proxy = "127.0.0.1:7777"
 	err := Spider.Init(taskconfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer Spider.Close()
 	var PluginWg sync.WaitGroup
-	data, _ := config.ReadResultConf("./json_testfile/xss_test2.json")
+	data, _ := config.ReadResultConf("./json_testfile/xss_test.json")
 	myfunc := []plugin.PluginCallback{}
 	myfunc = append(myfunc, xsschecker.CheckXss)
 

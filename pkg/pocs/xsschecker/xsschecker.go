@@ -442,6 +442,7 @@ func DoCheckXss(
 				urlocc := v[i].(nenet.UrlOCC)
 				if len(urlocc.OCC) > 0 {
 					logger.Warning("xss eval  url: %s payload: %s", urlocc.Request.Url, payload)
+
 					tab.CopyRequest(urlocc.Request)
 
 					response_strarray, requeststr, err := tab.CheckPayloadLocation(payload)
@@ -572,9 +573,11 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		flag := funk.RandomString(8)
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
-		tabs_obj.CopyRequest(Param.Url)
+		headers := util.InterfaceToString(Param.Headers)
+		ju := ast.JsonUrl{Url: Param.Url, MetHod: Param.Url, Headers: headers, Data: Param.Body}
+		tabs_obj.CopyRequest(ju)
 		// println("pre", Spider.Url.String())
-		b, Occ := tabs_obj.CheckRandOnHtmlS(flag, Param.Url)
+		b, Occ := tabs_obj.CheckRandOnHtmlS(flag, ju)
 		// Spider.CopyRequest(Urlinfo)
 		// println("post", Spider.Url.String())
 		if b {
@@ -604,9 +607,12 @@ func CheckXss(args interface{}) (*util.ScanResult, bool, error) {
 		bflag := false
 		resources := make([]map[int]interface{}, 1)
 		{
-			tabs_obj.CopyRequest(Param.Url)
+			headers := util.InterfaceToString(Param.Headers)
+			ju := ast.JsonUrl{Url: Param.Url, MetHod: Param.Url, Headers: headers, Data: Param.Body}
+			tabs_obj.CopyRequest(ju)
+
 			// logger.Debug("pre", Spider.Url.String())
-			b, Occ := tabs_obj.CheckRandOnHtmlS(flag, Param)
+			b, Occ := tabs_obj.CheckRandOnHtmlS(flag, ju)
 			if b {
 				logger.Debug("flag存在")
 				bflag = true

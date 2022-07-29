@@ -580,12 +580,11 @@ func (t *Tabs) CopyRequest(data interface{}) {
 	lock.Lock()
 	defer lock.Unlock()
 	switch v := data.(type) {
-	// case map[string]interface{}:
-	// 	t.ReqMode = v["method"].(string)
-	// 	t.Url, _ = url.Parse(v["url"].(string))
-	// 	t.PostData = []byte(v["data"].(string))
-	// 	hev["headers"].(map[string]interface{})
-	// 	t.Headers = v["headers"].(map[string]interface{})
+	case map[string]interface{}:
+		t.ReqMode = v["method"].(string)
+		t.Url, _ = url.Parse(v["url"].(string))
+		t.PostData = []byte(v["data"].(string))
+		t.Headers = v["headers"].(map[string]interface{})
 	case ast.JsonUrl:
 		t.ReqMode = v.MetHod
 		t.Url, _ = url.Parse(v.Url)
